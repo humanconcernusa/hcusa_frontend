@@ -1,0 +1,14 @@
+# Security headers for the exported site.
+#
+# The Content-Security-Policy lists the addresses the live site talks to. The donation API
+# origin must be in connect-src or the donate form is blocked. Add any host that serves
+# images to img-src (remote media) or leave only 'self' when images are local. Stripe needs
+# script-src and frame-src; its own telemetry lives on r.stripe.com.
+
+/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: geolocation=(), microphone=(), camera=()
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; frame-ancestors 'none'; script-src 'self' 'unsafe-inline' https://js.stripe.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; frame-src https://js.stripe.com https://hooks.stripe.com; connect-src 'self' https://api.stripe.com https://r.stripe.com https://donation.api.progressivebyte.com

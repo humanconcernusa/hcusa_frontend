@@ -1,0 +1,234 @@
+@media (max-width: 639.98px) {
+  .programs-row {
+    display: flex;
+    gap: 1rem;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    /* The bar itself would only add noise; the peeking card is the hint. */
+    scrollbar-width: none;
+  }
+
+  .programs-row::-webkit-scrollbar {
+    display: none;
+  }
+
+  .programs-row > li {
+    flex: 0 0 85%;
+    scroll-snap-align: center;
+  }
+}
+
+/*
+  Three per row from 820 until lg — the iPad Pro portrait range.
+
+  Written here rather than as a Tailwind `min-[820px]:` variant because Tailwind emits custom
+  breakpoints before its own sm/md/lg rules. The class was generated, but `sm:grid-cols-2` came
+  later in the stylesheet and won, so the row stayed at two. Unlayered rules sit after every
+  layer, so these hold at any width.
+*/
+@media (min-width: 820px) and (max-width: 1023.98px) {
+  .programs-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/*
+  Two actions that stack and share the width when there is no room for them side by side.
+
+  Laid out centred in a wrapping row they read as offset: the wider one starts further left, and
+  once they wrap each takes its own centre. Stacking puts both on the same edge.
+
+  "tight" is the narrower of the two, for pairs whose labels are long enough that they will not
+  fit side by side even at a short width — the closing "Give Hope" band, for instance. The plain
+  class covers the ordinary case.
+*/
+@media (max-width: 404px) {
+  .actions-stack-tight {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .actions-stack-tight > * {
+    width: 100%;
+  }
+}
+
+/*
+  The pay buttons inside the donate popup.
+
+  The popup's body scrolls, so the buttons stick to the bottom of that scroll and stay in reach
+  however long the form gets — on a laptop as much as a phone. The negative margin lets the bar's
+  background reach the panel's edges while its contents line up with the form above.
+*/
+.donate-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  margin-inline: -1.5rem;
+  padding-inline: 1.5rem;
+  padding-block: 0.75rem;
+  border-top: 1px solid var(--color-divider);
+  background: var(--color-surface);
+}
+
+/*
+  The stat cards on the About page. Up to 430 they sit one per row, where the column is wide
+  enough for a long figure to stay on one line; from 431 up the two-column grid takes over.
+*/
+@media (max-width: 430.98px) {
+  .about-stats {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/*
+  The About page's "Our Approach & Strategy" photos.
+
+  Up to 819 they are a swipe gallery. From 820 there is room for all three side by side, which is
+  what lg already does — this brings the tablet range into line with it, so the photos are about
+  250px each rather than three full-width blocks to scroll past.
+*/
+@media (min-width: 820px) and (max-width: 1023.98px) {
+  .approach-gallery {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    overflow: visible;
+  }
+
+  .approach-gallery > li {
+    width: auto;
+    flex-shrink: 1;
+    scroll-snap-align: none;
+  }
+}
+
+/* The dots only mean anything while the gallery swipes. */
+@media (min-width: 820px) {
+  .approach-dots {
+    display: none;
+  }
+}
+
+@media (max-width: 639.98px) {
+  .actions-stack {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .actions-stack > * {
+    width: 100%;
+  }
+}
+
+/*
+  Card grids that fit three per row from 820 rather than waiting for lg.
+
+  The iPad Pro portrait range has the room for it, and two columns there leaves a lot of unused
+  width. Written here rather than as a `min-[820px]:grid-cols-3` variant because Tailwind emits
+  custom breakpoints before its own sm/md/lg rules, so `sm:grid-cols-2` would come later and win.
+*/
+@media (min-width: 820px) and (max-width: 1023.98px) {
+  .grid-3-from-820 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/*
+  The "What We Stand For" cards. Each holds an icon and two or three words, so one per row on a
+  phone is mostly empty card — two fits comfortably from 390 up and halves the section's height.
+  From sm the grid's own two columns take over.
+*/
+@media (min-width: 390px) and (max-width: 639.98px) {
+  .stand-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/*
+  Report cards.
+
+  The cover is a 4:5 portrait, so a card spanning the page gives a cover taller than the screen.
+  Up to 820 the card and its cover are capped.
+
+  From 820 the cards flow two to a row and three from lg. A report on its own does not use that
+  grid: it takes the whole row, with the cover beside its description rather than stacked above
+  half an empty one.
+*/
+@media (max-width: 819.98px) {
+  .report-card {
+    max-width: 34rem;
+  }
+
+  .report-cover {
+    max-width: 15rem;
+  }
+}
+
+@media (min-width: 640px) {
+  .report-card:only-child {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.5rem;
+  }
+
+  .report-card:only-child .report-cover {
+    flex: 0 0 15rem;
+  }
+
+  /* With one report the grid is a single column, so the card has the whole row to itself. */
+  .report-grid:has(> :only-child) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (min-width: 820px) {
+  .report-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.5rem;
+  }
+
+  .report-card {
+    max-width: none;
+  }
+}
+
+@media (min-width: 1024px) {
+  .report-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/*
+  Policy headings on a phone.
+
+  Written in caps they wrap to two lines each, which doubles every row and is slower to read.
+  Lowercasing and re-capitalising the first letter gives a sentence whatever the editor typed,
+  and the heading fits one line. From sm the heading is shown as written.
+*/
+@media (max-width: 639.98px) {
+  .policy-title {
+    text-transform: lowercase;
+  }
+
+  .policy-title::first-letter {
+    text-transform: uppercase;
+  }
+}
+
+/*
+  The donation tiers in "How You Can Help Right Now".
+
+  Between 430 and sm the four tiers become a 2x2 of compact tiles — amount, its one line and the
+  button — so all four are in view at once instead of a column of cards to scroll.
+*/
+@media (min-width: 430px) and (max-width: 639.98px) {
+  .giving-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+
+  .giving-tile {
+    padding: 1rem;
+  }
+}

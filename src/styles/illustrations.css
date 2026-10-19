@@ -1,0 +1,104 @@
+.cos-spoke {
+  stroke-dasharray: 22;
+}
+
+.cos-spoke:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.cos-spoke:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.cos-spoke:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+.cos-spoke:nth-child(4) {
+  animation-delay: 0.45s;
+}
+
+.cos-spoke:nth-child(5) {
+  animation-delay: 0.6s;
+}
+
+.cos-spoke:nth-child(6) {
+  animation-delay: 0.75s;
+}
+
+/*
+  The Food distribution icon. The animations themselves are the animate-fd-* classes on the parts;
+  here they only carry their own turning point, and the three steam trails are staggered a third of
+  a second apart so they do not rise in unison.
+*/
+.fd-steam1 {
+  animation-delay: 0s;
+  transform-origin: 20px 20px;
+}
+
+.fd-steam2 {
+  animation-delay: 0.4s;
+  transform-origin: 28px 16px;
+}
+
+.fd-steam3 {
+  animation-delay: 0.8s;
+  transform-origin: 36px 20px;
+}
+
+.fd-lid {
+  transform-origin: 28px 22px;
+}
+
+.fd-bowl {
+  transform-origin: 28px 36px;
+}
+
+.fd-arrow {
+  transform-origin: 28px 50px;
+}
+
+/*
+  The fundraising icon. The animation is the animate-ef-* classes on the parts; here they only keep
+  their own turning point. The coins rise in turn, top first.
+*/
+.ef-c1 {
+  animation-delay: 0s;
+}
+
+.ef-c2 {
+  animation-delay: 0.2s;
+}
+
+.ef-c3 {
+  animation-delay: 0.4s;
+}
+
+.ef-arrow {
+  transform-origin: 44px 28px;
+}
+
+/*
+  The Emergency Relief icon. The animations are the animate-er-* classes on the parts; here they
+  only keep their own turning point. The second ring follows half a second behind the first.
+*/
+.er-ring1 {
+  animation-delay: 0s;
+  transform-origin: 28px 28px;
+}
+
+.er-ring2 {
+  animation-delay: 0.5s;
+  transform-origin: 28px 28px;
+}
+
+.er-cross {
+  transform-origin: 28px 28px;
+}
+
+/*
+  The Monthly heart's burst. Written as plain CSS rather than a theme token, so the animation and
+  its keyframes are always in the stylesheet whatever the source scanning makes of the class list.
+  Each dot carries its own --x and --y, so one keyframe throws them all in different directions.
+  "both" keeps them hidden before and after the throw.
+*/

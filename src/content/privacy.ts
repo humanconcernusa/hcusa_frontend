@@ -1,0 +1,176 @@
+/*
+  The Privacy Policy page wording. Plain data and types, imported by the page, the admin
+  editor and the server, so the shape lives exactly once. The values below are the shipped
+  defaults: with nothing published the page falls back to these.
+
+  Each policy section holds a fixed list of paragraph boxes, so the admin can change a
+  paragraph but cannot invent or lose one. Inside a box, each line is a line on the page, and
+  a line starting with "- " becomes a bullet.
+*/
+
+export type PrivacySectionKey = "hero" | "policy" | "ctaBand";
+
+export const PRIVACY_SECTION_LABELS: Record<PrivacySectionKey, string> = {
+  hero: "Hero",
+  policy: "Policy sections",
+  ctaBand: "Give Hope. Inspire Change",
+};
+
+export const PRIVACY_SECTION_KEYS = Object.keys(PRIVACY_SECTION_LABELS) as PrivacySectionKey[];
+
+export type PrivacyPageContent = {
+  visible: Record<PrivacySectionKey, boolean>;
+
+  hero: {
+    eyebrow: string;
+    headingStart: string;
+    headingAccent: string;
+    body: string;
+    cta: string;
+    /* Which donation popup the button opens. */
+    form: string;
+    image: string;
+    imageAlt: string;
+  };
+
+  policy: {
+    sections: { title: string; paragraphs: string[] }[];
+  };
+};
+
+/* Stand-in artwork, borrowed from the About Us set, until a real file is uploaded. */
+const HERO_PHOTO = "/images/about-us/story-rifat.webp";
+
+export const privacyDefaults: PrivacyPageContent = {
+  visible: {
+    hero: true,
+    policy: true,
+    ctaBand: true,
+  },
+
+  hero: {
+    eyebrow: "Mission-Aligned",
+    headingStart: "Privacy",
+    headingAccent: "Policy",
+    body: "Committed to Transparency and Trust",
+    cta: "Donate Today",
+    form: "general",
+    image: HERO_PHOTO,
+    imageAlt: "Children smiling at a Human Concern USA project",
+  },
+
+  policy: {
+    sections: [
+      {
+        title: "Your Privacy Matters to Us",
+        paragraphs: [
+          "At Human Concern International (“HCI”), accessible from humanconcernusa.org (the “Website”), one of our main priorities is the privacy of our visitors. In order to demonstrate our firm commitment to full transparency and best practices, we have developed the following Privacy Policy. Please read the following carefully to understand our practices regarding your personal information and how we will treat it. By engaging with the Website, you acknowledge that you have read, understood and agree to this Privacy Policy.",
+          "This Privacy Policy sets forth the policy of HCI (“us,” “we,” or “our”) concerning the collection, handling and storage of user information collected through the use of humanconcernusa.org, which links to this Privacy Policy. Please read this Privacy Policy carefully to understand how we process and use your information. This Privacy Policy may be amended by HCI from time to time and was last updated on 10/01/2020.",
+          "This Privacy Policy applies only to our online activities and is valid for visitors to our Website with regards to the information that they shared and/or that was collected by HCI via the Website. This policy is not applicable to any information collected offline or via channels other than this Website.",
+        ],
+      },
+      {
+        title: "Consent",
+        paragraphs: [
+          "By using our Website, you hereby consent to our Privacy Policy and agree to its terms.",
+        ],
+      },
+      {
+        title: "Information We Collect",
+        paragraphs: [
+          "At HCI, we do not require you to register or provide information to us in order to view our Website. The personal information that you may be asked to provide, and the reasons why you are asked to provide it, will be made clear to you at the point we ask you to provide your personal information.",
+          "If you contact us directly, we may receive additional information about you such as your name, email address, phone number, the contents of the message and/or attachments you may send us, and any other information you may choose to provide.",
+          "When you register for an Account, we may ask for your contact information, including items such as name, company name, address, email address, and telephone number.",
+        ],
+      },
+      {
+        title: "How We Use Your Information",
+        paragraphs: [
+          "HCI is the sole owner of any information collected on this Website. We do not sell personal information collected from our Website. We use the information we collect in various ways, including to:",
+          "- Provide, operate, and maintain our Website;\n- Improve, personalize, and expand our Website;\n- Understand and analyze how you use our Website;\n- Develop new products, services, features, and functionality;\n- Communicate with you, either directly or through one of our partners, including for customer service, to provide you with updates and other information relating to the Website, and for marketing and promotional purposes;\n- Send you emails; and\n- Find and prevent fraud",
+        ],
+      },
+      {
+        title: "Log Files",
+        paragraphs: [
+          "We follow a standard procedure of using log files. These files log visitors when they visit websites. All hosting companies do this as a part of the hosting services’ analytics. The information collected by log files include internet protocol (IP) addresses, browser type, Internet Service Provider (ISP), date and time stamp, referring/exit pages, and possibly the number of clicks. These are not linked to any information that is personally identifiable. The purpose of the information is for analyzing trends, administering the site, tracking users’ movement on the Website, and gathering demographic information.",
+        ],
+      },
+      {
+        title: "Cookies and Web Beacons",
+        paragraphs: [
+          "Like any other website, we use “cookies.” These cookies are used to store information including visitors’ preferences, and the pages on the Website that the visitor accessed or visited. The information is used to optimize the users’ experience by customizing our web page content based on visitors’ browser type and/or other information.",
+          "For more general information on cookies, please read “What Are Cookies.”",
+        ],
+      },
+      {
+        title: "Personal Information and Credit Card Security",
+        paragraphs: [
+          "We care about the safety and security of your transaction, and we take every precaution to protect your information.",
+          "Donations made on our Website are secure to the fullest extent possible. We use high-grade, 128-bit encryption and the “https” security protocol through Secure Socket Layer (SSL) technology to communicate with your browser software. SSL protects information as it is transferred through the Internet. This method is the industry standard security protocol, which makes it extremely difficult for anyone else to intercept the credit card information you send to us. Companies we work with to process credit card transactions also use high grade encryption and security protocols.",
+          "You can recognize secure website pages by checking for the secure symbol at the bottom of your browser screen. For most browsers, this symbol is either a lock or a key. When the lock symbol appears to be locked, the page is secure. When it appears to be unlocked, the page is insecure.",
+          "Additionally, all of the transactional data we collect from users is protected against unauthorized access with the use of digital certificates. Furthermore, this Website has security measures in place to protect the loss, misuse, and alteration of the information under our control.",
+        ],
+      },
+      {
+        title: "Advertising Partners Privacy Policies",
+        paragraphs: [
+          "You may consult this list to find the Privacy Policy for each of the advertising partners of HCI.",
+          "Third-party ad servers or ad networks use technologies like cookies, JavaScript, or Web Beacons that are used in their respective advertisements and links that appear on Human Concern International, which are sent directly to users’ browser. They automatically receive your IP address when this occurs. These technologies are used to measure the effectiveness of their advertising campaigns and/or to personalize the advertising content that you see on websites that you visit.",
+          "Note that HCI has no access to or control over these cookies that are used by third-party advertisers.",
+        ],
+      },
+      {
+        title: "Third Party Privacy Policies",
+        paragraphs: [
+          "This Privacy Policy applies only to our Website. The site may contain links to other web sites not operated or controlled by us. The policies and procedures described here do not apply to websites or other services that HCI does not operate or control. These links from our site do not imply that we endorse or have reviewed those websites or other services. We suggest contacting those services directly for information on their privacy policies.",
+        ],
+      },
+      {
+        title: "GDPR Data Protection Rights",
+        paragraphs: [
+          "We would like to make sure you are fully aware of all of your data protection rights. Every user is entitled to the following:",
+          "The right to access – You have the right to request copies of your personal data. We may charge you a small fee for this service.",
+          "The right to rectification – You have the right to request that we correct any information you believe is inaccurate. You also have the right to request that we complete the information you believe is incomplete.",
+          "The right to erasure – You have the right to request that we erase your personal data, under certain conditions.",
+          "The right to restrict processing – You have the right to request that we restrict the processing of your personal data, under certain conditions.",
+          "The right to object to processing – You have the right to object to our processing of your personal data, under certain conditions.",
+          "The right to data portability – You have the right to request that we transfer the data that we have collected to another organization, or directly to you, under certain conditions.",
+          "If you make a request, we have one month to respond to you. If you would like to exercise any of these rights, please contact us.",
+        ],
+      },
+      {
+        title: "Telephone Consumers Protection Act",
+        paragraphs: [
+          "By providing your phone number and email address, you are agreeing to receive text messages, emails, and/or calls (even if you are previously subscribed to the do not call list) from HCI. These calls might be recorded; and may be direct, auto-dialed or use pre-recorded/artificial voices. This consent is not a requirement or condition to donate to HCI. Messages and data rates might apply.",
+        ],
+      },
+      {
+        title: "Use of Services by Minors",
+        paragraphs: [
+          "This Website is not intended for the use of individuals under the age of 18, and we request that these individuals do not provide Personal Information through the Website or any associated services. HCI does not knowingly collect or maintain personal information from individuals under 18 years of age.",
+          "HCI does not knowingly collect any Personal Information from individuals under the age of 18. If you think that your child provided this kind of information on our Website, we strongly encourage you to contact us immediately and we will do our best to promptly remove such information from our records.",
+        ],
+      },
+      {
+        title: "Unsubscribing from Email Communication",
+        paragraphs: [
+          "You can unsubscribe from email communications at any time using the link provided at the bottom of all our emails or by emailing info@humanconcernusa.org.",
+        ],
+      },
+      {
+        title: "Contacting Us",
+        paragraphs: [
+          "If you have any question about this Privacy Policy or the practices described herein, or you have any privacy-related concerns, please contact us via:",
+          "Human Concern International USA\n600 E Carmel Drive Suite 147 Carmel, IN 46032\n1-800-583-5841\ninfo@humanconcernusa.org",
+          "Under California law, California residents have the right to request in writing from businesses with whom they have an established business relationship (i) a list of categories of personal information, such as name, address, e-mail address, and the type of services provided to the customer, that a business has disclosed to third parties (including affiliates that are separate legal entities) during the immediately preceding calendar year for the third parties’ direct marketing purposes and (ii) the names and addresses of all such third parties. Please request this information by contacting us by email at info@humanconcernusa.org.",
+          "Please note that email communications are not always secure; please do not include sensitive information in your emails to us.",
+        ],
+      },
+    ],
+  },
+};
+
+export const PRIVACY_LIMIT_LONG = 4000;
+export const PRIVACY_LIMIT_SHORT = 200;
+export const PRIVACY_LONG_FIELDS = new Set(["body", "imageAlt", "paragraphs"]);

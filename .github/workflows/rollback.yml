@@ -1,0 +1,53 @@
+# Puts an older release back without rebuilding it.
+#
+# Every deploy is archived in R2 as release-<number>, so a rollback is just: download that folder
+# and send it to both hosts again. No checkout, no build, takes seconds.
+#
+# PARKED: R2 archiving is skipped for now, so no release exists to restore. Do not run this
+# until the archive step in deploy.yml is restored. Until then, roll back by re-deploying an
+# earlier commit on `production` (or use Cloudflare Pages / Vercel deployment history).
+
+name: Roll back
+
+on:
+  workflow_dispatch:
+    inputs:
+      release:
+        description: "Release to put back, for example release-104"
+        required: true
+        type: string
+
+jobs:
+  rollback:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.R2_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          aws-region: auto
+
+      - name: Fetch the release
+        run: |
+          mkdir -p restored
+          aws s3 sync "s3://${{ vars.R2_BUCKET }}/website-releases/${{ inputs.release }}/" restored \
+            --endpoint-url "${{ vars.R2_ENDPOINT }}"
+
+      # If the folder is empty the release name was wrong, so stop rather than deploy nothing.
+      - name: Check it arrived
+        run: |
+          if [ ! -f restored/index.html ]; then
+            echo "Release ${{ inputs.release }} has no index.html. Check the name."
+            exit 1
+          fi
+
+      - name: Put it back on Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy restored --project-name=${{ vars.CLOUDFLARE_PROJECT }} --branch=production
+
+      - name: Put it back on Vercel
+        run: npx vercel deploy restored --prod --yes --token="${{ secrets.VERCEL_TOKEN }}"

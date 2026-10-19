@@ -1,0 +1,1093 @@
+{
+  "forms": [
+    {
+      "id": "general",
+      "label": "General donation",
+      "variant": "hero",
+      "purposes": [
+        "Sadaqa",
+        "Zakat",
+        "Emergency Relief",
+        "Education",
+        "Clean Water & Sanitation"
+      ],
+      "feePercent": 8,
+      "presets": [
+        {
+          "amount": 95,
+          "blurb": "- Can provide a food pack for a family for a month"
+        },
+        {
+          "amount": 180,
+          "blurb": "- Can provide 2 food packs for 2 families for a month"
+        },
+        {
+          "amount": 325,
+          "blurb": "- Can provide 4 food packs for 4 families for a month"
+        }
+      ],
+      "monthlyPresets": [
+        {
+          "amount": 100,
+          "blurb": "- For a family"
+        },
+        {
+          "amount": 200,
+          "blurb": "- For five family"
+        },
+        {
+          "amount": 300,
+          "blurb": "For six family"
+        }
+      ]
+    },
+    {
+      "id": "healthcare",
+      "label": "Healthcare for Vulnerable Communities",
+      "presets": [
+        {
+          "amount": 50,
+          "blurb": "- Provide essential medical treatment for one individual"
+        },
+        {
+          "amount": 200,
+          "blurb": "- Covers the medical needs of a family of four"
+        },
+        {
+          "amount": 500,
+          "blurb": "- Ensures access to healthcare for 10 individuals in need"
+        },
+        {
+          "amount": 1000,
+          "blurb": "- Supports healthcare for five families"
+        },
+        {
+          "amount": 2000,
+          "blurb": "- Funds a mobile clinic to serve a village of 200 people"
+        }
+      ],
+      "monthlyPresets": [
+        {
+          "amount": 50,
+          "blurb": "- Provide essential medical treatment for one individual"
+        },
+        {
+          "amount": 200,
+          "blurb": "- Covers the medical needs of a family of four"
+        },
+        {
+          "amount": 500,
+          "blurb": "- Ensures access to healthcare for 10 individuals in need"
+        },
+        {
+          "amount": 1000,
+          "blurb": "- Supports healthcare for five families"
+        },
+        {
+          "amount": 2000,
+          "blurb": "- Funds a mobile clinic to serve a village of 200 people"
+        }
+      ],
+      "purposes": []
+    },
+    {
+      "id": "africa",
+      "label": "Africa's Forgotten Ummah",
+      "presets": [
+        {
+          "amount": 100,
+          "blurb": "can support the greatest need"
+        },
+        {
+          "amount": 200,
+          "blurb": "can provide medical care for a family"
+        },
+        {
+          "amount": 500,
+          "blurb": "can provide medical supplies to a hospital"
+        },
+        {
+          "amount": 600,
+          "blurb": "can sponsor 1 child for a year and provide food, water, education, shelter, and healthcare"
+        },
+        {
+          "amount": 3500,
+          "blurb": "can build a full water well in Africa"
+        }
+      ],
+      "designation": [
+        "Sadaqa/ General"
+      ],
+      "monthlyPresets": [
+        {
+          "amount": 100,
+          "blurb": "can support the greatest need"
+        },
+        {
+          "amount": 200,
+          "blurb": "can provide medical care for a family"
+        },
+        {
+          "amount": 500,
+          "blurb": "can provide medical supplies to a hospital"
+        },
+        {
+          "amount": 600,
+          "blurb": "can sponsor 1 child for a year and provide food, water, education, shelter, and healthcare"
+        },
+        {
+          "amount": 3500,
+          "blurb": "can build a full water well in Africa"
+        }
+      ],
+      "purposes": []
+    },
+    {
+      "id": "palestine",
+      "label": "Palestine Emergency Relief",
+      "variant": "highlight",
+      "intro": "How much would you like to donate? As a contributor to Human Concern USA we make sure your donation goes directly to supporting our cause. Thank you for your generosity!",
+      "defaultAmount": 200,
+      "presets": [
+        {
+          "amount": 2000,
+          "blurb": ""
+        },
+        {
+          "amount": 1000,
+          "blurb": ""
+        },
+        {
+          "amount": 500,
+          "blurb": ""
+        },
+        {
+          "amount": 200,
+          "blurb": ""
+        },
+        {
+          "amount": 100,
+          "blurb": ""
+        },
+        {
+          "amount": 75,
+          "blurb": ""
+        }
+      ],
+      "monthlyPresets": [
+        {
+          "amount": 2000,
+          "blurb": ""
+        },
+        {
+          "amount": 1000,
+          "blurb": ""
+        },
+        {
+          "amount": 500,
+          "blurb": ""
+        },
+        {
+          "amount": 200,
+          "blurb": ""
+        },
+        {
+          "amount": 100,
+          "blurb": ""
+        },
+        {
+          "amount": 75,
+          "blurb": ""
+        }
+      ],
+      "purposes": []
+    },
+    {
+      "id": "sudan",
+      "label": "Sudan Emergency Relief",
+      "variant": "highlight",
+      "intro": "How much would you like to donate? As a contributor to Human Concern USA we make sure your donation goes directly to supporting our cause. Thank you for your generosity!",
+      "presets": [
+        {
+          "amount": 50,
+          "blurb": ""
+        },
+        {
+          "amount": 70,
+          "blurb": ""
+        },
+        {
+          "amount": 100,
+          "blurb": ""
+        },
+        {
+          "amount": 150,
+          "blurb": ""
+        },
+        {
+          "amount": 1000,
+          "blurb": ""
+        }
+      ],
+      "monthlyPresets": [
+        {
+          "amount": 50,
+          "blurb": ""
+        },
+        {
+          "amount": 70,
+          "blurb": ""
+        },
+        {
+          "amount": 100,
+          "blurb": ""
+        },
+        {
+          "amount": 150,
+          "blurb": ""
+        },
+        {
+          "amount": 1000,
+          "blurb": ""
+        }
+      ],
+      "purposes": []
+    },
+    {
+      "id": "gaza",
+      "label": "Gaza Scholarship",
+      "presets": [
+        {
+          "amount": 50,
+          "blurb": "- Stay Connected | Internet, mobile data, and digital access needed for coursework"
+        },
+        {
+          "amount": 100,
+          "blurb": "- Get to Clinical Training | Transportation to campus, hospitals, clinics or required placements"
+        },
+        {
+          "amount": 250,
+          "blurb": "- Keep Learning | Replacement textbooks, course materials, uniforms, clinical equipment e.g., stethoscope, and other larger educational costs"
+        },
+        {
+          "amount": 500,
+          "blurb": "- Stay Enrolled | Tuition, examination fees, registration costs, or other expenses that could interrupt a student’s progression"
+        },
+        {
+          "amount": 1000,
+          "blurb": "- Support their journey | Flexible hardship support addressing a student’s most urgent combination of educational needs."
+        }
+      ],
+      "monthlyPresets": [
+        {
+          "amount": 50,
+          "blurb": "- Stay Connected | Internet, mobile data, and digital access needed for coursework"
+        },
+        {
+          "amount": 100,
+          "blurb": "- Get to Clinical Training | Transportation to campus, hospitals, clinics or required placements"
+        },
+        {
+          "amount": 250,
+          "blurb": "- Keep Learning | Replacement textbooks, course materials, uniforms, clinical equipment e.g., stethoscope, and other larger educational costs"
+        },
+        {
+          "amount": 500,
+          "blurb": "- Stay Enrolled | Tuition, examination fees, registration costs, or other expenses that could interrupt a student’s progression"
+        },
+        {
+          "amount": 1000,
+          "blurb": "- Support their journey | Flexible hardship support addressing a student’s most urgent combination of educational needs."
+        }
+      ],
+      "purposes": []
+    },
+    {
+      "id": "flood",
+      "label": "Emergency Flood Relief",
+      "variant": "flood",
+      "defaultAmount": 100,
+      "presets": [
+        {
+          "amount": 100,
+          "blurb": "Can provide food and clean water to sustain a family fighting to survive"
+        },
+        {
+          "amount": 175,
+          "blurb": "Can deliver food staples plus a hygiene kit, protecting a family from hunger and disease"
+        },
+        {
+          "amount": 250,
+          "blurb": "Can give an emergency shelter kit so a flood-hit family has safety and dignity"
+        },
+        {
+          "amount": 500,
+          "blurb": "Can provide food and clean water for five families, keeping them alive through disaster"
+        }
+      ],
+      "monthlyPresets": [
+        {
+          "amount": 100,
+          "blurb": "Can provide food and clean water to sustain a family fighting to survive"
+        },
+        {
+          "amount": 175,
+          "blurb": "Can deliver food staples plus a hygiene kit, protecting a family from hunger and disease"
+        },
+        {
+          "amount": 250,
+          "blurb": "Can give an emergency shelter kit so a flood-hit family has safety and dignity"
+        },
+        {
+          "amount": 500,
+          "blurb": "Can provide food and clean water for five families, keeping them alive through disaster"
+        }
+      ],
+      "purposes": []
+    },
+    {
+      "id": "lebanon",
+      "label": "Lebanon Emergency Relief",
+      "variant": "lebanon",
+      "presets": [
+        {
+          "amount": 100,
+          "blurb": "can provide a family with food items for a month"
+        },
+        {
+          "amount": 200,
+          "blurb": "can provide a family with one month of food and hygiene items"
+        },
+        {
+          "amount": 350,
+          "blurb": "can provide a family with mattresses, blankets, & pillows"
+        },
+        {
+          "amount": 500,
+          "blurb": "can provide medical treatment for the injured"
+        }
+      ],
+      "monthlyPresets": [
+        {
+          "amount": 100,
+          "blurb": "can provide a family with food items for a month"
+        },
+        {
+          "amount": 200,
+          "blurb": "can provide a family with one month of food and hygiene items"
+        },
+        {
+          "amount": 350,
+          "blurb": "can provide a family with mattresses, blankets, & pillows"
+        },
+        {
+          "amount": 500,
+          "blurb": "can provide medical treatment for the injured"
+        }
+      ],
+      "purposes": []
+    },
+    {
+      "id": "water-aid",
+      "label": "Water Aid",
+      "variant": "introPacked",
+      "intro": "How much would you like to donate? As a contributor to Human Concern USA we make sure your donation goes directly to supporting our cause. Thank you for your generosity!",
+      "defaultAmount": 3500,
+      "presets": [
+        {
+          "amount": 60,
+          "blurb": ""
+        },
+        {
+          "amount": 500,
+          "blurb": ""
+        },
+        {
+          "amount": 1200,
+          "blurb": ""
+        },
+        {
+          "amount": 3500,
+          "blurb": ""
+        }
+      ],
+      "inscription": "If you're donating toward a full water well, please include your well inscription (max 25 characters) in the section below.",
+      "monthlyPresets": [
+        {
+          "amount": 60,
+          "blurb": ""
+        },
+        {
+          "amount": 500,
+          "blurb": ""
+        },
+        {
+          "amount": 1200,
+          "blurb": ""
+        },
+        {
+          "amount": 3500,
+          "blurb": ""
+        }
+      ],
+      "purposes": []
+    },
+    {
+      "id": "child-sponsorship",
+      "label": "Child Sponsorship",
+      "variant": "introPacked",
+      "intro": "How much would you like to donate? As a contributor to Human Concern USA we make sure your donation goes directly to supporting our cause. Thank you for your generosity!",
+      "defaultAmount": 500,
+      "presets": [
+        {
+          "amount": 60,
+          "blurb": ""
+        },
+        {
+          "amount": 100,
+          "blurb": ""
+        },
+        {
+          "amount": 250,
+          "blurb": ""
+        },
+        {
+          "amount": 500,
+          "blurb": ""
+        }
+      ],
+      "monthlyPresets": [
+        {
+          "amount": 60,
+          "blurb": ""
+        },
+        {
+          "amount": 100,
+          "blurb": ""
+        },
+        {
+          "amount": 250,
+          "blurb": ""
+        },
+        {
+          "amount": 500,
+          "blurb": ""
+        }
+      ],
+      "purposes": []
+    },
+    {
+      "id": "zakat",
+      "label": "Zakat",
+      "variant": "introPacked",
+      "intro": "How much would you like to donate? As a contributor to Human Concern USA we make sure your donation goes directly to supporting our cause. Thank you for your generosity!",
+      "defaultAmount": 350,
+      "presets": [
+        {
+          "amount": 50,
+          "blurb": ""
+        },
+        {
+          "amount": 100,
+          "blurb": ""
+        },
+        {
+          "amount": 250,
+          "blurb": ""
+        },
+        {
+          "amount": 350,
+          "blurb": ""
+        },
+        {
+          "amount": 600,
+          "blurb": ""
+        }
+      ],
+      "monthlyPresets": [
+        {
+          "amount": 50,
+          "blurb": ""
+        },
+        {
+          "amount": 100,
+          "blurb": ""
+        },
+        {
+          "amount": 250,
+          "blurb": ""
+        },
+        {
+          "amount": 350,
+          "blurb": ""
+        },
+        {
+          "amount": 600,
+          "blurb": ""
+        }
+      ],
+      "purposes": []
+    },
+    {
+      "id": "sadaqah",
+      "label": "Sadaqah",
+      "variant": "introPacked",
+      "intro": "How much would you like to donate? As a contributor to Human Concern USA we make sure your donation goes directly to supporting our cause. Thank you for your generosity!",
+      "defaultAmount": 350,
+      "presets": [
+        {
+          "amount": 50,
+          "blurb": ""
+        },
+        {
+          "amount": 100,
+          "blurb": ""
+        },
+        {
+          "amount": 250,
+          "blurb": ""
+        },
+        {
+          "amount": 350,
+          "blurb": ""
+        },
+        {
+          "amount": 600,
+          "blurb": ""
+        }
+      ],
+      "monthlyPresets": [
+        {
+          "amount": 50,
+          "blurb": ""
+        },
+        {
+          "amount": 100,
+          "blurb": ""
+        },
+        {
+          "amount": 250,
+          "blurb": ""
+        },
+        {
+          "amount": 350,
+          "blurb": ""
+        },
+        {
+          "amount": 600,
+          "blurb": ""
+        }
+      ],
+      "purposes": []
+    },
+    {
+      "id": "healthcare-1",
+      "label": "Emergency meals for a family",
+      "presets": [
+        {
+          "amount": 60,
+          "blurb": "Emergency meals for a family"
+        },
+        {
+          "amount": 50,
+          "blurb": "- Provide essential medical treatment for one individual"
+        },
+        {
+          "amount": 200,
+          "blurb": "- Covers the medical needs of a family of four"
+        },
+        {
+          "amount": 500,
+          "blurb": "- Ensures access to healthcare for 10 individuals in need"
+        },
+        {
+          "amount": 1000,
+          "blurb": "- Supports healthcare for five families"
+        },
+        {
+          "amount": 2000,
+          "blurb": "- Funds a mobile clinic to serve a village of 200 people"
+        }
+      ],
+      "monthlyPresets": [
+        {
+          "amount": 60,
+          "blurb": "Emergency meals for a family"
+        },
+        {
+          "amount": 50,
+          "blurb": "- Provide essential medical treatment for one individual"
+        },
+        {
+          "amount": 200,
+          "blurb": "- Covers the medical needs of a family of four"
+        },
+        {
+          "amount": 500,
+          "blurb": "- Ensures access to healthcare for 10 individuals in need"
+        },
+        {
+          "amount": 1000,
+          "blurb": "- Supports healthcare for five families"
+        },
+        {
+          "amount": 2000,
+          "blurb": "- Funds a mobile clinic to serve a village of 200 people"
+        }
+      ],
+      "purposes": []
+    },
+    {
+      "id": "healthcare-2",
+      "label": "Clean water for multiple families",
+      "presets": [
+        {
+          "amount": 100,
+          "blurb": "Clean water for multiple families"
+        },
+        {
+          "amount": 50,
+          "blurb": "- Provide essential medical treatment for one individual"
+        },
+        {
+          "amount": 200,
+          "blurb": "- Covers the medical needs of a family of four"
+        },
+        {
+          "amount": 500,
+          "blurb": "- Ensures access to healthcare for 10 individuals in need"
+        },
+        {
+          "amount": 1000,
+          "blurb": "- Supports healthcare for five families"
+        },
+        {
+          "amount": 2000,
+          "blurb": "- Funds a mobile clinic to serve a village of 200 people"
+        }
+      ],
+      "monthlyPresets": [
+        {
+          "amount": 100,
+          "blurb": "Clean water for multiple families"
+        },
+        {
+          "amount": 50,
+          "blurb": "- Provide essential medical treatment for one individual"
+        },
+        {
+          "amount": 200,
+          "blurb": "- Covers the medical needs of a family of four"
+        },
+        {
+          "amount": 500,
+          "blurb": "- Ensures access to healthcare for 10 individuals in need"
+        },
+        {
+          "amount": 1000,
+          "blurb": "- Supports healthcare for five families"
+        },
+        {
+          "amount": 2000,
+          "blurb": "- Funds a mobile clinic to serve a village of 200 people"
+        }
+      ],
+      "purposes": []
+    },
+    {
+      "id": "healthcare-3",
+      "label": "Medical aid & critical care support",
+      "presets": [
+        {
+          "amount": 250,
+          "blurb": "Medical aid & critical care support"
+        },
+        {
+          "amount": 50,
+          "blurb": "- Provide essential medical treatment for one individual"
+        },
+        {
+          "amount": 200,
+          "blurb": "- Covers the medical needs of a family of four"
+        },
+        {
+          "amount": 500,
+          "blurb": "- Ensures access to healthcare for 10 individuals in need"
+        },
+        {
+          "amount": 1000,
+          "blurb": "- Supports healthcare for five families"
+        },
+        {
+          "amount": 2000,
+          "blurb": "- Funds a mobile clinic to serve a village of 200 people"
+        }
+      ],
+      "monthlyPresets": [
+        {
+          "amount": 250,
+          "blurb": "Medical aid & critical care support"
+        },
+        {
+          "amount": 50,
+          "blurb": "- Provide essential medical treatment for one individual"
+        },
+        {
+          "amount": 200,
+          "blurb": "- Covers the medical needs of a family of four"
+        },
+        {
+          "amount": 500,
+          "blurb": "- Ensures access to healthcare for 10 individuals in need"
+        },
+        {
+          "amount": 1000,
+          "blurb": "- Supports healthcare for five families"
+        },
+        {
+          "amount": 2000,
+          "blurb": "- Funds a mobile clinic to serve a village of 200 people"
+        }
+      ],
+      "purposes": []
+    },
+    {
+      "id": "healthcare-4",
+      "label": "Emergency shelter & survival kit",
+      "presets": [
+        {
+          "amount": 500,
+          "blurb": "Emergency shelter & survival kit"
+        },
+        {
+          "amount": 50,
+          "blurb": "- Provide essential medical treatment for one individual"
+        },
+        {
+          "amount": 200,
+          "blurb": "- Covers the medical needs of a family of four"
+        },
+        {
+          "amount": 1000,
+          "blurb": "- Supports healthcare for five families"
+        },
+        {
+          "amount": 2000,
+          "blurb": "- Funds a mobile clinic to serve a village of 200 people"
+        }
+      ],
+      "monthlyPresets": [
+        {
+          "amount": 500,
+          "blurb": "Emergency shelter & survival kit"
+        },
+        {
+          "amount": 50,
+          "blurb": "- Provide essential medical treatment for one individual"
+        },
+        {
+          "amount": 200,
+          "blurb": "- Covers the medical needs of a family of four"
+        },
+        {
+          "amount": 1000,
+          "blurb": "- Supports healthcare for five families"
+        },
+        {
+          "amount": 2000,
+          "blurb": "- Funds a mobile clinic to serve a village of 200 people"
+        }
+      ],
+      "purposes": []
+    },
+    {
+      "id": "about",
+      "label": "About Us",
+      "presets": [
+        {
+          "amount": 50,
+          "blurb": "- Provide essential medical treatment for one individual"
+        },
+        {
+          "amount": 200,
+          "blurb": "- Covers the medical needs of a family of four"
+        },
+        {
+          "amount": 500,
+          "blurb": "- Ensures access to healthcare for 10 individuals in need"
+        },
+        {
+          "amount": 1000,
+          "blurb": "- Supports healthcare for five families"
+        },
+        {
+          "amount": 2000,
+          "blurb": "- Funds a mobile clinic to serve a village of 200 people"
+        }
+      ],
+      "monthlyPresets": [
+        {
+          "amount": 50,
+          "blurb": "- Provide essential medical treatment for one individual"
+        },
+        {
+          "amount": 200,
+          "blurb": "- Covers the medical needs of a family of four"
+        },
+        {
+          "amount": 500,
+          "blurb": "- Ensures access to healthcare for 10 individuals in need"
+        },
+        {
+          "amount": 1000,
+          "blurb": "- Supports healthcare for five families"
+        },
+        {
+          "amount": 2000,
+          "blurb": "- Funds a mobile clinic to serve a village of 200 people"
+        }
+      ],
+      "purposes": []
+    },
+    {
+      "id": "food-aid",
+      "label": "Food Aid",
+      "variant": "hero",
+      "purposes": [
+        "Sadaqa",
+        "Zakat",
+        "Emergency Relief",
+        "Education",
+        "Clean Water & Sanitation"
+      ],
+      "presets": [
+        {
+          "amount": 95,
+          "blurb": "- Can provide a food pack for a family for a month"
+        },
+        {
+          "amount": 180,
+          "blurb": "- Can provide 2 food packs for 2 families for a month"
+        },
+        {
+          "amount": 365,
+          "blurb": "- Can provide 4 food packs for 4 families for a month"
+        }
+      ],
+      "monthlyPresets": [
+        {
+          "amount": 95,
+          "blurb": "- Can provide a food pack for a family for a month"
+        },
+        {
+          "amount": 180,
+          "blurb": "- Can provide 2 food packs for 2 families for a month"
+        },
+        {
+          "amount": 365,
+          "blurb": "- Can provide 4 food packs for 4 families for a month"
+        }
+      ]
+    },
+    {
+      "id": "travel",
+      "label": "Travel With Us",
+      "variant": "hero",
+      "purposes": [
+        "Sadaqa",
+        "Zakat",
+        "Emergency Relief",
+        "Education",
+        "Clean Water & Sanitation"
+      ],
+      "presets": [
+        {
+          "amount": 95,
+          "blurb": "- Can provide a food pack for a family for a month"
+        },
+        {
+          "amount": 180,
+          "blurb": "- Can provide 2 food packs for 2 families for a month"
+        },
+        {
+          "amount": 365,
+          "blurb": "- Can provide 4 food packs for 4 families for a month"
+        }
+      ],
+      "monthlyPresets": [
+        {
+          "amount": 95,
+          "blurb": "- Can provide a food pack for a family for a month"
+        },
+        {
+          "amount": 180,
+          "blurb": "- Can provide 2 food packs for 2 families for a month"
+        },
+        {
+          "amount": 365,
+          "blurb": "- Can provide 4 food packs for 4 families for a month"
+        }
+      ]
+    },
+    {
+      "id": "volunteer",
+      "label": "Volunteer",
+      "variant": "hero",
+      "purposes": [
+        "Sadaqa",
+        "Zakat",
+        "Emergency Relief",
+        "Education",
+        "Clean Water & Sanitation"
+      ],
+      "presets": [
+        {
+          "amount": 95,
+          "blurb": "- Can provide a food pack for a family for a month"
+        },
+        {
+          "amount": 180,
+          "blurb": "- Can provide 2 food packs for 2 families for a month"
+        },
+        {
+          "amount": 365,
+          "blurb": "- Can provide 4 food packs for 4 families for a month"
+        }
+      ],
+      "monthlyPresets": [
+        {
+          "amount": 95,
+          "blurb": "- Can provide a food pack for a family for a month"
+        },
+        {
+          "amount": 180,
+          "blurb": "- Can provide 2 food packs for 2 families for a month"
+        },
+        {
+          "amount": 365,
+          "blurb": "- Can provide 4 food packs for 4 families for a month"
+        }
+      ]
+    },
+    {
+      "id": "youth",
+      "label": "Youth Fellowship",
+      "variant": "hero",
+      "purposes": [
+        "Sadaqa",
+        "Zakat",
+        "Emergency Relief",
+        "Education",
+        "Clean Water & Sanitation"
+      ],
+      "presets": [
+        {
+          "amount": 95,
+          "blurb": "- Can provide a food pack for a family for a month"
+        },
+        {
+          "amount": 180,
+          "blurb": "- Can provide 2 food packs for 2 families for a month"
+        },
+        {
+          "amount": 365,
+          "blurb": "- Can provide 4 food packs for 4 families for a month"
+        }
+      ],
+      "monthlyPresets": [
+        {
+          "amount": 95,
+          "blurb": "- Can provide a food pack for a family for a month"
+        },
+        {
+          "amount": 180,
+          "blurb": "- Can provide 2 food packs for 2 families for a month"
+        },
+        {
+          "amount": 365,
+          "blurb": "- Can provide 4 food packs for 4 families for a month"
+        }
+      ]
+    },
+    {
+      "id": "careers",
+      "label": "Work With Us",
+      "variant": "hero",
+      "purposes": [
+        "Sadaqa",
+        "Zakat",
+        "Emergency Relief",
+        "Education",
+        "Clean Water & Sanitation"
+      ],
+      "presets": [
+        {
+          "amount": 95,
+          "blurb": "- Can provide a food pack for a family for a month"
+        },
+        {
+          "amount": 180,
+          "blurb": "- Can provide 2 food packs for 2 families for a month"
+        },
+        {
+          "amount": 365,
+          "blurb": "- Can provide 4 food packs for 4 families for a month"
+        }
+      ],
+      "monthlyPresets": [
+        {
+          "amount": 95,
+          "blurb": "- Can provide a food pack for a family for a month"
+        },
+        {
+          "amount": 180,
+          "blurb": "- Can provide 2 food packs for 2 families for a month"
+        },
+        {
+          "amount": 365,
+          "blurb": "- Can provide 4 food packs for 4 families for a month"
+        }
+      ]
+    },
+    {
+      "id": "blogs",
+      "label": "Blogs",
+      "variant": "hero",
+      "purposes": [
+        "Sadaqa",
+        "Zakat",
+        "Emergency Relief",
+        "Education",
+        "Clean Water & Sanitation"
+      ],
+      "presets": [
+        {
+          "amount": 95,
+          "blurb": "- Can provide a food pack for a family for a month"
+        },
+        {
+          "amount": 180,
+          "blurb": "- Can provide 2 food packs for 2 families for a month"
+        },
+        {
+          "amount": 365,
+          "blurb": "- Can provide 4 food packs for 4 families for a month"
+        }
+      ],
+      "monthlyPresets": [
+        {
+          "amount": 95,
+          "blurb": "- Can provide a food pack for a family for a month"
+        },
+        {
+          "amount": 180,
+          "blurb": "- Can provide 2 food packs for 2 families for a month"
+        },
+        {
+          "amount": 365,
+          "blurb": "- Can provide 4 food packs for 4 families for a month"
+        }
+      ]
+    }
+  ]
+}

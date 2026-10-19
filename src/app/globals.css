@@ -1,0 +1,16 @@
+/*
+  The stylesheet, pulled together from the parts next to it.
+
+  Tailwind inlines these when it builds, so the browser still receives one file. The order is the
+  order the rules were written in, and it matters: the illustration and responsive parts sit
+  outside Tailwind's layers on purpose, which is what lets them win over its utilities.
+*/
+
+@import "tailwindcss";
+
+@import "../styles/theme.css";
+@import "../styles/base.css";
+@import "../styles/components.css";
+@import "../styles/motion.css";
+@import "../styles/illustrations.css";
+@import "../styles/responsive.css";

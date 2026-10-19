@@ -1,0 +1,76 @@
+# Builds the public site and puts it live.
+#
+# Two doors into one workflow:
+#   push               - someone changed code
+#   repository_dispatch - the admin published content
+#
+# Either way the content files are already in the repo by the time this runs, so the build reads
+# them and never touches a database.
+
+name: Deploy
+
+on:
+  push:
+    branches: [production]
+  repository_dispatch:
+    types: [content-published]
+
+# One deploy at a time, and a newer one wins.
+concurrency:
+  group: deploy
+  cancel-in-progress: true
+
+env:
+  RELEASE: release-${{ github.run_number }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      # Cheaper to stop here than after a deploy: a type error fails the build anyway, just later.
+      - run: npm run typecheck
+
+      - run: npm run lint
+
+      # Next bakes these into the exported files, so they must be here at build time.
+      - run: npm run build
+        env:
+          NEXT_PUBLIC_DONATION_API_URL: ${{ vars.DONATION_API_URL }}
+          NEXT_PUBLIC_MEDIA_URL: ${{ vars.MEDIA_URL }}
+          NEXT_PUBLIC_CARTO_API_KEY: ${{ vars.CARTO_API_KEY }}
+
+      # The build must not contain the admin. If it ever does, stop before it goes live.
+      - name: No admin in the export
+        run: |
+          if [ -d out/admin ]; then
+            echo "The export contains an admin folder. It should not."
+            exit 1
+          fi
+
+      # R2 is skipped for now. When it is back, restore two things here:
+      #   1. aws-actions/configure-aws-credentials@v4 with the R2_* secrets.
+      #   2. An `aws s3 sync out` step to website-releases/${{ env.RELEASE }}/.
+      # Rollback needs both, so rollback.yml stays parked until then.
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy out --project-name=${{ vars.CLOUDFLARE_PROJECT }} --branch=production
+
+      - name: Deploy to Vercel
+        run: npx vercel deploy out --prod --yes --token="${{ secrets.VERCEL_TOKEN }}"
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}

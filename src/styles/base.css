@@ -1,0 +1,60 @@
+@layer base {
+  /*
+    One knob for the whole design scale. Type, spacing, radii and component
+    sizes are all in rem, so this value scales them together. 100% = 16px.
+    The page frame stays at 1400px on purpose, so only the content scales.
+  */
+  html {
+    font-size: 112.5%;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    color: var(--color-ink);
+    letter-spacing: -0.02em;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-action);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /*
+    Tailwind v4 dropped the pointer cursor that v3's preflight put on buttons, so
+    they fall back to the arrow. Put it back for anything clickable, and show the
+    "not allowed" cursor on disabled controls so they read honestly.
+  */
+  button:not(:disabled),
+  [role="button"]:not(:disabled),
+  summary,
+  input[type="checkbox"],
+  input[type="radio"],
+  label:has(> input[type="checkbox"]),
+  label:has(> input[type="radio"]) {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  [aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      /*
+        Without this, an endless animation would cycle at 0.01ms and strobe.
+        One iteration means it simply stops.
+      */
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}

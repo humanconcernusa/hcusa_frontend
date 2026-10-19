@@ -1,0 +1,395 @@
+@theme {
+  /* Brand reds. Two on purpose: the darker one carries white text. */
+  --color-brand: #ea3335;
+  --color-action: #e32226;
+  --color-action-hover: #c51e21;
+  --color-tint: #fff1f1;
+  --color-progress: #be1c20;
+
+  /* Green accent: eyebrows, supporter names */
+  --color-leaf: #29bb24;
+
+  /* Amber, for a note that is neither an error nor a success. */
+  --color-warning: #7a4d00;
+  --color-warning-tint: #fff8e1;
+
+  /* Surfaces */
+  --color-page: #f3f3f3;
+  --color-band: #f6f6f6;
+  --color-surface: #ffffff;
+  --color-inverse: #333333;
+
+  /* Lines */
+  --color-line: #dddddd;
+  --color-divider: #eeeeee;
+
+  /* Text */
+  --color-ink: #0a0a0a;
+  --color-body: #383838;
+
+  /* Type: Poppins for headings, Roboto for body, Britti Sans for the red accents */
+  --font-display: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
+  --font-body: var(--font-roboto), ui-sans-serif, system-ui, sans-serif;
+  --font-accent: var(--font-britti), var(--font-poppins), ui-sans-serif, sans-serif;
+
+  --radius-card: 1.5rem;
+
+  --shadow-card: 0 1px 2px rgb(10 10 10 / 0.04), 0 10px 30px rgb(10 10 10 / 0.06);
+  --shadow-raised: 0 2px 4px rgb(10 10 10 / 0.05), 0 18px 44px rgb(10 10 10 / 0.1);
+  --shadow-tab: -2px 2px 10px rgb(10 10 10 / 0.14);
+
+  /* A soft double beat, used on the Quick Donate heart. */
+  --animate-heartbeat: heartbeat 2.4s ease-in-out infinite;
+
+  @keyframes heartbeat {
+    0%,
+    60%,
+    100% {
+      transform: scale(1);
+    }
+    15% {
+      transform: scale(1.18);
+    }
+    30% {
+      transform: scale(1);
+    }
+    45% {
+      transform: scale(1.1);
+    }
+  }
+
+  /* The three About Us hero dots, popping one after the next, left to right. */
+  --animate-dot-wave: dot-wave 1.5s ease-in-out infinite;
+
+  /* The Healthcare Access badge tile, beating faster than the other pills' icons. */
+  --animate-badge-beat: heartbeat 1.4s ease-in-out infinite;
+
+  @keyframes dot-wave {
+    0%,
+    60%,
+    100% {
+      opacity: 0.35;
+      transform: scale(0.75);
+    }
+    30% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  /* The corner bracket on the "Why Choose" boxes, breathing gently. */
+  --animate-corner-pulse: corner-pulse 3s ease-in-out infinite;
+
+  @keyframes corner-pulse {
+    0%,
+    100% {
+      opacity: 0.6;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+
+  /* The rule under each "Why Choose" point, drawing itself from the left. */
+  --animate-line-grow: line-grow 3s ease-in-out infinite;
+
+  @keyframes line-grow {
+    0% {
+      transform: scaleX(0);
+      opacity: 0.5;
+    }
+    45%,
+    70% {
+      transform: scaleX(1);
+      opacity: 1;
+    }
+    100% {
+      transform: scaleX(0);
+      opacity: 0.5;
+    }
+  }
+
+  /* The dashed ring that turns slowly around a "Why Choose" icon. */
+  --animate-ring-spin: ring-spin 10s linear infinite;
+
+  @keyframes ring-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* A block arriving as the page opens, for pages with no scroll to trigger them. */
+  --animate-rise: rise 0.5s ease-out both;
+
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  /* Entering surfaces: the wash fades, the dialog lifts, a menu drops. */
+  --animate-overlay-in: overlay-in 0.2s ease-out both;
+
+  @keyframes overlay-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  --animate-dialog-in: dialog-in 0.25s cubic-bezier(0.2, 0, 0, 1) both;
+
+  @keyframes dialog-in {
+    from {
+      opacity: 0;
+      transform: translateY(10px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  --animate-menu-in: menu-in 0.15s ease-out both;
+
+  @keyframes menu-in {
+    from {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  /* The bell on the Support Africa alert pill: a soft glow, and rings that ripple out. */
+  --animate-icon-glow: icon-glow 2.8s ease-in-out infinite;
+
+  /* The rings that pulse out of the sponsor-country dots on the map. Bigger and slower than
+     the pill ripple, because on a map they are read from much further away. */
+  --animate-map-ping: map-ping 2.6s ease-out infinite;
+
+  @keyframes map-ping {
+    0% {
+      transform: scale(0.7);
+      opacity: 0.55;
+    }
+    70% {
+      opacity: 0.25;
+    }
+    100% {
+      transform: scale(4.5);
+      opacity: 0;
+    }
+  }
+
+  /*
+    The step card dots on the Volunteer page. The ring is the dot's own box, pushed outward by
+    outline-offset, so it is always centred on the dot and its 1px edge never thickens.
+  */
+  --animate-dot-ping: dot-ping 1.8s ease-out infinite;
+
+  @keyframes dot-ping {
+    0% {
+      outline-offset: 0px;
+      opacity: 1;
+    }
+    55% {
+      opacity: 0.55;
+    }
+    100% {
+      outline-offset: 7px;
+      opacity: 0;
+    }
+  }
+
+  /*
+    The Youth Fellowship announcement bar. The line is printed twice and shifted by half its own
+    width, so it comes round with no visible seam.
+  */
+  --animate-marquee: marquee 32s linear infinite;
+
+  @keyframes marquee {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
+
+  --animate-cos-draw: cos-draw 3s ease-in-out infinite;
+
+  /* The Emergency Relief icon: rings travelling out from the cross, which keeps a slow beat. */
+  --animate-er-ring: er-ringOut 1.6s ease-out infinite;
+  --animate-er-cross: er-crossPulse 1.6s ease-in-out infinite;
+
+  @keyframes er-ringOut {
+    0% {
+      transform: scale(1);
+      opacity: 0.8;
+    }
+    70% {
+      opacity: 0.25;
+    }
+    100% {
+      transform: scale(1.9);
+      opacity: 0;
+    }
+  }
+
+  @keyframes er-crossPulse {
+    0%,
+    100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.06);
+    }
+  }
+
+  /* The fundraising icon: the coin stack rising a coin at a time, and the growth arrow with it. */
+  --animate-ef-stack: ef-stackRise 2s ease-in-out infinite;
+  --animate-ef-arrow: ef-arrowUp 2s ease-in-out infinite;
+
+  @keyframes ef-stackRise {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-3px);
+    }
+  }
+
+  @keyframes ef-arrowUp {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-4px);
+    }
+  }
+
+  /* The Food distribution icon: steam, lid, bowl and delivery arrow, all on one 2.2s beat. */
+  --animate-fd-steam: fd-steamRise 2.2s ease-in-out infinite;
+  --animate-fd-lid: fd-lidFloat 2.2s ease-in-out infinite;
+  --animate-fd-bowl: fd-bowlSettle 2.2s ease-in-out infinite;
+  --animate-fd-arrow: fd-arrowBounce 2.2s ease-in-out infinite;
+
+  @keyframes fd-steamRise {
+    0% {
+      transform: translateY(2px);
+      opacity: 0;
+    }
+    35% {
+      opacity: 0.9;
+    }
+    100% {
+      transform: translateY(-7px);
+      opacity: 0;
+    }
+  }
+
+  @keyframes fd-lidFloat {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-2px);
+    }
+  }
+
+  @keyframes fd-bowlSettle {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(1.5px);
+    }
+  }
+
+  @keyframes fd-arrowBounce {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(3px);
+    }
+  }
+
+  @keyframes cos-draw {
+    0% {
+      stroke-dashoffset: 22;
+    }
+    14%,
+    88% {
+      stroke-dashoffset: 0;
+    }
+    100% {
+      stroke-dashoffset: 22;
+    }
+  }
+
+  @keyframes icon-glow {
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 rgb(224 48 48 / 0);
+    }
+    50% {
+      box-shadow: 0 0 14px 2px rgb(224 48 48 / 0.6);
+    }
+  }
+
+  --animate-ripple: ripple 2.8s ease-out infinite;
+
+  @keyframes ripple {
+    0% {
+      transform: scale(0.85);
+      opacity: 0.7;
+    }
+    100% {
+      transform: scale(1.6);
+      opacity: 0;
+    }
+  }
+
+  /* The heart on the giving cards: a soft bump, like a slow heartbeat. */
+  --animate-bump: bump 1.4s ease-in-out infinite;
+
+  @keyframes bump {
+    0%,
+    100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.18);
+    }
+  }
+
+  /* The ring that pulses out of the Travel round badge. Scale + fade only, so it stays smooth. */
+  --animate-logo-pulse: logo-pulse 1.8s ease-out infinite;
+
+  @keyframes logo-pulse {
+    0% {
+      transform: scale(1);
+      opacity: 0.6;
+    }
+    100% {
+      transform: scale(1.8);
+      opacity: 0;
+    }
+  }
+}

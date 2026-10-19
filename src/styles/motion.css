@@ -1,0 +1,56 @@
+@keyframes logo-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-logo-scroll {
+  animation: logo-scroll 34s linear infinite;
+}
+
+/* Anyone who has asked their system to reduce motion gets a still row. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-logo-scroll {
+    animation: none;
+  }
+}
+
+/*
+  The Community outreach icon. Each spoke is a line running from the hub outwards, so shifting the
+  dash draws it from the centre out. The animation itself is the animate-cos-draw class on the
+  spokes; the delays here step them 0.15s apart, and the whole set retracts together at the end of
+  the cycle before beginning again.
+*/
+
+.hero-confetti-dot {
+  animation: hero-confetti 0.9s ease-out both;
+}
+
+@keyframes hero-confetti {
+  0% {
+    transform: translate(-50%, -50%) scale(0.4);
+    opacity: 0;
+  }
+  25% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) scale(0.9);
+    opacity: 0;
+  }
+}
+
+/*
+  The program cards on every phone width, up to sm.
+
+  Two cards side by side leave the title, the progress bar and the button too little room, so the
+  row is a swipe instead: one card fills most of the width and the next peeks in from the right to
+  show there is more. From sm, where the grid has two columns, it goes back to the grid.
+
+  This sits outside the layer above on purpose. Tailwind keeps its utilities in a later layer, so
+  a rule written inside the components layer loses to them — `display: flex` could never beat the
+  `grid` class, and the row stayed a grid. Unlayered rules come after every layer, so these win.
+*/
