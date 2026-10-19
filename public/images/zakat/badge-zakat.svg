@@ -1,0 +1,7 @@
+<svg class="jmt-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="rgba(255,255,255,0.15)"></rect>
+    <!-- Crescent moon -->
+    <path d="M14 6.5 C11 6.5 8.5 9 8.5 12 C8.5 15 11 17.5 14 17.5 C12.5 17.5 10 16.2 9.5 14 C9 11.8 9.8 9.2 11.5 7.8 C12.2 7.2 13.1 6.8 14 6.5Z" fill="#ffffff"></path>
+    <!-- Star -->
+    <polygon points="16,7 16.5,8.5 18,8.5 16.8,9.4 17.3,11 16,10.1 14.7,11 15.2,9.4 14,8.5 15.5,8.5" fill="#ffffff"></polygon>
+  </svg>
