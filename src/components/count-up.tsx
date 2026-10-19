@@ -1,12 +1,34 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 
 /*
   Climbs from zero to the figure the first time it is scrolled to. A figure that arrives
   already written for the reader keeps its thousands separators, because the number is put
   back through toLocaleString on the way up.
 */
+
+/* Reads the reduced-motion setting without setting state from an effect. */
+function usePrefersReducedMotion(): boolean {
+  const subscribe = useCallback((onChange: () => void) => {
+    const query = window.matchMedia("(prefers-reduced-motion: reduce)");
+    query.addEventListener("change", onChange);
+    return () => query.removeEventListener("change", onChange);
+  }, []);
+
+  return useSyncExternalStore(
+    subscribe,
+    () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+    () => false,
+  );
+}
+
 export function CountUp({
   value,
   className,
@@ -17,16 +39,13 @@ export function CountUp({
   const target = typeof value === "number" ? value : Number(value.replace(/[^0-9]/g, "")) || 0;
   const ref = useRef<HTMLParagraphElement>(null);
   const [shown, setShown] = useState(0);
+  const reduced = usePrefersReducedMotion();
 
   useEffect(() => {
+    if (reduced) return;
+
     const node = ref.current;
     if (!node) return;
-
-    /* Someone who asked for less motion gets the figure straight away. */
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      setShown(target);
-      return;
-    }
 
     let frame = 0;
 
@@ -56,11 +75,11 @@ export function CountUp({
       observer.disconnect();
       cancelAnimationFrame(frame);
     };
-  }, [target]);
+  }, [target, reduced]);
 
   return (
     <p ref={ref} className={className}>
-      {shown.toLocaleString("en-US")}
+      {(reduced ? target : shown).toLocaleString("en-US")}
     </p>
   );
 }

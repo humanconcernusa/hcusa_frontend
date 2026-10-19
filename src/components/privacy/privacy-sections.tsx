@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useCallback, useState, useSyncExternalStore, type ReactNode } from "react";
 import { DonateButton } from "@/components/donate/donate-button";
 import { Callout, Media } from "@/components/ui";
 import type { PrivacyPageContent } from "@/content/privacy";
@@ -114,17 +114,32 @@ export function PrivacyHero({ content }: { content: PrivacyPageContent["hero"] }
   );
 }
 
+/* Reads a media query without setting state from an effect. */
+function useMediaQuery(query: string): boolean {
+  const subscribe = useCallback(
+    (onChange: () => void) => {
+      const list = window.matchMedia(query);
+      list.addEventListener("change", onChange);
+      return () => list.removeEventListener("change", onChange);
+    },
+    [query],
+  );
+
+  return useSyncExternalStore(
+    subscribe,
+    () => window.matchMedia(query).matches,
+    () => false,
+  );
+}
+
 export function PolicyAccordion({ content }: { content: PrivacyPageContent["policy"] }) {
   /*
-    Which section is open. Nothing to begin with: the first section is a long read, and on a
-    phone having it open pushes the rest of the list off the screen.
+    Which section is open. Nothing is chosen yet, so the first section opens only where there is
+    room (sm and up); on a phone all of them start closed because the first is a long read.
   */
-  const [openIndex, setOpenIndex] = useState(-1);
-
-  /* From sm up there is room for it, so the first section opens as the design has it. */
-  useEffect(() => {
-    if (window.matchMedia("(min-width: 640px)").matches) setOpenIndex(0);
-  }, []);
+  const isWide = useMediaQuery("(min-width: 640px)");
+  const [chosen, setChosen] = useState<number | null>(null);
+  const openIndex = chosen ?? (isWide ? 0 : -1);
 
   return (
     <section id="policy" className="bg-surface py-20 lg:py-28">
@@ -138,7 +153,7 @@ export function PolicyAccordion({ content }: { content: PrivacyPageContent["poli
                 <button
                   type="button"
                   aria-expanded={isOpen}
-                  onClick={() => setOpenIndex(isOpen ? -1 : index)}
+                  onClick={() => setChosen(isOpen ? -1 : index)}
                   className="flex w-full items-center justify-between gap-6 rounded-card bg-tint px-6 py-5 text-left transition-colors hover:bg-page"
                 >
                   {/*

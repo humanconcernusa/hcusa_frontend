@@ -65,9 +65,6 @@ export function DonateProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let active = true;
 
-    setStatus("loading");
-    setError("");
-
     void fetchDonationForms()
       .then((loaded) => {
         if (!active) return;
@@ -102,6 +99,13 @@ export function DonateProvider({ children }: { children: ReactNode }) {
     lastTrigger.current = null;
   }, []);
 
+  /* A retry starts the wait again. Kept out of the effect so the effect only fetches. */
+  const retry = useCallback(() => {
+    setStatus("loading");
+    setError("");
+    setAttempt((current) => current + 1);
+  }, []);
+
   /*
     No id means the first popup. An id the donation platform no longer serves resolves to
     nothing, so a stale button opens nothing rather than quietly showing a different form's
@@ -129,7 +133,7 @@ export function DonateProvider({ children }: { children: ReactNode }) {
           status={status === "error" ? "error" : status === "ready" ? "missing" : "loading"}
           message={error}
           onClose={close}
-          onRetry={() => setAttempt((current) => current + 1)}
+          onRetry={retry}
         />
       )}
     </DonateContext.Provider>

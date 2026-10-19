@@ -6,13 +6,6 @@ import type { ReactElement } from "react";
 */
 type IconProps = { className?: string };
 
-const stroke = {
-  stroke: "currentColor",
-  strokeWidth: 1.6,
-  strokeLinecap: "round" as const,
-  strokeLinejoin: "round" as const,
-};
-
 export function BookIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true" className={className} fill="currentColor">
