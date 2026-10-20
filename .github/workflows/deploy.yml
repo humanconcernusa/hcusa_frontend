@@ -12,6 +12,12 @@ name: Deploy
 on:
   push:
     branches: [production]
+    # A publish commits only under content/, and then asks for a build through
+    # repository_dispatch. Ignoring content-only pushes here means one publish starts one run,
+    # instead of a push run and a dispatch run cancelling each other. A push that also changes
+    # code still builds.
+    paths-ignore:
+      - "content/**"
   repository_dispatch:
     types: [content-published]
 
