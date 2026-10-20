@@ -80,22 +80,22 @@ function StandaloneBody() {
   }
 
   return (
-    <main className="min-h-dvh bg-page px-4 py-8 sm:py-12">
-      <div className="mx-auto w-full max-w-[26rem]">
-        <div className="rounded-2xl bg-surface p-6 shadow-raised">
-          <div className="mb-5 flex justify-center">
-            <span className="inline-flex items-center gap-2 rounded-full bg-[#eef1f9] px-3 py-1.5 text-[0.8125rem] text-ink">
-              Secure Donation
-            </span>
-          </div>
-
+    <>
+      <div className="mx-auto w-full max-w-[30rem]">
+        <section className="rounded-card border border-line bg-surface p-6 lg:p-8">
           {/* The same form the popup draws, on the page instead of in a dialog. */}
           <HeroForm
             form={form}
             onClose={() => router.push("/")}
             confettiCanvas={confettiCanvas}
           />
-        </div>
+
+          {/* A quiet line at the foot, not a badge above the form. */}
+          <p className="mt-6 flex items-center justify-center gap-2 border-t border-divider pt-4 text-[0.75rem] text-body">
+            <LockIcon />
+            Secure donation
+          </p>
+        </section>
       </div>
 
       {/* The Monthly burst is drawn here, above the page, as it is in the popup. */}
@@ -104,7 +104,21 @@ function StandaloneBody() {
         aria-hidden="true"
         className="pointer-events-none fixed inset-0 z-[60] size-full"
       />
-    </main>
+    </>
+  );
+}
+
+/* A small lock, drawn here so no icon package is needed. */
+function LockIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      className="size-3.5 fill-none stroke-current stroke-2"
+    >
+      <rect x="5" y="11" width="14" height="9" rx="2" />
+      <path d="M8 11V8a4 4 0 0 1 8 0v3" strokeLinecap="round" />
+    </svg>
   );
 }
 
