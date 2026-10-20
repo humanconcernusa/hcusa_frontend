@@ -52,11 +52,14 @@ export function HeroForm({
   form,
   onClose,
   confettiCanvas,
+  preview = false,
 }: {
   form: DonateForm;
   onClose: () => void;
   /* Owned by the popup's overlay, so the burst covers the screen above the blurred wash. */
   confettiCanvas: RefObject<HTMLCanvasElement | null>;
+  /* Drawn in an admin preview tab: everything works up to Pay, and Pay takes nothing. */
+  preview?: boolean;
 }) {
   /* Nothing is picked to begin with; a tier or the custom row turns red only once it is chosen. */
   const [amount, setAmount] = useState("");
@@ -294,6 +297,10 @@ export function HeroForm({
     donor is told plainly rather than shown Stripe's own complaint about an unknown payment.
   */
   async function startPayment(): Promise<StartedDonation> {
+    if (preview) {
+      throw new Error("This is a preview. No payment was taken.");
+    }
+
     if (!gateway) {
       throw new Error("Card payments are not available right now. Please try again.");
     }
@@ -366,6 +373,7 @@ export function HeroForm({
           name={fullName}
           email={email}
           payLabel={payLabel}
+          preview={preview}
           resolvePayment={startPayment}
           onBillingChange={setBilling}
           onPaid={(status) => {
