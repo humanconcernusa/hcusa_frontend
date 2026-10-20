@@ -53,6 +53,7 @@ export function HeroForm({
   onClose,
   confettiCanvas,
   preview = false,
+  embedded = false,
 }: {
   form: DonateForm;
   onClose: () => void;
@@ -60,6 +61,8 @@ export function HeroForm({
   confettiCanvas: RefObject<HTMLCanvasElement | null>;
   /* Drawn in an admin preview tab: everything works up to Pay, and Pay takes nothing. */
   preview?: boolean;
+  /* Drawn inside another site's page: there is nothing to close, so no Done button. */
+  embedded?: boolean;
 }) {
   /* Nothing is picked to begin with; a tier or the custom row turns red only once it is chosen. */
   const [amount, setAmount] = useState("");
@@ -351,13 +354,16 @@ export function HeroForm({
           <p className="mt-1 text-[0.8125rem] text-body">
             A receipt is on its way to your inbox.
           </p>
-          <button
-            type="button"
-            onClick={onClose}
-            className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-action px-8 font-medium text-white transition-colors hover:bg-action-hover"
-          >
-            Done
-          </button>
+          {/* An embedded form has no page of its own to go back to. */}
+          {embedded ? null : (
+            <button
+              type="button"
+              onClick={onClose}
+              className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-action px-8 font-medium text-white transition-colors hover:bg-action-hover"
+            >
+              Done
+            </button>
+          )}
         </div>
       ) : step === "card" ? (
         <CardStep
