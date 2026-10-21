@@ -86,7 +86,71 @@ jobs:
           command: pages deploy out --project-name=${{ vars.CLOUDFLARE_PROJECT }} --branch=production
 
       - name: Deploy to Vercel
-        run: npx vercel deploy out --prod --yes --token="${{ secrets.VERCEL_TOKEN }}"
+        id: vercel
         env:
+          VERCEL_TOKEN_VALUE: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VERCEL_FALLBACK_URL: ${{ vars.VERCEL_URL }}
+        run: |
+          output="$(npx vercel deploy out --prod --yes --token="$VERCEL_TOKEN_VALUE" 2>&1)"
+          printf '%s\n' "$output"
+          url="$(printf '%s\n' "$output" | grep -Eo 'https://[^[:space:]]+\.vercel\.app[^[:space:]]*' | tail -n 1)"
+          echo "url=${url:-$VERCEL_FALLBACK_URL}" >> "$GITHUB_OUTPUT"
+
+      # Post-deploy health check. A failure turns the run red; it does not roll back.
+      - name: Check the live site
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+          PAGES_PROJECT: ${{ vars.CLOUDFLARE_PROJECT }}
+          VERCEL_URL: ${{ steps.vercel.outputs.url }}
+          DONATION_API_URL: ${{ vars.DONATION_API_URL }}
+        run: |
+          set -uo pipefail
+
+          check() {
+            local url="$1"
+            local code=""
+
+            for attempt in 1 2 3 4 5 6; do
+              code="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 20 "$url" || true)"
+              if [ "$code" = "200" ]; then
+                echo "ok   $code  $url"
+                return 0
+              fi
+              sleep 5
+            done
+
+            echo "FAIL $code  $url"
+            return 1
+          }
+
+          failed=0
+          paths="/ /about-us /blogs /contact-us /donate /reports /favicon.png /hcu-logo.png"
+
+          site="${SITE_URL:-}"
+          if [ -z "$site" ] && [ -n "${PAGES_PROJECT:-}" ]; then
+            site="https://${PAGES_PROJECT}.pages.dev"
+          fi
+
+          if [ -n "$site" ]; then
+            for path in $paths; do
+              check "${site%/}$path" || failed=1
+            done
+          else
+            echo "warning: no SITE_URL or CLOUDFLARE_PROJECT, skipping Cloudflare checks"
+          fi
+
+          if [ -n "${VERCEL_URL:-}" ]; then
+            for path in $paths; do
+              check "${VERCEL_URL%/}$path" || failed=1
+            done
+          else
+            echo "warning: no Vercel URL captured, skipping Vercel checks"
+          fi
+
+          if [ -n "${DONATION_API_URL:-}" ]; then
+            check "${DONATION_API_URL%/}/api/v1/simple-forms" || failed=1
+          fi
+
+          exit "$failed"
