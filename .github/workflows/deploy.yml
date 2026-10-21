@@ -126,7 +126,7 @@ jobs:
           }
 
           failed=0
-          paths="/ /about-us /blogs /contact-us /donate /reports /favicon.png /hcu-logo.png"
+          paths="/ /about-us /blogs /contact-us /reports /favicon.png /hcu-logo.png"
 
           site="${SITE_URL:-}"
           if [ -z "$site" ] && [ -n "${PAGES_PROJECT:-}" ]; then
