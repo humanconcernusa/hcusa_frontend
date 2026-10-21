@@ -82,6 +82,46 @@ function readForm(value: unknown): DonateForm | null {
   return form;
 }
 
+/*
+  One form for a preview tab. The admin freezes the form it is looking at and hands out a random
+  token; this reads that copy, so a draft can be drawn without being published.
+
+  The same `readForm` runs, so a preview is the live popup with other data, never a second design.
+*/
+export async function fetchPreviewForm(token: string): Promise<DonateForm> {
+  if (DONATION_API_URL.length === 0) {
+    throw new Error("The donation API address is not set for this build.");
+  }
+
+  const response = await fetch(
+    `${DONATION_API_URL}/api/v1/simple-forms/preview/${encodeURIComponent(token)}`,
+    {
+      headers: { accept: "application/json" },
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    },
+  );
+
+  const payload = (await response.json().catch(() => null)) as {
+    data?: unknown;
+    error?: { message?: unknown };
+  } | null;
+
+  if (!response.ok) {
+    throw new Error(
+      asText(payload?.error?.message) || `The donation API answered ${response.status}.`,
+    );
+  }
+
+  const form = readForm(payload?.data);
+
+  /* A form with no amounts cannot be drawn, so say what to fix rather than show a blank popup. */
+  if (!form) {
+    throw new Error("This form has no amounts yet. Add one amount, then press Preview again.");
+  }
+
+  return form;
+}
+
 export async function fetchDonationForms(): Promise<DonateForm[]> {
   if (DONATION_API_URL.length === 0) {
     throw new Error("The donation API address is not set for this build.");

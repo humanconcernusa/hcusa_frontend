@@ -20,10 +20,13 @@ export function DonateModal({
   open,
   form,
   onClose,
+  preview = false,
 }: {
   open: boolean;
   form: DonateForm;
   onClose: () => void;
+  /* A preview tab on the admin's side: the card step is drawn, but Pay takes no money. */
+  preview?: boolean;
 }) {
   const panel = useRef<HTMLDivElement>(null);
 
@@ -187,7 +190,7 @@ export function DonateModal({
               />
               <path d="M9 11.9l2 2 4-4.3" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            Secure Donation
+            {preview ? "Preview — not live" : "Secure Donation"}
           </span>
 
           <button
@@ -212,7 +215,12 @@ export function DonateModal({
           none here.
         */}
         <div className="min-h-0 flex-1 overflow-y-auto px-6 pt-3 pb-0">
-          <HeroForm form={form} onClose={onClose} confettiCanvas={confettiCanvas} />
+          <HeroForm
+            form={form}
+            onClose={onClose}
+            confettiCanvas={confettiCanvas}
+            preview={preview}
+          />
         </div>
       </div>
     </div>

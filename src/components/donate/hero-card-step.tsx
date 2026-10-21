@@ -39,6 +39,7 @@ function CardFields({
   resolvePayment,
   isMonthly,
   payLabel,
+  preview = false,
   name,
   email,
   billing,
@@ -51,6 +52,8 @@ function CardFields({
   isMonthly: boolean;
   /* The wording on the pay button, built by the popup, which knows the cadence. */
   payLabel: string;
+  /* A preview tab: Pay explains itself instead of starting a payment. */
+  preview?: boolean;
   name: string;
   email: string;
   billing: Billing | null;
@@ -69,6 +72,12 @@ function CardFields({
 
   async function pay(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    /* Checked before anything else, so a preview needs no card and no address to say so. */
+    if (preview) {
+      setError("This is a preview. No payment was taken.");
+      return;
+    }
 
     if (!stripe || !elements) return;
 
@@ -259,6 +268,7 @@ export function CardStep({
   name,
   email,
   payLabel,
+  preview = false,
   resolvePayment,
   onBillingChange,
   onPaid,
@@ -278,6 +288,8 @@ export function CardStep({
   name: string;
   email: string;
   payLabel: string;
+  /* A preview tab: Pay explains itself instead of starting a payment. */
+  preview?: boolean;
   resolvePayment: () => Promise<StartedDonation>;
   onBillingChange: (billing: Billing) => void;
   onPaid: (status: "succeeded" | "processing") => void;
@@ -335,6 +347,7 @@ export function CardStep({
           resolvePayment={resolvePayment}
           isMonthly={isMonthly}
           payLabel={payLabel}
+          preview={preview}
           name={name}
           email={email}
           billing={billing}
