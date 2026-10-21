@@ -23,10 +23,14 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: auto
+          R2_BUCKET: ${{ vars.R2_BUCKET }}
+          R2_ENDPOINT: ${{ vars.R2_ENDPOINT }}
         run: |
+          bucket="$(printf '%s' "$R2_BUCKET" | tr -d '[:space:]')"
+          endpoint="$(printf '%s' "$R2_ENDPOINT" | tr -d '[:space:]')"
           mkdir -p restored
-          aws s3 sync "s3://${{ vars.R2_BUCKET }}/website-releases/${{ inputs.release }}/" restored \
-            --endpoint-url "${{ vars.R2_ENDPOINT }}"
+          aws s3 sync "s3://${bucket}/website-releases/${{ inputs.release }}/" restored \
+            --endpoint-url "$endpoint"
 
       # If the folder is empty the release name was wrong, so stop rather than deploy nothing.
       - name: Check it arrived

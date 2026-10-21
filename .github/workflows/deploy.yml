@@ -70,9 +70,13 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: auto
+          R2_BUCKET: ${{ vars.R2_BUCKET }}
+          R2_ENDPOINT: ${{ vars.R2_ENDPOINT }}
         run: |
-          aws s3 sync out "s3://${{ vars.R2_BUCKET }}/website-releases/${{ env.RELEASE }}/" \
-            --endpoint-url "${{ vars.R2_ENDPOINT }}"
+          bucket="$(printf '%s' "$R2_BUCKET" | tr -d '[:space:]')"
+          endpoint="$(printf '%s' "$R2_ENDPOINT" | tr -d '[:space:]')"
+          aws s3 sync out "s3://${bucket}/website-releases/${{ env.RELEASE }}/" \
+            --endpoint-url "$endpoint"
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
