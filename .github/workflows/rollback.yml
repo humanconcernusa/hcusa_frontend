@@ -2,10 +2,6 @@
 #
 # Every deploy is archived in R2 as release-<number>, so a rollback is just: download that folder
 # and send it to both hosts again. No checkout, no build, takes seconds.
-#
-# PARKED: R2 archiving is skipped for now, so no release exists to restore. Do not run this
-# until the archive step in deploy.yml is restored. Until then, roll back by re-deploying an
-# earlier commit on `production` (or use Cloudflare Pages / Vercel deployment history).
 
 name: Roll back
 

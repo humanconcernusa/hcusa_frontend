@@ -63,10 +63,18 @@ jobs:
             exit 1
           fi
 
-      # R2 is skipped for now. When it is back, restore two things here:
-      #   1. aws-actions/configure-aws-credentials@v4 with the R2_* secrets.
-      #   2. An `aws s3 sync out` step to website-releases/${{ env.RELEASE }}/.
-      # Rollback needs both, so rollback.yml stays parked until then.
+      # Archive this exact build so rollback can put it back without rebuilding.
+      - name: Archive the release in R2
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.R2_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          aws-region: auto
+
+      - name: Upload the release archive
+        run: |
+          aws s3 sync out "s3://${{ vars.R2_BUCKET }}/website-releases/${{ env.RELEASE }}/" \
+            --endpoint-url "${{ vars.R2_ENDPOINT }}"
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
