@@ -64,14 +64,12 @@ jobs:
           fi
 
       # Archive this exact build so rollback can put it back without rebuilding.
-      - name: Archive the release in R2
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.R2_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-          aws-region: auto
-
+      # The keys go straight to aws s3 sync: R2 has no AWS STS, so the credentials action fails.
       - name: Upload the release archive
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
         run: |
           aws s3 sync out "s3://${{ vars.R2_BUCKET }}/website-releases/${{ env.RELEASE }}/" \
             --endpoint-url "${{ vars.R2_ENDPOINT }}"
