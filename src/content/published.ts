@@ -33,6 +33,10 @@ import { healthcareDefaults, type HealthcarePageContent } from "./healthcare";
 import { homeDefaults, type HomePageContent } from "./home";
 import { lebanonDefaults, type LebanonPageContent } from "./lebanon-emergency";
 import { ourTeamDefaults, type OurTeamPageContent } from "./our-team";
+import {
+  palestineHardshipDefaults,
+  type PalestineHardshipPageContent,
+} from "./palestine-hardship-fund";
 import { palestineDefaults, type PalestinePageContent } from "./palestine-relief";
 import { privacyDefaults, type PrivacyPageContent } from "./privacy";
 import { quickDonateDefaults, type QuickDonateContent } from "./quick-donate";
@@ -154,6 +158,10 @@ export const lebanonStore = publishedStore<LebanonPageContent>(
   "lebanon-emergency",
   lebanonDefaults,
 );
+export const palestineHardshipStore = publishedStore<PalestineHardshipPageContent>(
+  "palestine-hardship-fund",
+  palestineHardshipDefaults,
+);
 export const palestineStore = publishedStore<PalestinePageContent>(
   "palestine-relief",
   palestineDefaults,
@@ -251,6 +259,7 @@ export const PAGE_KEYS = [
   "home",
   "lebanon-emergency",
   "our-team",
+  "palestine-hardship-fund",
   "palestine-relief",
   "privacy",
   "quick-donate",

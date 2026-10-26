@@ -15,8 +15,8 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { AlertBar } from "@/components/alert-bar";
 import {
-  gazaScholarshipStore,
   getPublishedHeader,
+  palestineHardshipStore,
 } from "@/content/published";
 
 export const metadata = {
@@ -35,9 +35,9 @@ const CTA_BAND = {
   secondaryCta: "Travel with Us",
 };
 
-export default async function GazaScholarshipPage() {
+export default async function PalestineHardshipFundPage() {
   const [content, header] = await Promise.all([
-    gazaScholarshipStore.getPublished(),
+    palestineHardshipStore.getPublished(),
     getPublishedHeader(),
   ]);
 

@@ -157,8 +157,8 @@ export function ZakatCalculatorForm({
         </div>
       </div>
       <div className="text-center lg:mt-2 ">
-        <DonateButton formId={rates.form} variant="primarySolid" size="lg" className="mt-8 md:mt-2 lg:mt-8">
-          Donate Now
+        <DonateButton formId={rates.donateForm} variant="primarySolid" size="lg" className="mt-8 md:mt-2 lg:mt-8">
+          {rates.donateCta}
         </DonateButton>
       </div>
       {showStickyTotal ? (
