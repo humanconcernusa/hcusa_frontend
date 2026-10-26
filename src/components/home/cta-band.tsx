@@ -20,11 +20,11 @@ export function CtaBand({ content }: { content: HomeContent["ctaBand"] }) {
 
         {/* Side by side on phones too, at a smaller size so both fit on one line. Below 405px
             they stack and share the width — see .actions-stack-tight in styles/responsive.css. */}
-        <div className="actions-stack-tight mt-6 flex flex-wrap justify-center gap-2.5 sm:mt-8 sm:gap-4">
-          <ButtonLink href="/volunteer" variant="darkHover" className="max-sm:px-4 sm:min-h-12 sm:px-8 sm:text-base">
+        <div className=" mt-6 flex flex-row justify-center gap-2.5 sm:mt-8 sm:gap-4">
+          <ButtonLink href="/volunteer" size="sm" variant="darkHover" className="max-sm:px-4 sm:min-h-12 sm:px-8 sm:text-base">
             {content.primaryCta}
           </ButtonLink>
-          <ButtonLink href="/travel-with-us" variant="secondary" className="sm:min-h-12 sm:px-8 sm:text-base">
+          <ButtonLink href="/travel-with-us" variant="secondary" size="sm" className="sm:min-h-12 sm:px-8 sm:text-base">
             {content.secondaryCta}
           </ButtonLink>
         </div>

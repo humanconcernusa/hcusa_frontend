@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Button, Media } from "@/components/ui";
+import { Button, Media, PlayButton } from "@/components/ui";
 import { CountUp } from "@/components/count-up";
 import { DonateButton } from "@/components/donate/donate-button";
 import type { HealthcarePageContent } from "@/content/healthcare";
+import Image from "next/image";
 
 /*
   The live page draws the four card icons as red line drawings. Its own icon files are not
@@ -105,39 +106,38 @@ export function StoriesVideo({
   const [isPlaying, setIsPlaying] = useState(false);
 
   return (
-    <section className={`bg-page ${className}`}>
-      <div className="container-page">
-        <p className="text-center text-[0.75rem] font-medium tracking-[0.14em] text-leaf uppercase">
-          {content.eyebrow}
-        </p>
+    <section className={`bg-page ${className} py-14 lg:py-16`}>
+      <p className="text-center text-[0.75rem] font-medium tracking-[0.14em] text-leaf uppercase">
+        {content.eyebrow}
+      </p>
 
-        <h2 className="mt-4 text-center text-[2.25rem] leading-[1.1] font-semibold lg:text-[3.25rem]">
-          {content.headingStart} <span className="accent">{content.headingAccent}</span>{" "}
-          {content.headingEnd}
-        </h2>
-
-        <div className="mt-12 overflow-hidden rounded-card bg-ink shadow-card">
+      <h2 className="mt-4 text-center text-[2.25rem] leading-[1.1] font-semibold lg:text-[3.25rem]">
+        {content.headingStart} <span className="accent">{content.headingAccent}</span>{" "}
+        {content.headingEnd}
+      </h2> 
+      <div className="container-page mt-10 md:mt-14">
+        <div className="relative h-[13rem] overflow-hidden rounded-card md:h-[25.75rem] lg:h-[30.75rem]">
           {isPlaying ? (
             <iframe
-              title="Real stories of healing and hope"
+              className="absolute inset-0 h-full w-full"
               src={`https://www.youtube-nocookie.com/embed/${content.videoId}?autoplay=1&rel=0`}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              title="Human Concern USA story"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              referrerPolicy="strict-origin-when-cross-origin"
               allowFullScreen
-              className="aspect-[5/2] w-full"
             />
           ) : (
-            <button
-              type="button"
-              onClick={() => setIsPlaying(true)}
-              aria-label="Play the video"
-              className="group relative grid aspect-[5/2] w-full place-items-center"
-            >
-              <span className="grid size-16 place-items-center rounded-full bg-surface shadow-raised transition-transform duration-150 group-hover:scale-105">
-                <svg viewBox="0 0 24 24" aria-hidden="true" className="ml-1 size-6 fill-brand">
-                  <path d="M8 5v14l11-7z" />
-                </svg>
-              </span>
-            </button>
+            <>
+              <Media
+                src={content.image}
+                alt={content.imageAlt}
+                sizes="(min-width: 1440px) 1400px, 100vw"
+              />
+              <PlayButton
+                label="Play the Human Concern USA story"
+                onClick={() => setIsPlaying(true)}
+              />
+            </>
           )}
         </div>
       </div>
@@ -154,17 +154,17 @@ export function CounterBand({ content }: { content: HealthcarePageContent["count
   return (
     <section className="bg-action py-14">
       {/* Two narrow cards, centred as a pair, the way the live page has them. */}
-      <div className="container-page flex flex-wrap justify-center gap-5">
+      <div className="container-page flex fmd:lex-wrap flex-row justify-center gap-3 md:gap-5">
         {figures.map((figure, index) => (
           <div
             key={index}
-            className="flex w-full flex-col items-center rounded-card bg-surface px-6 py-10 text-center shadow-card sm:w-auto sm:min-w-[15rem] lg:min-w-[17rem]"
+            className="flex w-44 flex-col items-center rounded-card bg-surface md:px-6 px-3 md:py-10 py-5 text-center shadow-card sm:w-auto sm:min-w-[15rem] lg:min-w-[17rem]"
           >
             <p className="text-[0.8125rem] text-body">{figure.caption}</p>
             {/* Climbs to the figure the first time the band is scrolled to. */}
             <CountUp
               value={figure.value}
-              className="mt-1 text-[2.25rem] leading-none font-semibold text-action"
+              className="mt-1 md:text-4xl text-[28px] leading-none font-semibold text-action"
             />
             <p className="mt-2 text-[0.875rem] text-body">{figure.label}</p>
           </div>
@@ -193,9 +193,9 @@ export function GivingLevels({
           <span className="accent">{content.headingStart}</span> {content.headingAccent}
         </h2>
 
-        <ul className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <ul className="mt-12 grid gap-5 grid-cols-2 lg:grid-cols-4">
           {content.levels.map((level, index) => (
-            <li key={index} className="flex flex-col rounded-card bg-surface p-6 shadow-card">
+            <li key={index} className="flex flex-col rounded-card bg-surface md:p-6 p-5 shadow-card">
               {/* The amount and the heart sit on one row, amount left and heart right. */}
               <div className="flex items-start justify-between gap-4">
                 <p className="text-[1.5rem] font-semibold text-action">${level.amount}</p>
@@ -212,7 +212,7 @@ export function GivingLevels({
                 </svg>
               </div>
 
-              <p className="mt-3 flex-1 text-[0.9375rem] leading-snug text-body">{level.text}</p>
+              <p className="mt-3 flex-1 text-sm md:text-[0.9375rem] leading-snug text-body">{level.text}</p>
 
               <DonateButton formId={level.form} variant="dark" className="mt-6 w-full">
                 {level.cta}

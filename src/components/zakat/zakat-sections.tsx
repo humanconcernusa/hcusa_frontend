@@ -118,22 +118,22 @@ export function WhoCanReceive({ content }: { content: ZakatPageContent["who"] })
           One hairline grid: the panel carries the line colour and the cells sit on it with a
           single pixel between them, so the gaps read as the dividers.
         */}
-        <ul className="mt-12 grid gap-px overflow-hidden rounded-card bg-surface sm:grid-cols-2 lg:grid-cols-4">
+        <ul className="mt-12 grid gap-px overflow-hidden rounded-card bg-surface grid-cols-2 lg:grid-cols-4">
           {content.items.map((item, index) => (
             <li
               key={item.name}
-              className="flex items-start justify-between gap-4 bg-page p-6 transition-[background-color,box-shadow] duration-200 hover:bg-surface hover:shadow-card hover:ring-1 hover:ring-action/25"
+              className="flex items-start justify-between gap-4 bg-page md:p-6 p-4 transition-[background-color,box-shadow] duration-200 hover:bg-surface hover:shadow-card hover:ring-1 hover:ring-action/25"
             >
               <div>
-                <p className="text-[1.75rem] leading-none font-semibold text-action/25">
+                <p className="md:text-[1.75rem] text-[26px] leading-none font-semibold text-action/25">
                   {String(index + 1).padStart(2, "0")}
                 </p>
                 <p className="mt-4 text-[1rem] font-semibold text-action">{item.name}</p>
-                <p className="mt-1 text-[0.9375rem] text-body">{item.caption}</p>
+                <p className="mt-1 md:text-[0.9375rem] text-sm text-body">{item.caption}</p>
               </div>
 
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={CATEGORY_ICON} alt="" className="mt-1 size-6 shrink-0" />
+              <img src={CATEGORY_ICON} alt="" className="mt-1 md:size-6 size-4 shrink-0" />
             </li>
           ))}
         </ul>
@@ -172,8 +172,8 @@ export function CalculatorBanner({ content }: { content: ZakatPageContent["calcu
 
 export function WhereZakatGoes({ content }: { content: ZakatPageContent["where"] }) {
   return (
-    <section className="bg-surface pt-8 pb-20 lg:pt-12 lg:pb-28">
-      <div className="container-page grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
+    <section className="bg-surface pt-8 pb-20 md:pt-12 md:pb-28">
+      <div className="container-page grid items-center gap-12 md:gap-8 md:grid-cols-2 lg:gap-16">
         <div className="overflow-hidden rounded-card">
           <Image
             src={content.image}
@@ -190,14 +190,14 @@ export function WhereZakatGoes({ content }: { content: ZakatPageContent["where"]
             {content.eyebrow}
           </p>
 
-          <h2 className="mt-4 text-[2.25rem] leading-[1.1] font-semibold lg:text-[3rem]">
+          <h2 className="mt-4 md:mt-2 lg:mt-4 text-[2.25rem] leading-[1.1] font-semibold lg:text-[3rem]">
             {content.headingStart} <span className="accent">{content.headingAccent}</span>{" "}
             {content.headingEnd}
           </h2>
 
-          <p className="mt-4 text-[0.9375rem] text-body">{content.lead}</p>
+          <p className="mt-4 md:mt-2 lg:mt-4 text-[0.9375rem] text-body">{content.lead}</p>
 
-          <ul className="mt-6 flex flex-col gap-2.5">
+          <ul className="mt-4 md:mt-2 lg:mt-4 flex flex-col gap-2.5">
             {content.points.map((point) => (
               <li key={point} className="flex gap-3 text-[1rem] text-body">
                 <span aria-hidden="true" className="mt-2 size-1.5 shrink-0 rounded-full bg-ink" />
@@ -206,7 +206,7 @@ export function WhereZakatGoes({ content }: { content: ZakatPageContent["where"]
             ))}
           </ul>
 
-          <DonateButton formId={content.form} variant="dark" size="lg" className="mt-8">
+          <DonateButton formId={content.form} variant="dark" size="lg" className="mt-8 md:mt-2 lg:mt-8">
             {content.cta}
           </DonateButton>
         </div>

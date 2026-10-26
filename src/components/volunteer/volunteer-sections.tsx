@@ -68,20 +68,20 @@ export function Opportunities({ content }: { content: VolunteerPageContent["oppo
           {content.headingStart} <span className="accent">{content.headingAccent}</span>
         </h2>
 
-        <ul className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <ul className="mt-12 grid gap-5 grid-cols-2 lg:grid-cols-4">
           {content.cards.map((card, index) => {
             const Glyph = OPPORTUNITY_GLYPHS[index];
 
             return (
               <li
                 key={card.title}
-                className="rounded-card border border-line bg-surface p-6 shadow-card"
+                className="rounded-card border border-line bg-surface md:p-6 p-4 shadow-card"
               >
-                <span className="grid size-14 place-items-center rounded-xl bg-tint">
-                  <Glyph className="size-10" />
+                <span className="grid md:size-14 size-12 place-items-center rounded-xl bg-tint">
+                  <Glyph className="md:size-10 size-8" />
                 </span>
 
-                <p className="mt-5 text-[1.0625rem] font-medium text-ink">{card.title}</p>
+                <p className="mt-5 md:text-[1.0625rem]  font-medium text-ink">{card.title}</p>
               </li>
             );
           })}

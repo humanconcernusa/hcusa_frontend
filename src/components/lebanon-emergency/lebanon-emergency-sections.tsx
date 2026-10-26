@@ -176,7 +176,7 @@ export function DonationHelps({ content }: { content: LebanonPageContent["helps"
             {content.items.map((item, index) => (
               <li
                 key={item.line1}
-                className="flex flex-col items-center justify-center gap-2.5 rounded-2xl border border-line bg-surface px-3 py-6 text-center"
+                className="flex flex-col items-center justify-center gap-2.5 rounded-2xl border border-line bg-surface px-3 py-6 text-center [&:nth-child(odd):last-child]:col-span-2 sm:[&:nth-child(odd):last-child]:col-span-1"
               >
                 {item.icon ? (
                   /*
@@ -233,34 +233,46 @@ export function RespondSteps({ content }: { content: LebanonPageContent["respond
 
           <ul className="mt-12 grid gap-6 md:grid-cols-3">
             {content.steps.map((step) => (
-              <li key={step.number} className="flex flex-col rounded-2xl border border-action/20 p-2">
+              <li
+                key={step.number}
+                className="flex flex-col rounded-2xl border border-action/20 p-2"
+              >
                 <div className="aspect-[16/9] w-full overflow-hidden rounded-xl">
-                  <Media src={step.image} alt={step.title} sizes="(min-width: 768px) 400px, 90vw" />
+                  <Media
+                    src={step.image}
+                    alt={step.title}
+                    sizes="(min-width: 768px) 400px, 90vw"
+                  />
                 </div>
 
-                {/* From md the cards are a third of the row, so the number block moves above the
-                    words rather than beside them; side by side it left one word per line. */}
-                <div className="flex flex-1 items-start gap-3 p-3 md:flex-col">
-                  <span className="flex shrink-0 flex-col items-center rounded-lg bg-ink px-3 py-2 leading-none text-white">
+                <div className="flex sm:flex-1 md:flex-col lg:flex-row sm:items-stretch md:items-start lg:items-stretch gap-3 p-3">
+                  <span className="flex shrink-0 flex-col items-center justify-center rounded-lg bg-ink px-3 py-2 leading-none text-white">
                     <span className="text-[0.5625rem] font-semibold tracking-[0.18em] uppercase">
                       Step
                     </span>
-                    <span className="mt-1 text-[1.25rem] font-semibold">{step.number}</span>
+                    <span className="mt-1 text-[1.25rem] font-semibold">
+                      {step.number}
+                    </span>
                   </span>
 
+                  <span
+                    aria-hidden="true"
+                    className="w-0.5 shrink-0 self-stretch rounded-full bg-action md:hidden lg:block sm:self-auto"
+                  />
+
                   <div className="min-w-0 flex-1">
-                    <p className="text-[1rem] font-semibold text-ink">{step.title}</p>
+                    <p className="text-sm font-semibold text-ink">
+                      {step.title}
+                    </p>
 
-                    <span
-                      className="mt-2 block h-0.5 w-full rounded-full bg-action"
-                      aria-hidden="true"
-                    />
-
-                    <p className="mt-2 flex items-center gap-1.5 text-[0.875rem] text-body">
-                      <span aria-hidden="true" className="tracking-[0.2em] text-action">
+                    <p className="mt-1 flex items-start gap-1 text-[13px] text-body">
+                      <span
+                        aria-hidden="true"
+                        className="shrink-0 tracking-[0.2em] text-action"
+                      >
                         •••
                       </span>
-                      {step.text}
+                      <span>{step.text}</span>
                     </p>
                   </div>
                 </div>
@@ -276,7 +288,7 @@ export function RespondSteps({ content }: { content: LebanonPageContent["respond
 export function StatsBand({ content }: { content: LebanonPageContent["stats"] }) {
   return (
     <section className="bg-action py-14">
-      <div className="container-page flex flex-wrap justify-center gap-5">
+      <div className="container-page md:flex flex-wrap grid grid-cols-2 justify-center gap-5">
         {content.map((figure) => (
           <div
             key={figure.label}
@@ -285,7 +297,7 @@ export function StatsBand({ content }: { content: LebanonPageContent["stats"] })
             {/* Climbs to the figure the first time the band is scrolled to. */}
             <CountUp
               value={figure.value}
-              className="text-[2rem] leading-none font-semibold text-action"
+              className="md:text-4xl text-[28px] leading-none font-semibold text-action"
             />
             <p className="mt-2 text-[0.8125rem] leading-snug text-body">{figure.label}</p>
           </div>

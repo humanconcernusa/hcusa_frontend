@@ -78,10 +78,22 @@ export function GazaHero({ content }: { content: GazaPageContent["hero"] }) {
 
           <h1 className="mt-4 text-[2rem] leading-[1.15] font-semibold sm:text-[2.75rem] lg:text-[3.125rem]">
             {content.headingStart} <span className="accent">{content.headingAccent}</span>
-            <br />
-            <span className="accent">{content.headingAccentTwo}</span> {content.headingMiddle}
-            <br />
-            {content.headingEnd}
+
+            {/* The extra lines appear only when the admin fills them, so a two-line heading
+                does not leave an empty line behind. */}
+            {content.headingAccentTwo || content.headingMiddle ? (
+              <>
+                <br />
+                <span className="accent">{content.headingAccentTwo}</span> {content.headingMiddle}
+              </>
+            ) : null}
+
+            {content.headingEnd ? (
+              <>
+                <br />
+                {content.headingEnd}
+              </>
+            ) : null}
           </h1>
 
           <Callout className="mt-5 max-w-[34rem] leading-[1.4]">{content.body}</Callout>

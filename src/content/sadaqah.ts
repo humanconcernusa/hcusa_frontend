@@ -60,6 +60,8 @@ export const sadaqahDefaults: SadaqahPageContent = {
     headingAccent: "Transformed",
     headingEnd: "Through Your Sadaqah",
     videoId: "cHJhSoDDK0g",
+    image: `${ASSETS}/video.jpg`,
+    imageAlt: 'Through Your Sadaqah'
   },
 
   giving: {

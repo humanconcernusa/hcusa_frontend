@@ -31,7 +31,7 @@ export function ChildSponsorshipHero({
             The badge: the child glyph in its own tile, the words, then three dots. Same
             treatment as the Healthcare badge, so the two pages read as one family.
           */}
-          <span className="inline-flex items-center gap-2.5 overflow-hidden rounded-full border-[1.5px] border-white/12 bg-[linear-gradient(135deg,#0d0d0d,#7f0000)] px-3.5 py-1.5 font-[Georgia,serif] shadow-[0_4px_24px_rgba(180,0,0,0.4)]">
+          <span className="inline-flex items-center gap-2.5 overflow-hidden rounded-full border-[1.5px] border-white/12 bg-[linear-gradient(135deg,#0d0d0d,#7f0000)] px-3.5 py-1.5 font-medium shadow-[0_4px_24px_rgba(180,0,0,0.4)]">
             {/* A plain image, not next/image: this is an SVG, which next/image refuses. */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -41,7 +41,7 @@ export function ChildSponsorshipHero({
             />
 
             <span className="flex items-center gap-2">
-              <span className="text-[0.9375rem] tracking-[0.05em] text-white uppercase">
+              <span className="text-[0.9375rem] tracking-[0.05em] text-white">
                 {content.eyebrow}
               </span>
 

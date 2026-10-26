@@ -64,6 +64,8 @@ export const foodAidDefaults: FoodAidPageContent = {
     headingAccent: "Transformed",
     headingEnd: "Through Food Aid",
     videoId: "mLUQCcNoKDg",
+    image: `${ASSETS}/video.jpg`,
+    imageAlt: 'Hunger Relief'
   },
 
   counters: {

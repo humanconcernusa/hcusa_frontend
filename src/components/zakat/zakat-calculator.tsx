@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import type { ZakatPageContent } from "@/content/zakat";
+import { DonateButton } from "../donate/donate-button";
 
 /* Zakat is one fortieth of what is held above the nisab. */
 const ZAKAT_RATE = 0.025;
@@ -16,9 +17,9 @@ const ASSET_KEYS = ["cash", "gold", "silver", "business", "shares", "retirement"
 
 const FIELDS: { key: string; label: string; hint?: "gold" | "silver" }[] = [
   { key: "cash", label: "Cash at Home/Bank" },
+  { key: "business", label: "Business Assets" },
   { key: "gold", label: "Gold (Value)", hint: "gold" },
   { key: "silver", label: "Silver (Value)", hint: "silver" },
-  { key: "business", label: "Business Assets" },
   { key: "shares", label: "Shares & Investments" },
   { key: "retirement", label: "RRSP / Retirement" },
   { key: "liabilities", label: "Liabilities (Debts you owe)" },
@@ -41,8 +42,16 @@ function amount(input: string | undefined): number {
   them. It keeps its own figures, so it can sit on a page or inside the popup without either
   knowing about the other.
 */
-export function ZakatCalculatorForm({ rates }: { rates: ZakatPageContent["calculator"] }) {
+export function ZakatCalculatorForm({
+  rates,
+  showStickyTotal = false,
+}: {
+  rates: ZakatPageContent["calculator"];
+  showStickyTotal?: boolean;
+}) {
   const [values, setValues] = useState<Record<string, string>>({});
+  const [showStickyBar, setShowStickyBar] = useState(false);
+  const resultsRef = useRef<HTMLDivElement>(null);
 
   const assets = ASSET_KEYS.reduce((sum, key) => sum + amount(values[key]), 0);
   const liabilities = amount(values.liabilities);
@@ -53,6 +62,19 @@ export function ZakatCalculatorForm({ rates }: { rates: ZakatPageContent["calcul
     two thresholds and therefore the safer line for the poor.
   */
   const due = net >= rates.silver.value ? net * ZAKAT_RATE : 0;
+
+  useEffect(() => {
+    if (!showStickyTotal || !resultsRef.current) return;
+
+    const results = resultsRef.current;
+    const observer = new IntersectionObserver(
+      ([entry]) => setShowStickyBar(!entry.isIntersecting),
+      { threshold: 0 },
+    );
+
+    observer.observe(results);
+    return () => observer.disconnect();
+  }, [showStickyTotal]);
 
   return (
     <>
@@ -73,13 +95,13 @@ export function ZakatCalculatorForm({ rates }: { rates: ZakatPageContent["calcul
         ))}
       </div>
 
-      <div className="mt-8 grid gap-x-6 gap-y-5 sm:grid-cols-2">
+      <div className="mt-8 md:mt-12 grid gap-x-6 gap-y-5 sm:grid-cols-2">
         {FIELDS.map((field) => (
           <label key={field.key} className="block">
             <span className="text-[0.9375rem] font-semibold text-ink">{field.label}</span>
 
             {field.hint ? (
-              <span className="mt-0.5 block text-[0.75rem] text-leaf">
+              <span className="mt-0.5 block text-[0.75rem] text-[#16A82B]">
                 {field.hint === "gold" ? rates.gold.rate : rates.silver.rate}
               </span>
             ) : null}
@@ -102,7 +124,7 @@ export function ZakatCalculatorForm({ rates }: { rates: ZakatPageContent["calcul
                   }))
                 }
                 placeholder="0.00"
-                className="min-h-11 w-full rounded-md bg-transparent px-3 text-[0.9375rem] text-ink outline-none placeholder:text-[#8a8a8a]"
+                className="min-h-11 w-full rounded-md bg-transparent px-3 text-[16px] text-ink outline-none placeholder:text-[#8a8a8a]"
               />
             </span>
           </label>
@@ -110,7 +132,7 @@ export function ZakatCalculatorForm({ rates }: { rates: ZakatPageContent["calcul
       </div>
 
       {/* The three figures, worked out as the reader types. */}
-      <div className="mt-8 grid gap-4 rounded-xl bg-ink px-6 py-6 sm:grid-cols-3">
+      <div ref={resultsRef} className="mt-8 grid gap-4 rounded-xl bg-ink px-6 py-6 sm:grid-cols-3">
         <div className="rounded-lg border border-white/20 px-4 py-3 text-center">
           <p className="text-[0.75rem] font-semibold tracking-[0.1em] text-white/70 uppercase">
             Total Assets
@@ -128,12 +150,30 @@ export function ZakatCalculatorForm({ rates }: { rates: ZakatPageContent["calcul
         </div>
 
         <div className="rounded-lg border border-white/20 px-4 py-3 text-center">
-          <p className="text-[0.75rem] font-semibold tracking-[0.1em] text-white/70 uppercase">
+          <p className="text-[0.75rem]  font-semibold tracking-[0.1em] text-white/70 uppercase">
             Total Zakat Due
           </p>
           <p className="mt-2 text-[1.5rem] font-semibold text-leaf">{money.format(due)}</p>
         </div>
       </div>
+      <div className="text-center lg:mt-2 ">
+        <DonateButton formId={rates.form} variant="primarySolid" size="lg" className="mt-8 md:mt-2 lg:mt-8">
+          Donate Now
+        </DonateButton>
+      </div>
+      {showStickyTotal ? (
+        <div
+          aria-live="polite"
+          className={`fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface/95 px-5 pt-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] shadow-raised backdrop-blur transition-transform duration-200 sm:hidden ${
+            showStickyBar ? "translate-y-0" : "translate-y-full"
+          }`}
+        >
+          <div className="mx-auto flex max-w-[44rem] items-center justify-between gap-3">
+            <span className="text-sm font-semibold text-ink">Total Zakat Due</span>
+            <span className="text-base font-semibold text-leaf">{money.format(due)}</span>
+          </div>
+        </div>
+      ) : null}
     </>
   );
 }

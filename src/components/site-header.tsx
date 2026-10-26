@@ -1,3 +1,4 @@
+
 "use client";
 
 import Image from "next/image";
@@ -11,10 +12,6 @@ import type { SectionKey } from "@/content/home";
 type MenuItem = { label: string; icon: string; href?: string };
 type NavItem = { label: string; href: string; items: MenuItem[] };
 
-/*
-  Which page section each top-level link points at. A hidden section drops its link, so
-  the header never sends anyone to a section that is not on the page.
-*/
 const NAV_TARGET: Record<string, SectionKey | undefined> = {
   "#about": "ceoMessage",
   "#programs": "programs",
@@ -43,7 +40,7 @@ const NAV: NavItem[] = [
         href: "/palestine-relief",
       },
       { label: "Sudan Relief", icon: "sudan-relief", href: "/emergency-relief-sudan" },
-      { label: "Gaza Scholarship", icon: "gaza-scholarship", href: "/gaza-scholarship" },
+      { label: "Palestine Hardship Fund", icon: "gaza-scholarship", href: "/palestine-hardship-fund" },
       {
         label: "South Asia Flood Relief",
         icon: "palestine-relief",
@@ -108,27 +105,22 @@ export function SiteHeader({
 }: {
   className?: string;
   visible?: Record<SectionKey, boolean>;
-  /* Comes from the Header screen in the admin. A page that does not fetch it gets the shipped one. */
   content?: HeaderContent;
 }) {
   const { brand, donate, visible: show } = content ?? headerDefaults;
   const [isOpen, setIsOpen] = useState(false);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const pathname = usePathname();
-  /* The drawer's accordion. Separate from the desktop dropdowns, which open on hover. */
   const [openMobileMenu, setOpenMobileMenu] = useState<string | null>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
 
-  /*
-    While the drawer is open the page behind it must not scroll, and Escape closes it.
-    Focus moves into the drawer on open and back to the menu button on close.
-  */
   useEffect(() => {
     if (!isOpen) return;
 
     const toggle = toggleRef.current;
     const previousOverflow = document.body.style.overflow;
+
     document.body.style.overflow = "hidden";
     closeRef.current?.focus();
 
@@ -166,8 +158,7 @@ export function SiteHeader({
   return (
     <header className={className}>
       <div className="container-page">
-        <div className="flex h-[4.1rem] items-center gap-6 rounded-full bg-surface px-4 shadow-card sm:px-5 lg:px-7">
-          {/* The logo goes home through Next's router, so switching pages does not reload. */}
+        <div className="flex h-[4.1rem] items-center gap-3 rounded-full bg-surface px-4 shadow-card sm:px-5 xl:gap-6 xl:px-7">
           {show.logo ? (
             <Link
               href="/"
@@ -180,18 +171,19 @@ export function SiteHeader({
                 width={200}
                 height={50}
                 priority
-                className="h-auto w-[170px] sm:w-[200px]"
+                className="h-auto w-[170px] sm:w-[200px] xl:w-[210px]"
               />
             </Link>
           ) : null}
 
+          {/* Desktop navigation: visible from 1280px */}
           <nav
             aria-label="Main"
-            className={`flex-1 justify-center lg:flex ${
-              show.nav ? "hidden" : "hidden lg:hidden"
+            className={`min-w-0 flex-1 justify-center ${
+              show.nav ? "hidden xl:flex" : "hidden"
             }`}
           >
-            <ul className="flex items-center gap-6">
+            <ul className="flex items-center gap-4 2xl:gap-6">
               {navItems.map((item) => {
                 const isMenuOpen = openMenu === item.label;
 
@@ -213,10 +205,12 @@ export function SiteHeader({
                         aria-expanded={isMenuOpen}
                         onClick={(event) => {
                           event.preventDefault();
-                          setOpenMenu(item.label);
+                          setOpenMenu(isMenuOpen ? null : item.label);
                         }}
                         className={`inline-flex items-center gap-1.5 whitespace-nowrap text-[0.9375rem] transition-colors ${
-                          isMenuOpen ? "text-action" : "text-body hover:text-action"
+                          isMenuOpen
+                            ? "text-action"
+                            : "text-body hover:text-action"
                         }`}
                       >
                         {item.label}
@@ -230,7 +224,9 @@ export function SiteHeader({
                               <li key={sub.label}>
                                 <Link
                                   href={sub.href ?? "#"}
-                                  aria-current={sub.href === pathname ? "page" : undefined}
+                                  aria-current={
+                                    sub.href === pathname ? "page" : undefined
+                                  }
                                   className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-[0.9375rem] whitespace-nowrap transition-colors ${
                                     sub.href === pathname
                                       ? "bg-action font-medium text-white"
@@ -243,7 +239,9 @@ export function SiteHeader({
                                     width={18}
                                     height={18}
                                     className={`shrink-0 ${
-                                      sub.href === pathname ? "brightness-0 invert" : ""
+                                      sub.href === pathname
+                                        ? "brightness-0 invert"
+                                        : ""
                                     }`}
                                   />
                                   {sub.label}
@@ -260,13 +258,10 @@ export function SiteHeader({
             </ul>
           </nav>
 
-          <div className="ml-auto flex shrink-0 items-center gap-3 lg:ml-0">
-            {/*
-              The wrapper does the hiding. On the button itself the base inline-flex beat
-              "hidden", so on phones it squeezed the pill and pushed the page sideways.
-            */}
+          <div className="ml-auto flex shrink-0 items-center gap-3 xl:ml-0">
+            {/* Desktop Donate button */}
             {show.cta ? (
-              <div className="hidden sm:block">
+              <div className="hidden xl:block">
                 <DonateButton
                   formId={donate.form}
                   variant="primarySolid"
@@ -278,6 +273,7 @@ export function SiteHeader({
               </div>
             ) : null}
 
+            {/* Hamburger: visible below 1280px */}
             <button
               ref={toggleRef}
               type="button"
@@ -285,22 +281,30 @@ export function SiteHeader({
               aria-expanded={isOpen}
               aria-controls="mobile-nav"
               aria-label="Open menu"
-              className="-mr-1 grid size-11 place-items-center rounded-full transition-colors hover:bg-page lg:hidden"
+              className="-mr-1 grid size-11 shrink-0 place-items-center rounded-full transition-colors hover:bg-page xl:hidden"
             >
-              <svg viewBox="0 0 24 24" aria-hidden="true" className="size-6 fill-none stroke-ink stroke-[1.75]">
-                <path d="M4 6.5h16M4 12h16M4 17.5h16" strokeLinecap="round" />
+              <svg
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+                className="size-6 fill-none stroke-ink stroke-[1.75]"
+              >
+                <path
+                  d="M4 6.5h16M4 12h16M4 17.5h16"
+                  strokeLinecap="round"
+                />
               </svg>
             </button>
           </div>
         </div>
       </div>
 
-      {/*
-        Phones and tablets get a drawer that slides in from the right over a dimmed page,
-        with each section folded until tapped. It stays mounted so it can animate, and is
-        inert while closed so nothing inside it can be tabbed to.
-      */}
-      <div className={`fixed inset-0 z-50 lg:hidden ${isOpen ? "" : "pointer-events-none"}`} inert={!isOpen}>
+      {/* Mobile and tablet drawer: visible below 1280px */}
+      <div
+        className={`fixed inset-0 z-50 xl:hidden ${
+          isOpen ? "" : "pointer-events-none"
+        }`}
+        inert={!isOpen}
+      >
         <div
           aria-hidden="true"
           onClick={closeDrawer}
@@ -329,7 +333,7 @@ export function SiteHeader({
                   alt={brand.imageAlt}
                   width={200}
                   height={50}
-                  className="h-auto w-[170px]"
+                  className="h-auto w-[150px] sm:w-[170px]"
                 />
               </Link>
             ) : (
@@ -343,8 +347,15 @@ export function SiteHeader({
               aria-label="Close menu"
               className="-mt-1 -mr-2 grid size-10 shrink-0 place-items-center rounded-full transition-colors hover:bg-page"
             >
-              <svg viewBox="0 0 24 24" aria-hidden="true" className="size-5 fill-none stroke-ink stroke-2">
-                <path d="M6 6l12 12M18 6L6 18" strokeLinecap="round" />
+              <svg
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+                className="size-5 fill-none stroke-ink stroke-2"
+              >
+                <path
+                  d="M6 6l12 12M18 6L6 18"
+                  strokeLinecap="round"
+                />
               </svg>
             </button>
           </div>
@@ -352,13 +363,17 @@ export function SiteHeader({
           <ul className={`mt-5 flex-col ${show.nav ? "flex" : "hidden"}`}>
             {navItems.map((item) => {
               const isExpanded = openMobileMenu === item.label;
-              const panelId = `mobile-nav-${item.label.replace(/\W+/g, "-").toLowerCase()}`;
+              const panelId = `mobile-nav-${item.label
+                .replace(/\W+/g, "-")
+                .toLowerCase()}`;
 
               return (
                 <li key={item.label} className="border-b border-line">
                   <button
                     type="button"
-                    onClick={() => setOpenMobileMenu(isExpanded ? null : item.label)}
+                    onClick={() =>
+                      setOpenMobileMenu(isExpanded ? null : item.label)
+                    }
                     aria-expanded={isExpanded}
                     aria-controls={panelId}
                     className={`flex min-h-12 w-full items-center gap-2 px-5 text-left text-[1rem] transition-colors hover:text-action ${
@@ -370,13 +385,18 @@ export function SiteHeader({
                   </button>
 
                   {isExpanded ? (
-                    <ul id={panelId} className="flex flex-col pb-2 pl-7">
+                    <ul
+                      id={panelId}
+                      className="flex flex-col pb-2 pl-7"
+                    >
                       {item.items.map((sub) => (
                         <li key={sub.label}>
                           <Link
                             href={sub.href ?? "#"}
                             onClick={closeDrawer}
-                            aria-current={sub.href === pathname ? "page" : undefined}
+                            aria-current={
+                              sub.href === pathname ? "page" : undefined
+                            }
                             className={`flex min-h-10 items-center gap-3 text-[0.9375rem] transition-colors ${
                               sub.href === pathname
                                 ? "font-medium text-action"

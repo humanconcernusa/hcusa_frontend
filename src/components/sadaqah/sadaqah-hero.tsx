@@ -21,9 +21,9 @@ export function SadaqahHero({ content }: { content: SadaqahPageContent["hero"] }
         />
       </div>
 
-      <div className="container-page pt-32 pb-24 lg:min-h-[36.75rem] lg:pt-[7.5rem] lg:pb-[9rem]">
+      <div className="container-page lg:pt-32 pt-26 pb-24 lg:min-h-[36.75rem] lg:pt-[7.5rem] lg:pb-[9rem]">
         <div className="max-w-[35.22rem] rounded-card bg-surface p-7 shadow-raised lg:p-8">
-          <span className="inline-flex items-center gap-2.5 overflow-hidden rounded-full border-[1.5px] border-white/12 bg-[linear-gradient(135deg,#0d0d0d,#7f0000)] px-4 py-1.5 font-[Georgia,serif] shadow-[0_4px_24px_rgba(180,0,0,0.4)]">
+          <span className="inline-flex items-center gap-2.5 overflow-hidden rounded-full border-[1.5px] border-white/12 bg-[linear-gradient(135deg,#0d0d0d,#7f0000)] px-4 py-1.5 font-medium shadow-[0_4px_24px_rgba(180,0,0,0.4)]">
             {/* A plain image, not next/image: this is an SVG, which next/image refuses. */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -33,7 +33,7 @@ export function SadaqahHero({ content }: { content: SadaqahPageContent["hero"] }
             />
 
             <span className="flex items-center gap-2">
-              <span className="text-[0.9375rem] tracking-[0.14em] text-white uppercase">
+              <span className="text-[0.9375rem] tracking-[0.14em] text-white ">
                 {content.eyebrow}
               </span>
 

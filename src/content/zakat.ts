@@ -39,6 +39,8 @@ export type ZakatPageContent = Omit<HealthcarePageContent, "visible" | "why" | "
     headingAccent: string;
     body: string;
     cta: string;
+    /* The popup the calculator's Donate button opens. Picked in the admin from the simple forms. */
+    form: string;
     /*
       The nisab is the threshold below which no Zakat is due, and it moves with the metal price,
       so these are held here and have to be refreshed. The weight and rate are only shown to the
@@ -111,6 +113,8 @@ export const zakatDefaults: ZakatPageContent = {
     headingAccent: "Zakat",
     headingEnd: "in Action",
     videoId: "WxNO-E8aUaY",
+    image: `${ASSETS}/video.jpg`,
+    imageAlt: 'Real stories of change made possible through your support'
   },
 
   giving: {
@@ -167,6 +171,7 @@ export const zakatDefaults: ZakatPageContent = {
     headingAccent: "Calculator",
     body: "Calculate your Zakat with our Zakat Calculator Tool",
     cta: "Calculator",
+    form: "zakat",
     gold: { value: 7251, weight: "87.48g", rate: "$167.56 / gram" },
     silver: { value: 557.25, weight: "612.36g", rate: "$0.91 / gram" },
   },
