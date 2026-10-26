@@ -7,13 +7,13 @@
     "callout": "Your donation provides life-saving water, food, and care to families in need",
     "primaryCta": "Donate Now",
     "secondaryCta": "Learn More",
-    "form": "general-donation",
+    "form": "west-bank-hunger-campaign",
     "tags": [
       "Clean Water",
       "Orphan Care",
       "Food Aid"
     ],
-    "image": "https://res.cloudinary.com/impactreports/image/upload/v1790424356/hcusa/home/rawu7ewj84q222pfl9ad.webp",
+    "image": "https://pub-387995532fb34284b3f927edc6088b7b.r2.dev/media/mvgnekim-c9e5ea1c362e.webp",
     "imageAlt": "Children outside their school"
   },
   "videoBanner": {
@@ -120,10 +120,6 @@
     "primaryCta": "Become a Volunteer",
     "secondaryCta": "Travel with Us"
   },
-  "quickDonate": {
-    "label": "Quick Donate",
-    "form": "general-donation"
-  },
   "visible": {
     "hero": true,
     "videoBanner": true,
@@ -131,7 +127,6 @@
     "programs": true,
     "testimonial": true,
     "ceoMessage": true,
-    "ctaBand": true,
-    "quickDonate": true
+    "ctaBand": true
   }
 }
