@@ -21,6 +21,8 @@ export type SitePreview = {
     header: HeaderContent;
     footer: FooterContent;
     quickDonate: QuickDonateContent;
+    /* The blogs listing draws real posts; every other page leaves this out. */
+    posts?: unknown;
   };
 };
 

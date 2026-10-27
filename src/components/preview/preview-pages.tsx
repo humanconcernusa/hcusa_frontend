@@ -1,9 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
-
 import { AlertBar } from "@/components/alert-bar";
-import { DonateProvider } from "@/components/donate/donate-context";
 import {
   DonationHelps as FloodDonationHelps,
   Giving as FloodGiving,
@@ -41,7 +38,6 @@ import { CeoMessage } from "@/components/home/ceo-message";
 import { Hero } from "@/components/home/hero";
 import { Impact } from "@/components/home/impact";
 import { Programs } from "@/components/home/programs";
-import { QuickDonate } from "@/components/home/quick-donate";
 import { Testimonial } from "@/components/home/testimonial";
 import { VideoBanner } from "@/components/home/video-banner";
 import { LebanonHero } from "@/components/lebanon-emergency/lebanon-emergency-hero";
@@ -61,8 +57,6 @@ import {
 } from "@/components/palestine-relief/palestine-relief-sections";
 import { SadaqahHero } from "@/components/sadaqah/sadaqah-hero";
 import { WhySadaqah } from "@/components/sadaqah/sadaqah-sections";
-import { SiteFooterBody } from "@/components/site-footer-body";
-import { SiteHeader } from "@/components/site-header";
 import { WaterAidHero } from "@/components/water-aid/water-aid-hero";
 import { WhyWaterAid } from "@/components/water-aid/water-aid-sections";
 import { YouthAnnouncement } from "@/components/youth/youth-announcement";
@@ -118,65 +112,19 @@ import type { WaterAidPageContent } from "@/content/water-aid";
 import type { YouthPageContent } from "@/content/youth";
 import type { ZakatPageContent } from "@/content/zakat";
 
+import { InfoPreview } from "./preview-info";
+import { CTA_BAND, Shell, type Chrome } from "./preview-shell";
+
 /*
   The pages the preview tab can draw. Each one repeats the composition of the real page, but takes
   the content and the header/footer as props instead of reading the published files.
 
-  Only the pages that use the shared Save/Publish bar are here. A page added later needs a case
-  below, and until then the tab says so instead of drawing something wrong.
+  Every page with a draft is covered: the appeal and program pages here, the information pages in
+  preview-info.tsx. A new page needs a case in one of the two, and until then the tab says so
+  instead of drawing something wrong.
 */
 
-const CTA_BAND = {
-  headingStart: "Give Hope.",
-  headingAccent: "Inspire",
-  headingEnd: "Change",
-  subtitle: "We'd love to hear from you.",
-  primaryCta: "Become a Volunteer",
-  secondaryCta: "Travel with Us",
-};
-
-type Chrome = { header: HeaderContent; footer: FooterContent };
-
-function Shell({
-  chrome,
-  children,
-  home,
-  padTop,
-  quickDonate = true,
-}: {
-  chrome: Chrome;
-  children: ReactNode;
-  home?: HomePageContent["visible"];
-  /* The page hides its hero, so the floating header needs the room the hero would have given it. */
-  padTop?: boolean;
-  quickDonate?: boolean;
-}) {
-  return (
-    <DonateProvider>
-      <a
-        href="#main"
-        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:rounded-full focus:bg-surface focus:px-6 focus:py-3 focus:text-ink focus:shadow-raised"
-      >
-        Skip to content
-      </a>
-
-      <div className="relative isolate">
-        <SiteHeader
-          className="absolute inset-x-0 top-2 z-20"
-          visible={home}
-          content={chrome.header}
-        />
-
-        <main id="main" className={padTop ? "pt-32 lg:pt-[7.5rem]" : undefined}>
-          {children}
-        </main>
-      </div>
-
-      <SiteFooterBody content={chrome.footer} />
-      {quickDonate ? <QuickDonate /> : null}
-    </DonateProvider>
-  );
-}
+/* The frame and the shared closing band live in preview-shell.tsx. */
 
 function HomePreview({ content, chrome }: { content: HomePageContent; chrome: Chrome }) {
   return (
@@ -461,6 +409,8 @@ export function PreviewPage({
     content: unknown;
     header: HeaderContent;
     footer: FooterContent;
+    /* The blogs listing draws real posts; every other page ignores this. */
+    posts?: unknown;
   };
 }) {
   const chrome = { header: payload.header, footer: payload.footer };
@@ -514,13 +464,12 @@ export function PreviewPage({
       return <YouthPreview content={payload.content as YouthPageContent} chrome={chrome} />;
     default:
       return (
-        <div className="mx-auto max-w-[34rem] p-10 text-center">
-          <p className="text-body">Preview is not ready for this page yet.</p>
-          <p className="mt-2 text-[0.875rem] text-body">
-            The page key is <code>{page}</code>. Its editor and draft work; only the preview
-            drawing is missing.
-          </p>
-        </div>
+        <InfoPreview
+          page={page}
+          content={payload.content}
+          chrome={chrome}
+          posts={payload.posts}
+        />
       );
   }
 }
