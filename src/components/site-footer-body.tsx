@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { Button } from "@/components/ui";
 import {
   FOOTER_CONTACT_ROWS,
@@ -188,14 +189,21 @@ export function SiteFooterBody({ content }: { content: FooterContent }) {
           </div>
         </div>
 
-        {visible.copyright ? (
-          <>
-            <hr className="mt-8 border-divider sm:mt-14" />
+        <hr className="mt-8 border-divider sm:mt-14" />
 
-            <p className="pt-6 pb-4 text-center text-[0.75rem] text-ink sm:pb-0 sm:text-[0.875rem] sm:text-body">
-              {copyright}
-            </p>
-          </>
+        <div className="pt-6 text-center">
+          <Link
+            href="/track-donation"
+            className="text-[0.8125rem] text-action underline underline-offset-4 hover:text-action-hover"
+          >
+            Track Your Donation
+          </Link>
+        </div>
+
+        {visible.copyright ? (
+          <p className="pt-3 pb-4 text-center text-[0.75rem] text-ink sm:pb-0 sm:text-[0.875rem] sm:text-body">
+            {copyright}
+          </p>
         ) : null}
       </div>
     </footer>

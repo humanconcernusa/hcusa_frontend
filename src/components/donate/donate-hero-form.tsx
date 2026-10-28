@@ -6,6 +6,7 @@ import type { UtmData } from "@/content/utm";
 import {
   MONTHLY_TERM,
   allocateAmount,
+  fetchReceiptPdf,
   monthlySchedule,
   newPaymentKey,
   submitDonation,
@@ -46,6 +47,30 @@ function campaignFrom(utms: UtmData): DonationUtm {
   if (utms.utm_content) mapped.content = utms.utm_content;
 
   return mapped;
+}
+
+/* One line of the thank-you receipt: the label on the left, the value on the right. */
+function ReceiptRow({
+  label,
+  value,
+  strong = false,
+}: {
+  label: string;
+  value: string;
+  strong?: boolean;
+}) {
+  return (
+    <div className="flex items-start justify-between gap-4 py-1.5">
+      <dt className="shrink-0 text-body">{label}</dt>
+      <dd className={`break-words text-right text-ink ${strong ? "font-semibold" : ""}`}>
+        {value}
+      </dd>
+    </div>
+  );
+}
+
+function money2(amount: number): string {
+  return `$${amount.toFixed(2)}`;
 }
 
 export function HeroForm({
@@ -89,6 +114,11 @@ export function HeroForm({
   const [step, setStep] = useState<"form" | "card" | "success">("form");
   /* A card can come back "processing", which settles later rather than right away. */
   const [paidStatus, setPaidStatus] = useState<"succeeded" | "processing">("succeeded");
+  /* What the thank-you screen repeats back: the platform's reference and when it happened. */
+  const [receipt, setReceipt] = useState<{ donationId: string; at: string } | null>(null);
+  /* The PDF download: its own busy flag, so it never disables Done. */
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadNote, setDownloadNote] = useState("");
   const [cardError, setCardError] = useState("");
   /* Kept here rather than in a step, so going back and forward does not clear it. */
   const [billing, setBilling] = useState<Billing | null>(null);
@@ -143,6 +173,42 @@ export function HeroForm({
   const payLabel = isMonthly ? `Donate ${totalLabel}/Month` : `Donate ${totalLabel}`;
   /* The chosen purposes by name, for the summary and for the monthly route. */
   const chosenPurposes = (form.purposes ?? []).filter((purpose) => purposes.includes(purpose.id));
+
+  /* The billing address as the receipt reads it back, one line per part. */
+  const billingAddress = billing?.value.address;
+  const billingLines = [
+    billingAddress?.line1,
+    billingAddress?.line2,
+    [billingAddress?.city, billingAddress?.state, billingAddress?.postal_code]
+      .filter((part) => Boolean(part && part.trim()))
+      .join(", "),
+    billingAddress?.country,
+  ]
+    .map((line) => (typeof line === "string" ? line.trim() : ""))
+    .filter((line) => line.length > 0);
+
+  const receiptDate = receipt
+    ? new Date(receipt.at).toLocaleString("en-US", {
+        dateStyle: "medium",
+        timeStyle: "short",
+      })
+    : "";
+
+  /*
+    A receipt is issued only for a settled charge. A monthly gift's first payment is scheduled for
+    later, and a card that came back "processing" has not settled yet, so the button is shown but
+    disabled with the reason underneath.
+  */
+  const receiptReady = !isMonthly && paidStatus === "succeeded";
+  const canDownloadReceipt =
+    receiptReady && Boolean(receipt?.donationId) && email.trim().length > 0;
+  const receiptNote = canDownloadReceipt
+    ? ""
+    : isMonthly
+      ? "Your receipt is emailed after the first payment."
+      : paidStatus === "processing"
+        ? "Your receipt is emailed once the card payment completes."
+        : "Your receipt is on its way to your inbox.";
 
   function togglePurpose(id: string) {
     setPurposes((current) =>
@@ -318,6 +384,41 @@ export function HeroForm({
     return started;
   }
 
+  /*
+    The platform issues the PDF only after the charge settles, so the request itself waits and
+    retries. The download is handed to the browser as a blob, which is the only way to keep the
+    file name ours across a cross-origin request.
+  */
+  async function downloadReceipt() {
+    if (!receipt || !canDownloadReceipt) return;
+
+    setIsDownloading(true);
+    setDownloadNote("");
+
+    try {
+      const blob = await fetchReceiptPdf({
+        donationId: receipt.donationId,
+        email: email.trim(),
+      });
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `receipt-${receipt.donationId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      /* Revoking straight away can cancel the save in some browsers, so let the click land first. */
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (caught) {
+      setDownloadNote(
+        caught instanceof Error ? caught.message : "The receipt could not be downloaded.",
+      );
+    } finally {
+      setIsDownloading(false);
+    }
+  }
+
   /* The heading changes with the step, so the popup always names where the donor is. */
   const heading = step === "success" ? "Thank you" : step === "card" ? "Card details" : form.label;
 
@@ -354,16 +455,88 @@ export function HeroForm({
           <p className="mt-1 text-[0.8125rem] text-body">
             A receipt is on its way to your inbox.
           </p>
-          {/* An embedded form has no page of its own to go back to. */}
-          {embedded ? null : (
-            <button
-              type="button"
-              onClick={onClose}
-              className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-action px-8 font-medium text-white transition-colors hover:bg-action-hover"
-            >
-              Done
-            </button>
-          )}
+
+          {/* The same information, on screen, so nothing has to be looked up later. */}
+          {receipt ? (
+            <div className="mt-5 w-full rounded-xl border border-line bg-page px-4 py-3 text-left">
+              <p className="text-[0.7rem] font-semibold tracking-[0.1em] text-body uppercase">
+                Receipt
+              </p>
+
+              <dl className="mt-2 divide-y divide-divider text-[0.8125rem]">
+                <ReceiptRow label="Campaign" value={form.label} />
+                <ReceiptRow
+                  label={isMonthly ? "Monthly gift" : "Donation amount"}
+                  value={money2(value)}
+                />
+                {extra > 0 ? (
+                  <ReceiptRow label="Platform fee" value={money2(extra)} />
+                ) : null}
+                <ReceiptRow
+                  label={isMonthly ? "Charged each month" : "Total charged"}
+                  value={totalLabel}
+                  strong
+                />
+                <ReceiptRow
+                  label="Frequency"
+                  value={
+                    isMonthly
+                      ? `Monthly · ${MONTHLY_TERM} payments · first payment today`
+                      : "One-time"
+                  }
+                />
+                {chosenPurposes.length > 0 ? (
+                  <ReceiptRow
+                    label="Purpose"
+                    value={chosenPurposes.map((purpose) => purpose.name).join(", ")}
+                  />
+                ) : null}
+                <ReceiptRow label="Donor" value={fullName} />
+                <ReceiptRow label="Email" value={email} />
+                {isOrganization && organization.trim().length > 0 ? (
+                  <ReceiptRow label="Organization" value={organization.trim()} />
+                ) : null}
+                {billingLines.length > 0 ? (
+                  <ReceiptRow label="Billing address" value={billingLines.join(", ")} />
+                ) : null}
+                <ReceiptRow label="Date" value={receiptDate} />
+                {receipt.donationId.length > 0 ? (
+                  <ReceiptRow label="Reference" value={receipt.donationId} />
+                ) : null}
+              </dl>
+            </div>
+          ) : null}
+
+          {/* The receipt and Done sit together; an embedded form has no Done to show. */}
+          <div className="mt-6 flex w-full flex-col items-center gap-2">
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <button
+                type="button"
+                onClick={() => void downloadReceipt()}
+                disabled={!canDownloadReceipt || isDownloading}
+                className="inline-flex min-h-11 items-center justify-center rounded-full border border-line px-6 font-medium text-ink transition-colors hover:bg-surface disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {isDownloading ? "Preparing receipt…" : "Download Your Receipt"}
+              </button>
+
+              {embedded ? null : (
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="inline-flex min-h-11 items-center justify-center rounded-full bg-action px-8 font-medium text-white transition-colors hover:bg-action-hover"
+                >
+                  Done
+                </button>
+              )}
+            </div>
+
+            {canDownloadReceipt ? null : (
+              <p className="text-[0.75rem] text-body">{receiptNote}</p>
+            )}
+            {downloadNote.length > 0 ? (
+              <p className="text-[0.75rem] text-body">{downloadNote}</p>
+            ) : null}
+          </div>
         </div>
       ) : step === "card" ? (
         <CardStep
@@ -382,8 +555,12 @@ export function HeroForm({
           preview={preview}
           resolvePayment={startPayment}
           onBillingChange={setBilling}
-          onPaid={(status) => {
+          onPaid={(status, reference) => {
             setPaidStatus(status);
+            setReceipt({
+              donationId: reference?.donationId ?? "",
+              at: new Date().toISOString(),
+            });
             setStep("success");
           }}
           onBack={() => {

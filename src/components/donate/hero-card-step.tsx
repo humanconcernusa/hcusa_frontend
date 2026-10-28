@@ -58,7 +58,8 @@ function CardFields({
   email: string;
   billing: Billing | null;
   onBillingChange: (billing: Billing) => void;
-  onPaid: (status: "succeeded" | "processing") => void;
+  /* The reference is the platform's donation id, shown on the thank-you receipt. */
+  onPaid: (status: "succeeded" | "processing", reference?: { donationId: string }) => void;
   onBack: () => void;
 }) {
   const stripe = useStripe();
@@ -136,7 +137,7 @@ function CardFields({
         );
 
         /* The plan is recorded. The first payment is taken on its own date, which is today. */
-        onPaid("succeeded");
+        onPaid("succeeded", { donationId: current.donationId });
         return;
       }
 
@@ -154,7 +155,7 @@ function CardFields({
         gets thanked; Stripe's receipt is what confirms the final outcome.
       */
       if (status === "succeeded" || status === "processing") {
-        onPaid(status);
+        onPaid(status, { donationId: current.donationId });
         return;
       }
 
@@ -292,7 +293,7 @@ export function CardStep({
   preview?: boolean;
   resolvePayment: () => Promise<StartedDonation>;
   onBillingChange: (billing: Billing) => void;
-  onPaid: (status: "succeeded" | "processing") => void;
+  onPaid: (status: "succeeded" | "processing", reference?: { donationId: string }) => void;
   onBack: () => void;
 }) {
   return (

@@ -246,3 +246,58 @@ export async function finalizeDonation(
 
   throw new Error(text(payload?.error?.message) || "The monthly gift could not be saved.");
 }
+
+/*
+  The donor's receipt, as a PDF.
+
+  A receipt proves money changed hands, so the platform only issues one after the charge settles.
+  Stripe's webhook can land a few seconds after the card is confirmed, so a "not ready yet" answer
+  is retried a few times before the donor is told it will be emailed instead.
+
+  The email is the proof of ownership: the platform compares it with the donation's donor email.
+*/
+const RECEIPT_RETRIES = 4;
+const RECEIPT_RETRY_DELAY_MS = 2000;
+
+export async function fetchReceiptPdf({
+  donationId,
+  email,
+}: {
+  donationId: string;
+  email: string;
+}): Promise<Blob> {
+  if (DONATION_API_URL.length === 0) {
+    throw new Error("The donation platform address is not set for this build.");
+  }
+
+  for (let attempt = 1; attempt <= RECEIPT_RETRIES; attempt += 1) {
+    const response = await fetch(`${DONATION_API_URL}/api/v1/receipt/download`, {
+      method: "POST",
+      headers: { "content-type": "application/json", accept: "application/pdf" },
+      body: JSON.stringify({ donationId, email }),
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    });
+
+    if (response.ok) return response.blob();
+
+    const payload = (await response.json().catch(() => null)) as {
+      error?: { code?: unknown; message?: unknown };
+    } | null;
+
+    const code = text(payload?.error?.code);
+    const notReady = code === "RECEIPT_NOT_COMPLETED" || code === "RECEIPT_NOT_AVAILABLE";
+
+    if (notReady && attempt < RECEIPT_RETRIES) {
+      await new Promise((resolve) => setTimeout(resolve, RECEIPT_RETRY_DELAY_MS));
+      continue;
+    }
+
+    if (notReady) {
+      throw new Error("Your receipt is being prepared. It will also arrive by email.");
+    }
+
+    throw new Error(text(payload?.error?.message) || "The receipt could not be downloaded.");
+  }
+
+  throw new Error("The receipt could not be downloaded.");
+}
