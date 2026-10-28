@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useState, type FormEvent } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
 import {
@@ -331,12 +332,12 @@ function DonationList({ token }: { token: string }) {
       <div className="mx-auto max-w-[36rem] rounded-card border border-line bg-surface p-6 text-center">
         <h1 className="text-[1.25rem] font-semibold text-ink">We could not open that link</h1>
         <p className="mt-2 text-[0.9375rem] text-body">{error}</p>
-        <a
+        <Link
           href="/track-donation"
           className="mt-5 inline-flex min-h-11 items-center justify-center rounded-full bg-action px-6 font-medium text-white transition-colors hover:bg-action-hover"
         >
           Request a new link
-        </a>
+        </Link>
       </div>
     );
   }
@@ -350,12 +351,12 @@ function DonationList({ token }: { token: string }) {
         <p className="mt-2 text-[0.9375rem] text-body">
           We could not find a donation for {page.email || "that email"} on this site.
         </p>
-        <a
+        <Link
           href="/track-donation"
           className="mt-5 inline-flex min-h-11 items-center justify-center rounded-full border border-line px-6 font-medium text-ink transition-colors hover:bg-page"
         >
           Use another email
-        </a>
+        </Link>
       </div>
     );
   }
@@ -375,12 +376,12 @@ function DonationList({ token }: { token: string }) {
         ))}
       </ul>
 
-      <a
+      <Link
         href="/track-donation"
         className="mt-6 inline-block text-[0.875rem] text-action underline underline-offset-4"
       >
         Use another email
-      </a>
+      </Link>
     </div>
   );
 }

@@ -5,7 +5,6 @@ import { Button, Media, PlayButton } from "@/components/ui";
 import { CountUp } from "@/components/count-up";
 import { DonateButton } from "@/components/donate/donate-button";
 import type { HealthcarePageContent } from "@/content/healthcare";
-import Image from "next/image";
 
 /*
   The live page draws the four card icons as red line drawings. Its own icon files are not
