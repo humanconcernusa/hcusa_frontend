@@ -50,7 +50,7 @@ function CardFields({
   onBack,
 }: {
   /* Starts the payment, and answers with the secret and, for monthly, the plan's two ids. */
-  resolvePayment: (turnstileToken: string) => Promise<StartedDonation>;
+  resolvePayment: (turnstileToken: string) => Promise<StartedDonation>; 
   isMonthly: boolean;
   /* The wording on the pay button, built by the popup, which knows the cadence. */
   payLabel: string;
@@ -320,7 +320,7 @@ export function CardStep({
   payLabel: string;
   /* A preview tab: Pay explains itself instead of starting a payment. */
   preview?: boolean;
-  resolvePayment: () => Promise<StartedDonation>;
+  resolvePayment: (turnstileToken: string) => Promise<StartedDonation>;
   onBillingChange: (billing: Billing) => void;
   onPaid: (status: "succeeded" | "processing", reference?: { donationId: string }) => void;
   onBack: () => void;
