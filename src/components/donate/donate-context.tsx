@@ -21,7 +21,12 @@ import type { DonateForm } from "@/content/donate";
 
 type DonateContextValue = {
   isOpen: boolean;
-  open: (formId?: string) => void;
+  /*
+    `fallbackToFirst` is for the site's main Donate Now button: if the form it points at was
+    renamed or unpublished, the first available one still opens, so the button never dead-ends.
+    A campaign button keeps the strict rule, because another form's amounts could mislead.
+  */
+  open: (formId?: string, options?: { fallbackToFirst?: boolean }) => void;
   close: () => void;
 };
 
@@ -44,10 +49,10 @@ export function DonateProvider({ children }: { children: ReactNode }) {
   */
   const [forms, setForms] = useState<DonateForm[]>([]);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
-  const [attempt, setAttempt] = useState(0);
 
   const [isOpen, setIsOpen] = useState(false);
   const [activeFormId, setActiveFormId] = useState<string | undefined>(undefined);
+  const [fallbackToFirst, setFallbackToFirst] = useState(false);
   const lastTrigger = useRef<HTMLElement | null>(null);
   /* One setting for the whole site, read in the root layout from the published content file. */
   const fallback = useDonateFallback();
@@ -83,14 +88,15 @@ export function DonateProvider({ children }: { children: ReactNode }) {
     return () => {
       active = false;
     };
-  }, [attempt]);
+  }, []);
 
-  const open = useCallback((formId?: string) => {
+  const open = useCallback((formId?: string, options?: { fallbackToFirst?: boolean }) => {
     /* An empty choice means this button opens nothing. No argument opens the first popup. */
     if (formId !== undefined && formId.length === 0) return;
 
     lastTrigger.current = document.activeElement as HTMLElement | null;
     setActiveFormId(formId);
+    setFallbackToFirst(options?.fallbackToFirst === true);
     setIsOpen(true);
   }, []);
 
@@ -98,12 +104,6 @@ export function DonateProvider({ children }: { children: ReactNode }) {
     setIsOpen(false);
     lastTrigger.current?.focus();
     lastTrigger.current = null;
-  }, []);
-
-  /* A retry starts the wait again. Kept out of the effect so the effect only fetches. */
-  const retry = useCallback(() => {
-    setStatus("loading");
-    setAttempt((current) => current + 1);
   }, []);
 
   /*
@@ -114,8 +114,13 @@ export function DonateProvider({ children }: { children: ReactNode }) {
   const activeForm = useMemo(() => {
     if (status !== "ready" || forms.length === 0) return null;
     if (activeFormId === undefined) return forms[0];
-    return forms.find((form) => form.id === activeFormId) ?? null;
-  }, [activeFormId, forms, status]);
+
+    const match = forms.find((form) => form.id === activeFormId);
+    if (match) return match;
+
+    /* Only the main Donate Now button asks for this; a stale campaign button still opens nothing. */
+    return fallbackToFirst ? forms[0] : null;
+  }, [activeFormId, fallbackToFirst, forms, status]);
 
   const value = useMemo(() => ({ isOpen, open, close }), [isOpen, open, close]);
 
@@ -133,7 +138,6 @@ export function DonateProvider({ children }: { children: ReactNode }) {
           status={status === "loading" ? "loading" : "unavailable"}
           fallback={fallback}
           onClose={close}
-          onRetry={retry}
         />
       )}
 

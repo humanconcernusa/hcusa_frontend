@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, type FocusEvent } from "react";
 import { DonateButton } from "@/components/donate/donate-button";
+import { useDonate } from "@/components/donate/donate-context";
 import { headerDefaults, type HeaderContent } from "@/content/header";
 import type { SectionKey } from "@/content/home";
 
@@ -108,8 +109,11 @@ export function SiteHeader({
   content?: HeaderContent;
 }) {
   const { brand, donate, visible: show } = content ?? headerDefaults;
+  const { open: openDonation } = useDonate();
   const [isOpen, setIsOpen] = useState(false);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
+  /* The small menu beside Donate Now: the extra links that do not deserve their own nav item. */
+  const [donateMenuOpen, setDonateMenuOpen] = useState(false);
   const pathname = usePathname();
   const [openMobileMenu, setOpenMobileMenu] = useState<string | null>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
@@ -152,6 +156,12 @@ export function SiteHeader({
   function handleBlur(event: FocusEvent<HTMLDivElement>) {
     if (!event.currentTarget.contains(event.relatedTarget)) {
       setOpenMenu(null);
+    }
+  }
+
+  function handleDonateBlur(event: FocusEvent<HTMLDivElement>) {
+    if (!event.currentTarget.contains(event.relatedTarget)) {
+      setDonateMenuOpen(false);
     }
   }
 
@@ -259,17 +269,67 @@ export function SiteHeader({
           </nav>
 
           <div className="ml-auto flex shrink-0 items-center gap-3 xl:ml-0">
-            {/* Desktop Donate button */}
+            {/*
+              One red pill, split in two: the words start the donation, the arrow beside the thin
+              divider opens the extra links. Both halves share the same shape and hover colour, so
+              it reads as a single button.
+            */}
             {show.cta ? (
-              <div className="hidden xl:block">
-                <DonateButton
-                  formId={donate.form}
-                  variant="primarySolid"
-                  size="sm"
-                  className="uppercase"
+              <div
+                className="group relative hidden items-stretch rounded-full bg-action text-white shadow-[0_2px_10px_rgb(227_34_38_/_0.18)] xl:flex"
+                onBlur={handleDonateBlur}
+              >
+                {/*
+                  The hover sits on the whole pill, not on each half: hovering either side darkens
+                  both, so the two actions still read as one button.
+                */}
+                <button
+                  type="button"
+                  onClick={() => openDonation(donate.form, { fallbackToFirst: true })}
+                  className="inline-flex min-h-9 cursor-pointer items-center rounded-l-full px-5 text-[0.8125rem] font-semibold tracking-[0.02em] uppercase transition-colors group-hover:bg-action-hover group-focus-within:bg-action-hover focus-visible:outline-none"
                 >
                   {donate.cta}
-                </DonateButton>
+                </button>
+
+                {/* The divider is the arrow button's own left edge, so it never shifts. */}
+                <button
+                  type="button"
+                  onClick={() => setDonateMenuOpen((open) => !open)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Escape") setDonateMenuOpen(false);
+                  }}
+                  aria-expanded={donateMenuOpen}
+                  aria-haspopup="true"
+                  aria-controls="header-donate-menu"
+                  aria-label="More donation links"
+                  className="grid w-9 shrink-0 cursor-pointer place-items-center rounded-r-full border-l border-white/40 transition-colors group-hover:bg-action-hover group-focus-within:bg-action-hover focus-visible:outline-none"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                    className={`size-4 fill-none stroke-current stroke-[2.4] transition-transform duration-200 ${
+                      donateMenuOpen ? "rotate-180" : ""
+                    }`}
+                  >
+                    <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+
+                {donateMenuOpen ? (
+                  <div id="header-donate-menu" className="absolute top-full right-0 z-30 pt-3">
+                    <ul className="min-w-[14rem] animate-menu-in rounded-xl bg-surface p-2 shadow-raised">
+                      <li>
+                        <Link
+                          href="/track-donation"
+                          onClick={() => setDonateMenuOpen(false)}
+                          className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-[0.9375rem] whitespace-nowrap text-body transition-colors hover:bg-page hover:text-action"
+                        >
+                          Track Your Donation
+                        </Link>
+                      </li>
+                    </ul>
+                  </div>
+                ) : null}
               </div>
             ) : null}
 

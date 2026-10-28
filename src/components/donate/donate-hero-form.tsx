@@ -596,6 +596,7 @@ export function HeroForm({
           billing={billing}
           name={fullName}
           email={email}
+          organization={isOrganization ? organization.trim() : ""}
           payLabel={payLabel}
           preview={preview}
           resolvePayment={startPayment}

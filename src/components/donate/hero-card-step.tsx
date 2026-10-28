@@ -298,6 +298,7 @@ export function CardStep({
   billing,
   name,
   email,
+  organization,
   payLabel,
   preview = false,
   resolvePayment,
@@ -320,6 +321,8 @@ export function CardStep({
   billing: Billing | null;
   name: string;
   email: string;
+  /* The organization the donor typed, or an empty string when they are giving as themselves. */
+  organization: string;
   payLabel: string;
   /* A preview tab: Pay explains itself instead of starting a payment. */
   preview?: boolean;
@@ -328,6 +331,9 @@ export function CardStep({
   onPaid: (status: "succeeded" | "processing", reference?: { donationId: string }) => void;
   onBack: () => void;
 }) {
+  /* One line for the extras: the donor reads the amount, not a list of names. */
+  const addOnTotal = addOns.reduce((sum, addOn) => sum + addOn.amount, 0);
+
   return (
     <>
       <p className="mt-4 text-[0.8125rem] text-body">
@@ -336,6 +342,20 @@ export function CardStep({
 
       {/* What the charge is made of, so it can be read over before the card is entered. */}
       <dl className="mt-4 flex flex-col gap-2 rounded-lg border border-line bg-page px-4 py-3 text-[0.8125rem]">
+        {name.trim().length > 0 ? (
+          <div className="flex items-baseline justify-between gap-4">
+            <dt className="shrink-0 text-body">Donor</dt>
+            <dd className="min-w-0 truncate text-right font-semibold text-ink">{name}</dd>
+          </div>
+        ) : null}
+
+        {organization.trim().length > 0 ? (
+          <div className="flex items-baseline justify-between gap-4">
+            <dt className="shrink-0 text-body">Organization</dt>
+            <dd className="min-w-0 truncate text-right font-semibold text-ink">{organization}</dd>
+          </div>
+        ) : null}
+
         <div className="flex items-baseline justify-between gap-4">
           <dt className="text-body">Donation amount</dt>
           <dd className="font-semibold text-ink">
@@ -349,12 +369,12 @@ export function CardStep({
           <dd className="font-semibold text-ink">{money(extra)}</dd>
         </div>
 
-        {addOns.map((addOn) => (
-          <div key={addOn.id} className="flex items-baseline justify-between gap-4">
-            <dt className="min-w-0 truncate text-body">{addOn.name}</dt>
-            <dd className="shrink-0 font-semibold text-ink">{money(addOn.amount)}</dd>
+        {addOnTotal > 0 ? (
+          <div className="flex items-baseline justify-between gap-4">
+            <dt className="text-body">Add-ons</dt>
+            <dd className="font-semibold text-ink">{money(addOnTotal)}</dd>
           </div>
-        ))}
+        ) : null}
 
         {causeLabels.length > 0 ? (
           <div className="flex items-baseline justify-between gap-4">
@@ -382,20 +402,32 @@ export function CardStep({
         </div>
       </dl>
 
-      <Elements stripe={stripe} options={stripeLook}>
-        <CardFields
-          resolvePayment={resolvePayment}
-          isMonthly={isMonthly}
-          payLabel={payLabel}
-          preview={preview}
-          name={name}
-          email={email}
-          billing={billing}
-          onBillingChange={onBillingChange}
-          onPaid={onPaid}
-          onBack={onBack}
-        />
-      </Elements>
+      {/*
+        Stripe refuses to change the `stripe` prop after <Elements> has mounted. Mounting it while
+        the gateway is still loading (null) left the card fields dead for the rest of the visit,
+        and only closing and reopening the popup brought them back. So <Elements> now waits until
+        there is a real instance.
+      */}
+      {stripe ? (
+        <Elements stripe={stripe} options={stripeLook}>
+          <CardFields
+            resolvePayment={resolvePayment}
+            isMonthly={isMonthly}
+            payLabel={payLabel}
+            preview={preview}
+            name={name}
+            email={email}
+            billing={billing}
+            onBillingChange={onBillingChange}
+            onPaid={onPaid}
+            onBack={onBack}
+          />
+        </Elements>
+      ) : (
+        <p className="mt-5 text-[0.8125rem] text-body">
+          Preparing the secure card fields…
+        </p>
+      )}
     </>
   );
 }

@@ -93,6 +93,14 @@ export function SiteFooterBody({ content }: { content: FooterContent }) {
                 {brand.blurb}
               </p>
             ) : null}
+
+            {/* Kept in the brand column, so a donor finds it without reading the whole footer. */}
+            <Link
+              href="/track-donation"
+              className="mt-4 inline-block text-[0.8125rem] text-action underline underline-offset-4 hover:text-action-hover"
+            >
+              Track Your Donation
+            </Link>
           </div>
 
           {visible.contact ? (
@@ -190,15 +198,6 @@ export function SiteFooterBody({ content }: { content: FooterContent }) {
         </div>
 
         <hr className="mt-8 border-divider sm:mt-14" />
-
-        <div className="pt-6 text-center">
-          <Link
-            href="/track-donation"
-            className="text-[0.8125rem] text-action underline underline-offset-4 hover:text-action-hover"
-          >
-            Track Your Donation
-          </Link>
-        </div>
 
         {visible.copyright ? (
           <p className="pt-3 pb-4 text-center text-[0.75rem] text-ink sm:pb-0 sm:text-[0.875rem] sm:text-body">

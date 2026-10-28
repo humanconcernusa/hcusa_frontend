@@ -30,13 +30,11 @@ export function DonatePending({
   status,
   fallback,
   onClose,
-  onRetry,
 }: {
   open: boolean;
   status: "loading" | "unavailable";
   fallback: DonateFallbackContent;
   onClose: () => void;
-  onRetry: () => void;
 }) {
   useEffect(() => {
     if (!open) return;
@@ -102,14 +100,6 @@ export function DonatePending({
             >
               {fallback.buttonLabel || donateFallbackDefaults.buttonLabel}
             </a>
-
-            <button
-              type="button"
-              onClick={onRetry}
-              className="mt-3 w-full cursor-pointer text-center text-[0.8125rem] text-body underline underline-offset-4 transition-colors hover:text-ink"
-            >
-              Try again
-            </button>
           </>
         )}
       </div>
