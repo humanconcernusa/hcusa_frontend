@@ -12,6 +12,8 @@ import {
 } from "react";
 import { DonateModal } from "./donate-modal";
 import { DonatePending } from "./donate-pending";
+import { RecentDonationToast } from "./recent-donation-toast";
+import { useDonateFallback } from "./fallback-context";
 import { captureUtms } from "./utm";
 import { fetchDonationForms } from "@/donation-forms";
 import { loadStripeOnce } from "@/stripe-key";
@@ -42,12 +44,13 @@ export function DonateProvider({ children }: { children: ReactNode }) {
   */
   const [forms, setForms] = useState<DonateForm[]>([]);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
-  const [error, setError] = useState("");
   const [attempt, setAttempt] = useState(0);
 
   const [isOpen, setIsOpen] = useState(false);
   const [activeFormId, setActiveFormId] = useState<string | undefined>(undefined);
   const lastTrigger = useRef<HTMLElement | null>(null);
+  /* One setting for the whole site, read in the root layout from the published content file. */
+  const fallback = useDonateFallback();
 
   /* This provider wraps every page, so the campaign is captured the moment the donor lands. */
   useEffect(() => {
@@ -71,11 +74,9 @@ export function DonateProvider({ children }: { children: ReactNode }) {
         setForms(loaded);
         setStatus("ready");
       })
-      .catch((caught: unknown) => {
+      .catch(() => {
         if (!active) return;
-        setError(
-          caught instanceof Error ? caught.message : "The donation form could not be loaded.",
-        );
+        /* The popup's own words come from the admin, so the technical reason is not shown. */
         setStatus("error");
       });
 
@@ -102,7 +103,6 @@ export function DonateProvider({ children }: { children: ReactNode }) {
   /* A retry starts the wait again. Kept out of the effect so the effect only fetches. */
   const retry = useCallback(() => {
     setStatus("loading");
-    setError("");
     setAttempt((current) => current + 1);
   }, []);
 
@@ -129,13 +129,16 @@ export function DonateProvider({ children }: { children: ReactNode }) {
       ) : (
         <DonatePending
           open={isOpen}
-          /* Ready but nothing to show means this button's id is not one the API serves. */
-          status={status === "error" ? "error" : status === "ready" ? "missing" : "loading"}
-          message={error}
+          /* A form the API does not serve, and an API that did not answer, look the same here. */
+          status={status === "loading" ? "loading" : "unavailable"}
+          fallback={fallback}
           onClose={close}
           onRetry={retry}
         />
       )}
+
+      {/* The latest gifts, in the corner. It hides itself while the popup is open. */}
+      <RecentDonationToast />
     </DonateContext.Provider>
   );
 }

@@ -24,6 +24,7 @@ import {
   type ChildSponsorshipPageContent,
 } from "./child-sponsorship";
 import { contactDefaults, type ContactPageContent } from "./contact";
+import { donateFallbackDefaults, type DonateFallbackContent } from "./donate-fallback";
 import { floodReliefDefaults, type FloodReliefPageContent } from "./flood-relief";
 import { foodAidDefaults, type FoodAidPageContent } from "./food-aid";
 import { footerDefaults, type FooterContent } from "./footer";
@@ -132,6 +133,11 @@ export async function getPublishedHeader(): Promise<HeaderContent> {
 
 export async function getPublishedQuickDonate(): Promise<QuickDonateContent> {
   return readPublished("quick-donate", quickDonateDefaults);
+}
+
+/* The popup shown when a donation form cannot be opened. Used on every page. */
+export async function getPublishedDonateFallback(): Promise<DonateFallbackContent> {
+  return readPublished("donate-fallback", donateFallbackDefaults);
 }
 
 export async function getPublishedFooter(): Promise<FooterContent> {
@@ -249,6 +255,7 @@ export const PAGE_KEYS = [
   "careers",
   "child-sponsorship",
   "contact",
+  "donate-fallback",
   "flood-relief",
   "food-aid",
   "footer",

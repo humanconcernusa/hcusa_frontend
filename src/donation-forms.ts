@@ -9,7 +9,13 @@
   NEXT_PUBLIC_ because the browser makes the call; the value is inlined at build time.
 */
 
-import type { DonateForm, DonatePreset, DonatePurpose } from "@/content/donate";
+import type {
+  DonateAddOn,
+  DonateAddOnInput,
+  DonateForm,
+  DonatePreset,
+  DonatePurpose,
+} from "@/content/donate";
 
 const DONATION_API_URL = (process.env.NEXT_PUBLIC_DONATION_API_URL ?? "").replace(/\/+$/, "");
 
@@ -50,6 +56,73 @@ function readPurposes(value: unknown): DonatePurpose[] {
     .filter((purpose) => purpose.id.length > 0 && purpose.name.length > 0);
 }
 
+function readAddOnInput(value: unknown): DonateAddOnInput | null {
+  const row = (value ?? {}) as Record<string, unknown>;
+  const key = asText(row.key);
+  const label = asText(row.label);
+
+  if (key.length === 0 || label.length === 0) return null;
+
+  const type = row.type === "select" ? "select" : row.type === "number" ? "number" : "int";
+
+  return {
+    key,
+    label,
+    type,
+    required: row.required !== false,
+    min: typeof row.min === "number" ? row.min : null,
+    max: typeof row.max === "number" ? row.max : null,
+    step: typeof row.step === "number" ? row.step : null,
+    defaultValue:
+      typeof row.defaultValue === "string" || typeof row.defaultValue === "number"
+        ? row.defaultValue
+        : null,
+    options: Array.isArray(row.options)
+      ? row.options
+          .map((entry) => {
+            const option = (entry ?? {}) as { value?: unknown; label?: unknown };
+            return { value: asText(option.value), label: asText(option.label) };
+          })
+          .filter((option) => option.value.length > 0)
+      : [],
+  };
+}
+
+/* The extras the form offers. A row without an id cannot be paid for, so it is dropped. */
+function readAddOns(value: unknown): DonateAddOn[] {
+  if (!Array.isArray(value)) return [];
+
+  return value
+    .map((entry) => {
+      const row = (entry ?? {}) as Record<string, unknown>;
+      const id = asText(row.id);
+      const pricing = (row.pricing ?? {}) as Record<string, unknown>;
+
+      if (id.length === 0) return null;
+
+      const inputs = Array.isArray(pricing.inputs)
+        ? pricing.inputs.map(readAddOnInput).filter((input): input is DonateAddOnInput => input !== null)
+        : [];
+
+      return {
+        id,
+        name: asText(row.name) || "Add-on",
+        iconEmoji: asText(row.iconEmoji),
+        shortDescription: asText(row.shortDescription),
+        amountFieldLabel: asText(row.amountFieldLabel),
+        amount: asNumber(row.amount),
+        labelUnderAmount: asText(row.labelUnderAmount),
+        pricing: {
+          type: pricing.type === "formula" ? "formula" : "fixed",
+          baseUnitAmount: typeof pricing.baseUnitAmount === "number" ? pricing.baseUnitAmount : null,
+          formula: asText(pricing.formula),
+          inputs,
+        },
+      } satisfies DonateAddOn;
+    })
+    .filter((addOn): addOn is DonateAddOn => addOn !== null);
+}
+
 function readForm(value: unknown): DonateForm | null {
   const row = (value ?? {}) as Record<string, unknown>;
 
@@ -78,6 +151,9 @@ function readForm(value: unknown): DonateForm | null {
   if (row.feePercent !== null && row.feePercent !== undefined) {
     form.feePercent = asNumber(row.feePercent);
   }
+
+  const addOns = readAddOns(row.addons);
+  if (addOns.length > 0) form.addons = addOns;
 
   return form;
 }

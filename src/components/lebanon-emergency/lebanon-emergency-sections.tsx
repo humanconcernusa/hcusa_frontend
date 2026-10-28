@@ -2,6 +2,7 @@ import { Eyebrow, Media } from "@/components/ui";
 import { CountUp } from "@/components/count-up";
 import { DonateButton } from "@/components/donate/donate-button";
 import type { LebanonPageContent } from "@/content/lebanon-emergency";
+import { assetUrl } from "@/media";
 
 /*
   The Lebanon Emergency Relief sections, the same shape as the other appeals. The copy comes from
@@ -184,7 +185,7 @@ export function DonationHelps({ content }: { content: LebanonPageContent["helps"
                     default. h-10 with w-auto keeps whatever shape the icon was drawn at.
                   */
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={item.icon} alt="" className="h-10 w-auto" />
+                  <img src={assetUrl(item.icon)} alt="" className="h-10 w-auto" />
                 ) : (
                   <ReliefIcon index={index} />
                 )}

@@ -1,6 +1,7 @@
 import { Eyebrow, Media } from "@/components/ui";
 import { DonateButton } from "@/components/donate/donate-button";
 import type { SupportAfricaPageContent } from "@/content/support-africa";
+import { assetUrl } from "@/media";
 
 /*
   The Support Africa sections. The copy comes from src/content/support-africa.ts and every donate
@@ -112,7 +113,7 @@ export function ReliefGrid({ content }: { content: SupportAfricaPageContent["rel
                   by default.
                 */}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={item.icon} alt="" className="size-10" />
+                <img src={assetUrl(item.icon)} alt="" className="size-10" />
                 <p className="text-[0.875rem] leading-snug text-ink">
                   {item.line1}
                   <br />

@@ -1,8 +1,11 @@
 "use client";
 
+import { useRef } from "react";
+
 import type { DonatePreset } from "@/content/donate";
 import { FeeSlider } from "./fee-slider";
 import { HeartBurst, money, wording } from "./hero-parts";
+import { RisingHeart } from "./rising-heart";
 
 /*
   The amount half of the hero popup: the one-time / monthly switch, the stacked list of amounts,
@@ -20,6 +23,7 @@ export function AmountStep({
   extra,
   amountError,
   showFee,
+  heartBeat,
   onPickCadence,
   onPickAmount,
   onCustomFocus,
@@ -39,12 +43,17 @@ export function AmountStep({
   amountError: string;
   /* The admin can put a slider on this popup; it waits until an amount is picked. */
   showFee: boolean;
+  /* Bumped when Monthly is picked, which replays the heart rising off the button. */
+  heartBeat: number;
   onPickCadence: (monthly: boolean) => void;
   onPickAmount: (amount: number) => void;
   onCustomFocus: () => void;
   onCustomChange: (raw: string) => void;
   onFeeChange: (percent: number) => void;
 }) {
+  /* Where the floating heart starts: the small heart inside the Monthly choice. */
+  const monthlyHeartRef = useRef<HTMLSpanElement | null>(null);
+
   return (
     <>
       {/*
@@ -79,7 +88,7 @@ export function AmountStep({
             >
               {option.monthly ? (
                 /* The heart lies flat and grey until Monthly is picked, then it beats. */
-                <span aria-hidden="true" className="relative inline-flex">
+                <span ref={monthlyHeartRef} aria-hidden="true" className="relative inline-flex">
                   <span className={selected ? "inline-flex animate-bump" : "inline-flex"}>
                     <svg
                       viewBox="0 0 24 24"
@@ -98,6 +107,9 @@ export function AmountStep({
           );
         })}
       </div>
+
+      {/* Drawn on <body> with a high z-index, so nothing in the popup can cover it. */}
+      <RisingHeart trigger={heartBeat} anchorRef={monthlyHeartRef} />
 
       <div className="mt-4 flex flex-col gap-2">
         {amounts.map((preset, index) => {

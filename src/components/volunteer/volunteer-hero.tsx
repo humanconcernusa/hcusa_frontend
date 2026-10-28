@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { ButtonLink, Callout } from "@/components/ui";
 import type { VolunteerPageContent } from "@/content/volunteer";
+import { assetUrl } from "@/media";
 
 /*
   The Volunteer hero. Same white card over a photo as the appeal pages, but with two buttons side
@@ -27,7 +28,7 @@ export function VolunteerHero({ content }: { content: VolunteerPageContent["hero
             {/* A plain image, not next/image: this is an SVG, which next/image refuses. */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/images/volunteer/heart.svg"
+              src={assetUrl("/images/volunteer/heart.svg")}
               alt=""
               className="size-5 shrink-0 origin-center animate-heartbeat"
             />

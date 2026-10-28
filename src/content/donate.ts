@@ -20,6 +20,41 @@ export type DonatePurpose = {
   name: string;
 };
 
+/*
+  One input a formula add-on asks for. `select` carries its choices; the others are numbers.
+*/
+export type DonateAddOnInput = {
+  key: string;
+  label: string;
+  type: "int" | "number" | "select";
+  required: boolean;
+  min: number | null;
+  max: number | null;
+  step: number | null;
+  defaultValue: string | number | null;
+  options: { value: string; label: string }[];
+};
+
+/*
+  One extra the form offers. The price and the fund code live on the platform's add-on, never on
+  the form, so the popup only shows what the platform already decided.
+*/
+export type DonateAddOn = {
+  id: string;
+  name: string;
+  iconEmoji: string;
+  shortDescription: string;
+  amountFieldLabel: string;
+  amount: number;
+  labelUnderAmount: string;
+  pricing: {
+    type: "fixed" | "formula";
+    baseUnitAmount: number | null;
+    formula: string;
+    inputs: DonateAddOnInput[];
+  };
+};
+
 export type DonateForm = {
   /*
     The slug. The site's own content points at a popup by slug (`form: "palestine"`), so this is
@@ -51,7 +86,28 @@ export type DonateForm = {
     MAX_FEE_PERCENT. Left out, the popup shows no slider at all.
   */
   feePercent?: number;
+  /* The extras this form offers. Empty or absent means no add-on section is drawn. */
+  addons?: DonateAddOn[];
 };
+
+/*
+  The price of an add-on for the values typed. The platform multiplies the base by each input, and
+  it recomputes the same figure when the donation is submitted.
+*/
+export function addOnAmount(addOn: DonateAddOn, values: Record<string, string>): number {
+  const pricing = addOn.pricing;
+
+  if (!pricing || pricing.type !== "formula") return addOn.amount;
+
+  const base =
+    typeof pricing.baseUnitAmount === "number" ? pricing.baseUnitAmount : addOn.amount;
+
+  return pricing.inputs.reduce((total, input) => {
+    const raw = values[input.key] ?? input.defaultValue ?? 1;
+    const n = Number(raw);
+    return total * (Number.isFinite(n) ? n : 1);
+  }, base);
+}
 
 /* The most a donor can add on top through the slider, as a percentage of their gift. */
 export const MAX_FEE_PERCENT = 20;

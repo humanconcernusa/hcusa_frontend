@@ -1,6 +1,7 @@
 import { Eyebrow, Media } from "@/components/ui";
 import { DonateButton } from "@/components/donate/donate-button";
 import type { PalestinePageContent } from "@/content/palestine-relief";
+import { assetUrl } from "@/media";
 
 /*
   The Palestine Emergency Relief sections. The copy comes from src/content/palestine-relief.ts and
@@ -190,7 +191,7 @@ export function DonationHelps({ content }: { content: PalestinePageContent["help
                   /* A plain image, not next/image: these are SVGs, which next/image
                      refuses by default. */
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={item.icon} alt="" className="size-10" />
+                  <img src={assetUrl(item.icon)} alt="" className="size-10" />
                 ) : (
                   <ReliefIcon index={index} />
                 )}

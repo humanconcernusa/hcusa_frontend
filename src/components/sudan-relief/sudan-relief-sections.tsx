@@ -2,6 +2,7 @@ import { Eyebrow, Media } from "@/components/ui";
 import { CountUp } from "@/components/count-up";
 import { DonateButton } from "@/components/donate/donate-button";
 import type { SudanPageContent } from "@/content/sudan-relief";
+import { assetUrl } from "@/media";
 
 /*
   The Sudan Emergency Relief sections. The copy comes from src/content/sudan-relief.ts and every
@@ -180,7 +181,7 @@ export function DonationHelps({ content }: { content: SudanPageContent["helps"] 
                     default.
                   */
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={item.icon} alt="" className="size-10" />
+                  <img src={assetUrl(item.icon)} alt="" className="size-10" />
                 ) : (
                   <ReliefIcon index={index} />
                 )}

@@ -3,9 +3,13 @@ import { Poppins, Roboto } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
 import { BackToTop } from "@/components/back-to-top";
+import { DonateFallbackProvider } from "@/components/donate/fallback-context";
 import { QuickDonateProvider } from "@/components/donate/quick-donate-context";
 import { SmoothAnchors } from "@/components/smooth-anchors";
-import { getPublishedQuickDonate } from "@/content/published";
+import {
+  getPublishedDonateFallback,
+  getPublishedQuickDonate,
+} from "@/content/published";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -47,7 +51,10 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     The Quick Donate tab shows on every page, so its one setting is read here, from the published
     content file, and handed down to every page through the provider.
   */
-  const quickDonate = await getPublishedQuickDonate();
+  const [quickDonate, donateFallback] = await Promise.all([
+    getPublishedQuickDonate(),
+    getPublishedDonateFallback(),
+  ]);
 
   return (
     <html
@@ -55,7 +62,9 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       className={`${poppins.variable} ${roboto.variable} ${brittiSans.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-page text-body font-body">
-        <QuickDonateProvider value={quickDonate}>{children}</QuickDonateProvider>
+        <DonateFallbackProvider value={donateFallback}>
+          <QuickDonateProvider value={quickDonate}>{children}</QuickDonateProvider>
+        </DonateFallbackProvider>
         <SmoothAnchors />
         <BackToTop />
       </body>

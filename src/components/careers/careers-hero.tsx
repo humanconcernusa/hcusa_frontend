@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { ButtonLink, Callout } from "@/components/ui";
 import type { CareerPageContent } from "@/content/careers";
+import { assetUrl } from "@/media";
 
 /*
   The Careers hero. Same white card over a photo as the Volunteer page, with the person-and-plus
@@ -27,7 +28,7 @@ export function CareersHero({ content }: { content: CareerPageContent["hero"] })
             {/* A plain image, not next/image: this is an SVG, which next/image refuses. */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/images/careers/badge-join.svg"
+              src={assetUrl("/images/careers/badge-join.svg")}
               alt=""
               className="size-5 shrink-0 origin-center animate-heartbeat"
             />

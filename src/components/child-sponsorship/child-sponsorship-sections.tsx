@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { useState } from "react";
 import { DonateButton } from "@/components/donate/donate-button";
 import type { ChildSponsorshipPageContent } from "@/content/child-sponsorship";
+import { assetUrl } from "@/media";
 
 /*
   The three bands this page does not share: the four-card "Why" band, the map of the countries
@@ -60,7 +61,7 @@ export function WhySponsor({ content }: { content: ChildSponsorshipPageContent["
               {/* A plain image, not next/image: these are SVGs, which next/image refuses
                   by default. */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={WHY_ICONS[index % WHY_ICONS.length]} alt="" className="size-12" />
+              <img src={assetUrl(WHY_ICONS[index % WHY_ICONS.length])} alt="" className="size-12" />
               <p className="text-[1rem] font-medium text-ink">{card.title}</p>
             </li>
           ))}

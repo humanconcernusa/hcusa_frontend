@@ -63,6 +63,11 @@ export type DonationSubmitBody = {
   formId: string;
   /* Which site this is. The platform records it, so its admin can tell a hcusa gift apart. */
   source: string;
+  /*
+    The extras the donor ticked. Only the id and the typed values travel; the platform prices each
+    one from its own add-on settings and refuses an id the form does not offer.
+  */
+  addons?: { items: { addOnId: string; values?: Record<string, string> }[] };
   info: DonationInfo;
   paymentMethod: "stripe";
   payment:

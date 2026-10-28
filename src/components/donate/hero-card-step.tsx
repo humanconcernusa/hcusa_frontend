@@ -293,6 +293,7 @@ export function CardStep({
   causeLabels,
   isMonthly,
   totalLabel,
+  addOns,
   stripe,
   billing,
   name,
@@ -312,6 +313,8 @@ export function CardStep({
   causeLabels: string[];
   isMonthly: boolean;
   totalLabel: string;
+  /* The ticked add-ons by name and price, for the summary. */
+  addOns: { id: string; name: string; amount: number }[];
   /* The instance for the platform's default gateway, which the payment is pinned to. */
   stripe: Stripe | Promise<Stripe | null> | null;
   billing: Billing | null;
@@ -345,6 +348,13 @@ export function CardStep({
           <dt className="text-body">{feePercent > 0 ? `Fees (${feePercent}%)` : "Fees"}</dt>
           <dd className="font-semibold text-ink">{money(extra)}</dd>
         </div>
+
+        {addOns.map((addOn) => (
+          <div key={addOn.id} className="flex items-baseline justify-between gap-4">
+            <dt className="min-w-0 truncate text-body">{addOn.name}</dt>
+            <dd className="shrink-0 font-semibold text-ink">{money(addOn.amount)}</dd>
+          </div>
+        ))}
 
         {causeLabels.length > 0 ? (
           <div className="flex items-baseline justify-between gap-4">

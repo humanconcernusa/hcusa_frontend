@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type RefObject } from "react";
-import { extraPercent, presetsFor, type DonateForm } from "@/content/donate";
+import { addOnAmount, extraPercent, presetsFor, type DonateForm } from "@/content/donate";
 import type { UtmData } from "@/content/utm";
 import {
   MONTHLY_TERM,
@@ -98,6 +98,11 @@ export function HeroForm({
   const [feePercent, setFeePercent] = useState(form.feePercent ?? 0);
   /* The purposes are a multi-choice list, so two or more can be picked at once. Kept by id. */
   const [purposes, setPurposes] = useState<string[]>([]);
+  /* The add-ons the donor ticked, and the values typed into a formula add-on's inputs. */
+  const [chosenAddOns, setChosenAddOns] = useState<string[]>([]);
+  const [addOnValues, setAddOnValues] = useState<Record<string, Record<string, string>>>({});
+  /* Bumped when Monthly is picked, which replays the rising heart. */
+  const [heartBeat, setHeartBeat] = useState(0);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -157,6 +162,14 @@ export function HeroForm({
     };
   }, []);
 
+  /* The rising heart is removed once it has faded, so no invisible node stays over the button. */
+  useEffect(() => {
+    if (heartBeat === 0) return undefined;
+
+    const timer = window.setTimeout(() => setHeartBeat(0), 3900);
+    return () => window.clearTimeout(timer);
+  }, [heartBeat]);
+
   const value = Number.parseFloat(amount) || 0;
   /* Stripe and the server each take a single name, so the two fields are joined for them. */
   const fullName = [firstName, lastName]
@@ -165,9 +178,20 @@ export function HeroForm({
     .join(" ");
   /* The type decides which amounts are offered: a form may keep a monthly list of its own. */
   const amounts = presetsFor(form, isMonthly);
+  /* The extras the donor ticked, priced from the platform's own add-on settings. */
+  const addOnList = form.addons ?? [];
+  const chosenAddOnsDetail = addOnList
+    .filter((addOn) => chosenAddOns.includes(addOn.id))
+    .map((addOn) => ({
+      id: addOn.id,
+      name: addOn.name,
+      amount: addOnAmount(addOn, addOnValues[addOn.id] ?? {}),
+    }));
+  const addOnTotal = chosenAddOnsDetail.reduce((sum, addOn) => sum + addOn.amount, 0);
+
   /* The same total the server works out, so the button and the charge agree. */
   const extra = extraPercent(value, feePercent);
-  const total = value + extra;
+  const total = value + extra + addOnTotal;
   const totalLabel = `$${total.toFixed(2)}`;
   /* The pay button names what it does, and the cadence on a monthly gift. */
   const payLabel = isMonthly ? `Donate ${totalLabel}/Month` : `Donate ${totalLabel}`;
@@ -217,17 +241,35 @@ export function HeroForm({
     setPurposeError("");
   }
 
-  /* Switching cadence throws the screen burst on the way into Monthly, not on every click. */
+  /* Monthly gets a heart rising up, not a confetti burst: the gift is a promise, not a party. */
   function pickCadence(monthly: boolean) {
-    if (monthly && !isMonthly && confettiCanvas.current) {
-      throwScreenConfetti(confettiCanvas.current);
-    }
+    if (monthly && !isMonthly) setHeartBeat((count) => count + 1);
 
     setIsMonthly(monthly);
     /* Each type has its own amounts, so the picked one is let go. */
     setAmount("");
     setIsCustom(false);
     setAmountError("");
+  }
+
+  /* Ticking an add-on is the small win, so it gets the confetti burst. */
+  function toggleAddOn(id: string) {
+    const wasChosen = chosenAddOns.includes(id);
+
+    setChosenAddOns((prev) =>
+      prev.includes(id) ? prev.filter((value) => value !== id) : [...prev, id],
+    );
+
+    if (!wasChosen && confettiCanvas.current) {
+      throwScreenConfetti(confettiCanvas.current);
+    }
+  }
+
+  function setAddOnValue(addOnId: string, key: string, next: string) {
+    setAddOnValues((prev) => ({
+      ...prev,
+      [addOnId]: { ...(prev[addOnId] ?? {}), [key]: next },
+    }));
   }
 
   /* The platform's own body. The tip is a figure of its own, so the causes sum to the gift. */
@@ -282,6 +324,17 @@ export function HeroForm({
             }),
       },
       ...(Object.keys(campaign).length > 0 ? { utm: campaign } : {}),
+      /* Only the ticked add-ons travel; the platform prices them from its own settings. */
+      ...(chosenAddOns.length > 0
+        ? {
+            addons: {
+              items: chosenAddOns.map((id) => ({
+                addOnId: id,
+                values: addOnValues[id] ?? {},
+              })),
+            },
+          }
+        : {}),
     };
   }
 
@@ -472,6 +525,9 @@ export function HeroForm({
                 {extra > 0 ? (
                   <ReceiptRow label="Platform fee" value={money2(extra)} />
                 ) : null}
+                {chosenAddOnsDetail.map((addOn) => (
+                  <ReceiptRow key={addOn.id} label={addOn.name} value={money2(addOn.amount)} />
+                ))}
                 <ReceiptRow
                   label={isMonthly ? "Charged each month" : "Total charged"}
                   value={totalLabel}
@@ -547,6 +603,7 @@ export function HeroForm({
           causeLabels={chosenPurposes.map((purpose) => purpose.name)}
           isMonthly={isMonthly}
           totalLabel={totalLabel}
+          addOns={chosenAddOnsDetail}
           stripe={gateway ? gateway.stripe : null}
           billing={billing}
           name={fullName}
@@ -581,6 +638,7 @@ export function HeroForm({
             extra={extra}
             amountError={amountError}
             showFee={form.feePercent !== undefined && value > 0}
+            heartBeat={heartBeat}
             onPickCadence={pickCadence}
             onPickAmount={(picked) => {
               setAmount(String(picked));
@@ -607,6 +665,11 @@ export function HeroForm({
           />
 
           <DetailsStep
+            addOns={addOnList}
+            chosenAddOns={chosenAddOns}
+            addOnValues={addOnValues}
+            onToggleAddOn={toggleAddOn}
+            onAddOnValue={setAddOnValue}
             purposes={form.purposes ?? []}
             chosen={purposes}
             purposeError={purposeError}

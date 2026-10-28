@@ -5,6 +5,7 @@ import { useState } from "react";
 import { DonateButton } from "@/components/donate/donate-button";
 import { Button, ButtonLink } from "@/components/ui";
 import type { ZakatPageContent } from "@/content/zakat";
+import { assetUrl } from "@/media";
 import { ZakatCalculator } from "./zakat-calculator";
 
 /*
@@ -90,7 +91,7 @@ export function WhyZakat({
               {/* A plain image, not next/image: these are SVGs, which next/image refuses
                   by default. */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={WHY_ICONS[index % WHY_ICONS.length]} alt="" className="size-12" />
+              <img src={assetUrl(WHY_ICONS[index % WHY_ICONS.length])} alt="" className="size-12" />
               <p className="text-[1rem] font-medium text-ink">{card.title}</p>
             </li>
           ))}
@@ -133,7 +134,7 @@ export function WhoCanReceive({ content }: { content: ZakatPageContent["who"] })
               </div>
 
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={CATEGORY_ICON} alt="" className="mt-1 md:size-6 size-4 shrink-0" />
+              <img src={assetUrl(CATEGORY_ICON)} alt="" className="mt-1 md:size-6 size-4 shrink-0" />
             </li>
           ))}
         </ul>

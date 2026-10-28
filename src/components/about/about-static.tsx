@@ -3,6 +3,7 @@ import { StoryQuote } from "@/components/about/about-interactive";
 import { CountUp } from "@/components/count-up";
 import { ButtonLink, Eyebrow, Media } from "@/components/ui";
 import type { AboutPageContent } from "@/content/about";
+import { assetUrl } from "@/media";
 
 /*
   The About Us sections that need no interactivity, so they stay server-rendered.
@@ -270,7 +271,7 @@ export function Partners({ content }: { content: AboutPageContent["partners"] })
                 refuses by default, and the logos must not be cropped.
               */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={logo.image} alt={logo.name} className="max-h-16 w-full object-contain" />
+              <img src={assetUrl(logo.image)} alt={logo.name} className="max-h-16 w-full object-contain" />
             </li>
           ))}
         </ul>

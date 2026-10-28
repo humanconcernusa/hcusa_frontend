@@ -2,6 +2,7 @@ import Image from "next/image";
 import { DonateButton } from "@/components/donate/donate-button";
 import { Callout } from "@/components/ui";
 import type { SadaqahPageContent } from "@/content/sadaqah";
+import { assetUrl } from "@/media";
 
 /*
   The Sadaqah hero. Same arrangement as the other appeal heroes — a white card over the photo —
@@ -27,7 +28,7 @@ export function SadaqahHero({ content }: { content: SadaqahPageContent["hero"] }
             {/* A plain image, not next/image: this is an SVG, which next/image refuses. */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/images/sadaqah/badge-sadaqah.svg"
+              src={assetUrl("/images/sadaqah/badge-sadaqah.svg")}
               alt=""
               className="size-[26px] shrink-0 origin-center animate-badge-beat"
             />

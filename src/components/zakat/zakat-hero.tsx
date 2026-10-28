@@ -2,6 +2,7 @@ import Image from "next/image";
 import { DonateButton } from "@/components/donate/donate-button";
 import { Callout } from "@/components/ui";
 import type { ZakatPageContent } from "@/content/zakat";
+import { assetUrl } from "@/media";
 
 /*
   The Zakat hero. Same arrangement as the other appeal heroes — a white card over the photo —
@@ -27,7 +28,7 @@ export function ZakatHero({ content }: { content: ZakatPageContent["hero"] }) {
             {/* A plain image, not next/image: this is an SVG, which next/image refuses. */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/images/zakat/badge-zakat.svg"
+              src={assetUrl("/images/zakat/badge-zakat.svg")}
               alt=""
               className="size-[26px] shrink-0 origin-center animate-badge-beat"
             />

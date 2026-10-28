@@ -2,23 +2,39 @@
 
 import { useEffect } from "react";
 
+import {
+  donateFallbackDefaults,
+  type DonateFallbackContent,
+} from "@/content/donate-fallback";
+
 /*
-  Drawn when a donation button is pressed but the popup's amounts are not in hand: the donation
-  API is either still answering or could not be reached.
+  Drawn when a donation button is pressed but there is no popup to show: the donation API is still
+  answering, or it could not open the form at all.
+
+  The words on the unavailable screen are edited in the admin and shared by every page, so one
+  change reaches every donate button on the site. The button sends the donor to a fixed payment
+  page, which keeps a gift possible while the form cannot be opened.
 
   It deliberately never falls back to another form's amounts. Showing a donor the wrong figures
   would be worse than showing nothing.
 */
+
+/* Only a web address or a path on this site is used; anything else keeps the shipped link. */
+function safeUrl(value: string): string {
+  const url = String(value || "").trim();
+  return /^(https?:\/\/|\/)/.test(url) ? url : donateFallbackDefaults.buttonUrl;
+}
+
 export function DonatePending({
   open,
   status,
-  message,
+  fallback,
   onClose,
   onRetry,
 }: {
   open: boolean;
-  status: "loading" | "error" | "missing";
-  message: string;
+  status: "loading" | "unavailable";
+  fallback: DonateFallbackContent;
   onClose: () => void;
   onRetry: () => void;
 }) {
@@ -36,23 +52,7 @@ export function DonatePending({
 
   if (!open) return null;
 
-  /*
-    "missing" is a button pointing at a form the donation API no longer serves. Saying so beats
-    the click that used to do nothing at all, which is what a donor would otherwise see.
-  */
-  const heading =
-    status === "loading"
-      ? "Loading the donation form"
-      : status === "missing"
-        ? "This donation form is not available"
-        : "We could not open the donation form";
-
-  const body =
-    status === "loading"
-      ? "Just a moment."
-      : status === "missing"
-        ? message || "It may have been unpublished. Try again, or use another way to give."
-        : message || "The donation form could not be loaded. Please try again.";
+  const heading = status === "loading" ? "Loading the donation form" : fallback.title;
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto px-4 max-sm:px-0">
@@ -84,18 +84,33 @@ export function DonatePending({
           </button>
         </div>
 
-        <p aria-live="polite" className="mt-3 text-[0.9375rem] text-body">
-          {body}
-        </p>
+        {status === "loading" ? (
+          <p aria-live="polite" className="mt-3 text-[0.9375rem] text-body">
+            Just a moment.
+          </p>
+        ) : (
+          <>
+            <p className="mt-3 text-[0.9375rem] text-body">{fallback.description}</p>
 
-        {status === "loading" ? null : (
-          <button
-            type="button"
-            onClick={onRetry}
-            className="mt-5 min-h-11 w-full cursor-pointer rounded-full bg-action px-6 text-[0.9375rem] font-medium text-white transition-colors hover:bg-action-hover"
-          >
-            Try again
-          </button>
+            {fallback.extraText.length > 0 ? (
+              <p className="mt-2 text-[0.875rem] text-body">{fallback.extraText}</p>
+            ) : null}
+
+            <a
+              href={safeUrl(fallback.buttonUrl)}
+              className="mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-full bg-action px-6 text-[0.9375rem] font-medium text-white transition-colors hover:bg-action-hover"
+            >
+              {fallback.buttonLabel || donateFallbackDefaults.buttonLabel}
+            </a>
+
+            <button
+              type="button"
+              onClick={onRetry}
+              className="mt-3 w-full cursor-pointer text-center text-[0.8125rem] text-body underline underline-offset-4 transition-colors hover:text-ink"
+            >
+              Try again
+            </button>
+          </>
         )}
       </div>
     </div>

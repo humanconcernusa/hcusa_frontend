@@ -1,7 +1,7 @@
 "use client";
 
-import type { DonatePurpose } from "@/content/donate";
-import { CardIcon, detailsField } from "./hero-parts";
+import { addOnAmount, type DonateAddOn, type DonatePurpose } from "@/content/donate";
+import { CardIcon, detailsField, money } from "./hero-parts";
 
 /*
   The details half of the hero popup: the purpose pills, the reader's name and email, the
@@ -13,6 +13,11 @@ import { CardIcon, detailsField } from "./hero-parts";
 */
 
 export function DetailsStep({
+  addOns,
+  chosenAddOns,
+  addOnValues,
+  onToggleAddOn,
+  onAddOnValue,
   purposes,
   chosen,
   purposeError,
@@ -34,6 +39,12 @@ export function DetailsStep({
   cardError,
   onOpenCard,
 }: {
+  /* The extras this form offers. Empty means the section is not drawn at all. */
+  addOns: DonateAddOn[];
+  chosenAddOns: string[];
+  addOnValues: Record<string, Record<string, string>>;
+  onToggleAddOn: (id: string) => void;
+  onAddOnValue: (addOnId: string, key: string, value: string) => void;
   /* The purposes the admin gave this popup. Empty means the section is not drawn at all. */
   purposes: DonatePurpose[];
   /* The ids of the ones the donor picked. */
@@ -60,6 +71,96 @@ export function DetailsStep({
   return (
     <>
       <div className="mt-5 border-t border-divider" />
+
+      {/* The extras sit above the purposes, so the donor picks them before the cause. */}
+      {addOns.length > 0 ? (
+        <>
+          <p className="mt-5 text-[0.8125rem] font-normal text-ink">Add-ons</p>
+          <div className="mt-2.5 flex flex-col gap-2">
+            {addOns.map((addOn) => {
+              const selected = chosenAddOns.includes(addOn.id);
+              const values = addOnValues[addOn.id] ?? {};
+              const inputs = addOn.pricing.inputs;
+
+              return (
+                <div
+                  key={addOn.id}
+                  className={`rounded-lg border px-3 py-3 transition-colors ${
+                    selected ? "border-action" : "border-line"
+                  }`}
+                >
+                  <label className="flex cursor-pointer items-start gap-3">
+                    <input
+                      type="checkbox"
+                      checked={selected}
+                      onChange={() => onToggleAddOn(addOn.id)}
+                      className="mt-1 size-4 shrink-0 accent-action"
+                    />
+
+                    <span className="min-w-0 flex-1">
+                      <span className="flex items-baseline justify-between gap-3">
+                        <span className="text-[0.875rem] font-medium text-ink">
+                          {addOn.iconEmoji.length > 0 ? `${addOn.iconEmoji} ` : ""}
+                          {addOn.name}
+                        </span>
+                        <span className="shrink-0 text-[0.8125rem] font-semibold text-action">
+                          {money(addOnAmount(addOn, values))}
+                        </span>
+                      </span>
+
+                      {addOn.shortDescription.length > 0 ? (
+                        <span className="mt-0.5 block text-[0.75rem] text-body">
+                          {addOn.shortDescription}
+                        </span>
+                      ) : null}
+                    </span>
+                  </label>
+
+                  {selected && inputs.length > 0 ? (
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      {inputs.map((input) => {
+                        const current = values[input.key] ?? String(input.defaultValue ?? "");
+
+                        return (
+                          <label key={input.key} className="text-[0.75rem] text-body">
+                            {input.label}
+                            {input.type === "select" ? (
+                              <select
+                                value={current}
+                                onChange={(event) =>
+                                  onAddOnValue(addOn.id, input.key, event.target.value)
+                                }
+                                className="mt-1 min-h-9 w-full rounded-md border border-line bg-surface px-2 text-[0.8125rem] text-ink outline-none focus:border-action"
+                              >
+                                {input.options.map((option) => (
+                                  <option key={option.value} value={option.value}>
+                                    {option.label}
+                                  </option>
+                                ))}
+                              </select>
+                            ) : (
+                              <input
+                                inputMode="numeric"
+                                value={current}
+                                onChange={(event) =>
+                                  onAddOnValue(addOn.id, input.key, event.target.value)
+                                }
+                                className="mt-1 min-h-9 w-full rounded-md border border-line bg-surface px-2 text-[0.8125rem] text-ink outline-none focus:border-action"
+                              />
+                            )}
+                          </label>
+                        );
+                      })}
+                    </div>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="mt-5 border-t border-divider" />
+        </>
+      ) : null}
 
       {/* Only a form the admin has given purposes to shows this section. */}
       {purposes.length > 0 ? (

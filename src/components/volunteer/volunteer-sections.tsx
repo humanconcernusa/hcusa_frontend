@@ -8,6 +8,7 @@ import {
   ReliefIcon,
 } from "@/components/volunteer/volunteer-icons";
 import type { VolunteerPageContent } from "@/content/volunteer";
+import { assetUrl } from "@/media";
 
 /*
   The four bands the Volunteer page does not share with any other. Every glyph is drawn in
@@ -116,7 +117,7 @@ export function VolunteerExperiences({
           <span className="inline-flex items-center gap-2.5 rounded-full border border-white/20 bg-white/5 py-1 pr-4 pl-1">
             <span className="grid size-7 shrink-0 place-items-center rounded-full bg-action">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/images/volunteer/heart.svg" alt="" className="size-[18px]" />
+              <img src={assetUrl("/images/volunteer/heart.svg")} alt="" className="size-[18px]" />
             </span>
             <span className="text-[0.75rem] font-medium tracking-[0.14em] text-white uppercase">
               {content.eyebrow}
