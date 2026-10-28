@@ -34,7 +34,8 @@ export function RecentDonationToast() {
   const { isOpen, open } = useDonate();
   const [items, setItems] = useState<RecentDonation[]>([]);
   const [index, setIndex] = useState(0);
-  const [visible, setVisible] = useState(false);
+  /* Which notice is on screen; null means none. Set from the timers only, never during a render. */
+  const [shown, setShown] = useState<number | null>(null);
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
@@ -54,16 +55,13 @@ export function RecentDonationToast() {
   }, []);
 
   useEffect(() => {
-    if (dismissed || isOpen || items.length === 0) {
-      setVisible(false);
-      return undefined;
-    }
+    if (dismissed || isOpen || items.length === 0) return undefined;
 
     const delay = index === 0 ? FIRST_DELAY_MS : BETWEEN_DELAY_MS;
 
-    const show = window.setTimeout(() => setVisible(true), delay);
+    const show = window.setTimeout(() => setShown(index), delay);
     const next = window.setTimeout(() => {
-      setVisible(false);
+      setShown(null);
       setIndex((current) => (current + 1) % items.length);
     }, delay + SHOW_MS);
 
@@ -73,9 +71,9 @@ export function RecentDonationToast() {
     };
   }, [dismissed, index, isOpen, items.length]);
 
-  const item = items[index];
+  const item = shown === null ? null : items[shown];
 
-  if (!item || !visible || isOpen) return null;
+  if (!item || isOpen || dismissed) return null;
 
   return (
     <div
@@ -112,7 +110,7 @@ export function RecentDonationToast() {
           type="button"
           onClick={() => {
             setDismissed(true);
-            setVisible(false);
+            setShown(null);
           }}
           aria-label="Close"
           className="shrink-0 cursor-pointer text-body transition-colors hover:text-ink"

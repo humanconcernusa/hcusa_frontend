@@ -101,8 +101,6 @@ export function HeroForm({
   /* The add-ons the donor ticked, and the values typed into a formula add-on's inputs. */
   const [chosenAddOns, setChosenAddOns] = useState<string[]>([]);
   const [addOnValues, setAddOnValues] = useState<Record<string, Record<string, string>>>({});
-  /* Bumped when Monthly is picked, which replays the rising heart. */
-  const [heartBeat, setHeartBeat] = useState(0);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -161,14 +159,6 @@ export function HeroForm({
       active = false;
     };
   }, []);
-
-  /* The rising heart is removed once it has faded, so no invisible node stays over the button. */
-  useEffect(() => {
-    if (heartBeat === 0) return undefined;
-
-    const timer = window.setTimeout(() => setHeartBeat(0), 3900);
-    return () => window.clearTimeout(timer);
-  }, [heartBeat]);
 
   const value = Number.parseFloat(amount) || 0;
   /* Stripe and the server each take a single name, so the two fields are joined for them. */
@@ -243,8 +233,6 @@ export function HeroForm({
 
   /* Monthly gets a heart rising up, not a confetti burst: the gift is a promise, not a party. */
   function pickCadence(monthly: boolean) {
-    if (monthly && !isMonthly) setHeartBeat((count) => count + 1);
-
     setIsMonthly(monthly);
     /* Each type has its own amounts, so the picked one is let go. */
     setAmount("");
@@ -638,7 +626,6 @@ export function HeroForm({
             extra={extra}
             amountError={amountError}
             showFee={form.feePercent !== undefined && value > 0}
-            heartBeat={heartBeat}
             onPickCadence={pickCadence}
             onPickAmount={(picked) => {
               setAmount(String(picked));
