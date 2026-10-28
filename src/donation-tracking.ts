@@ -9,7 +9,13 @@
 
 const DONATION_API_URL = (process.env.NEXT_PUBLIC_DONATION_API_URL ?? "").replace(/\/+$/, "");
 
+const HUMAN_CONCERN_URL = (process.env.NEXT_PUBLIC_HUMAN_CONCERN_URL ?? "").replace(/\/+$/, "");
+
 const REQUEST_TIMEOUT_MS = 10000;
+
+/* A donor who already has an account signs in here. Empty hides the log in button. */
+export const HUMAN_CONCERN_LOGIN_URL =
+  HUMAN_CONCERN_URL.length > 0 ? `${HUMAN_CONCERN_URL}/user/login` : "";
 
 /* The source value the custom site sends with every donation it submits. */
 const SOURCE = "hcusa";

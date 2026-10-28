@@ -55,6 +55,7 @@ jobs:
           NEXT_PUBLIC_MEDIA_URL: ${{ vars.MEDIA_URL }}
           NEXT_PUBLIC_CARTO_API_KEY: ${{ vars.CARTO_API_KEY }}
           NEXT_PUBLIC_CMS_URL: ${{ vars.CMS_URL }}
+          NEXT_PUBLIC_HUMAN_CONCERN_URL: ${{ vars.HUMAN_CONCERN_URL }}
 
       # The build must not contain the admin. If it ever does, stop before it goes live.
       - name: No admin in the export

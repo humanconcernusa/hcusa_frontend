@@ -7,6 +7,7 @@ import { useSearchParams } from "next/navigation";
 import {
   fetchTrackedDonation,
   fetchTrackedDonations,
+  HUMAN_CONCERN_LOGIN_URL,
   requestTrackLink,
   TrackError,
   type TrackedDonation,
@@ -138,6 +139,15 @@ function EmailForm() {
           <p className="text-[0.9375rem] leading-relaxed text-body">
             {result.message || "If we found donations for that email, we've sent a link."}
           </p>
+
+          {result.registered && HUMAN_CONCERN_LOGIN_URL.length > 0 ? (
+            <a
+              href={HUMAN_CONCERN_LOGIN_URL}
+              className="mt-4 inline-flex min-h-11 items-center justify-center rounded-full bg-action px-6 font-medium text-white transition-colors hover:bg-action-hover"
+            >
+              Log in to your account
+            </a>
+          ) : null}
         </div>
       ) : null}
     </div>
