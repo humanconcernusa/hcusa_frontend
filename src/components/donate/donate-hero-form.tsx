@@ -554,11 +554,12 @@ export function HeroForm({
           {/* The receipt and Done sit together; an embedded form has no Done to show. */}
           <div className="mt-6 flex w-full flex-col items-center gap-2">
             <div className="flex flex-wrap items-center justify-center gap-3">
+              {/* The receipt is the useful action here, so it carries the red; Done steps back. */}
               <button
                 type="button"
                 onClick={() => void downloadReceipt()}
                 disabled={!canDownloadReceipt || isDownloading}
-                className="inline-flex min-h-11 items-center justify-center rounded-full border border-line px-6 font-medium text-ink transition-colors hover:bg-surface disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex min-h-11 items-center justify-center rounded-full bg-action px-6 text-[0.875rem] font-semibold text-white transition-colors hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isDownloading ? "Preparing receipt…" : "Download Your Receipt"}
               </button>
@@ -567,7 +568,7 @@ export function HeroForm({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="inline-flex min-h-11 items-center justify-center rounded-full bg-action px-8 font-medium text-white transition-colors hover:bg-action-hover"
+                  className="inline-flex min-h-11 items-center justify-center rounded-full border border-line bg-surface px-6 text-[0.875rem] font-semibold text-ink transition-colors hover:bg-page"
                 >
                   Done
                 </button>
