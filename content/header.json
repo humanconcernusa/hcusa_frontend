@@ -1,0 +1,15 @@
+{
+  "visible": {
+    "logo": true,
+    "nav": true,
+    "cta": true
+  },
+  "brand": {
+    "image": "/hcu-logo.png",
+    "imageAlt": "Human Concern USA"
+  },
+  "donate": {
+    "cta": "Donate Now",
+    "form": "general-donation"
+  }
+}
