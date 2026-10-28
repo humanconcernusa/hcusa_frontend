@@ -10,6 +10,8 @@ import {
 } from "@stripe/react-stripe-js";
 import type { Stripe } from "@stripe/stripe-js";
 import { stripeLook } from "@/stripe-key";
+import { TURNSTILE_ENABLED } from "@/turnstile";
+import { TurnstileBox } from "@/components/turnstile/turnstile-box";
 import {
   MONTHLY_TERM,
   finalizeDonation,
@@ -48,7 +50,7 @@ function CardFields({
   onBack,
 }: {
   /* Starts the payment, and answers with the secret and, for monthly, the plan's two ids. */
-  resolvePayment: () => Promise<StartedDonation>;
+  resolvePayment: (turnstileToken: string) => Promise<StartedDonation>;
   isMonthly: boolean;
   /* The wording on the pay button, built by the popup, which knows the cadence. */
   payLabel: string;
@@ -70,6 +72,9 @@ function CardFields({
   const [started, setStarted] = useState<StartedDonation | null>(null);
   /* One key for the monthly confirmation, so a retry cannot record the plan twice. */
   const finalizeKey = useRef("");
+  /* Cloudflare's token. The platform checks it before it starts the payment. */
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const [turnstileReset, setTurnstileReset] = useState(0);
 
   async function pay(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -91,6 +96,12 @@ function CardFields({
       return;
     }
 
+    /* Pay waits for Cloudflare's token, so no payment is ever started without the check. */
+    if (!preview && TURNSTILE_ENABLED && turnstileToken.length === 0) {
+      setError("Please wait for the security check to finish.");
+      return;
+    }
+
     setIsPaying(true);
     setError("");
 
@@ -99,9 +110,20 @@ function CardFields({
         The payment is started on this press, not when the screen opened, so a donor who never
         presses Pay leaves nothing behind. A retry after a decline reuses what came back.
       */
-      const current = started ?? (await resolvePayment());
+      let current = started;
 
-      if (!started) setStarted(current);
+      if (!current) {
+        try {
+          current = await resolvePayment(turnstileToken);
+        } catch (caught) {
+          /* A token works once, so a retry after a failed start needs a fresh one. */
+          setTurnstileToken("");
+          setTurnstileReset((value) => value + 1);
+          throw caught;
+        }
+
+        setStarted(current);
+      }
 
       const paymentMethod = {
         card,
@@ -222,6 +244,11 @@ function CardFields({
         />
       </div>
 
+      {/* The preview takes no payment, so it needs no check. */}
+      {preview ? null : (
+        <TurnstileBox onToken={setTurnstileToken} resetKey={turnstileReset} className="mt-1" />
+      )}
+
       {error.length > 0 ? (
         <p role="alert" className="text-[0.8125rem] text-action">
           {error}
@@ -241,7 +268,9 @@ function CardFields({
           </button>
           <button
             type="submit"
-            disabled={!stripe || isPaying}
+            disabled={
+              !stripe || isPaying || (!preview && TURNSTILE_ENABLED && turnstileToken.length === 0)
+            }
             className="inline-flex min-h-12 items-center justify-center rounded-md bg-action px-3 text-[0.9375rem] font-semibold whitespace-nowrap text-white transition-colors hover:bg-action-hover disabled:pointer-events-none disabled:opacity-60 max-sm:min-h-11"
           >
             {isPaying ? "Processing..." : payLabel}

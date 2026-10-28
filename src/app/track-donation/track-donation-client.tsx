@@ -4,6 +4,8 @@ import { Suspense, useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
+import { TURNSTILE_ENABLED } from "@/turnstile";
+import { TurnstileBox } from "@/components/turnstile/turnstile-box";
 import {
   fetchTrackedDonation,
   fetchTrackedDonations,
@@ -67,6 +69,9 @@ function EmailForm() {
   const [error, setError] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [result, setResult] = useState<TrackLinkResult | null>(null);
+  /* Cloudflare's token. The platform checks it before it sends any link. */
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const [turnstileReset, setTurnstileReset] = useState(0);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -80,15 +85,23 @@ function EmailForm() {
       return;
     }
 
+    if (TURNSTILE_ENABLED && turnstileToken.length === 0) {
+      setError("Please finish the security check first.");
+      return;
+    }
+
     setIsSending(true);
 
     try {
-      setResult(await requestTrackLink(value));
+      setResult(await requestTrackLink(value, turnstileToken));
     } catch (caught) {
       setError(
         caught instanceof Error ? caught.message : "The link could not be sent. Please try again.",
       );
     } finally {
+      /* A token works once, so every attempt starts a fresh check. */
+      setTurnstileToken("");
+      setTurnstileReset((count) => count + 1);
       setIsSending(false);
     }
   }
@@ -125,9 +138,16 @@ function EmailForm() {
           <p className="mt-2 text-[0.875rem] text-action">{error}</p>
         ) : null}
 
+        <TurnstileBox
+          onToken={setTurnstileToken}
+          resetKey={turnstileReset}
+          size="normal"
+          className="mt-4"
+        />
+
         <button
           type="submit"
-          disabled={isSending}
+          disabled={isSending || (TURNSTILE_ENABLED && turnstileToken.length === 0)}
           className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-full bg-action px-6 font-medium text-white transition-colors hover:bg-action-hover disabled:opacity-60"
         >
           {isSending ? "Sending link…" : "Email me a link"}

@@ -165,6 +165,7 @@ export function monthlySchedule(
 export async function submitDonation(
   body: DonationSubmitBody,
   idempotencyKey: string,
+  turnstileToken = "",
 ): Promise<StartedDonation> {
   if (DONATION_API_URL.length === 0) {
     throw new Error("The donation platform address is not set for this build.");
@@ -176,6 +177,8 @@ export async function submitDonation(
       "content-type": "application/json",
       accept: "application/json",
       "x-idempotency-key": idempotencyKey,
+      /* Cloudflare's bot check token; the platform checks it before taking the donation. */
+      ...(turnstileToken.length > 0 ? { "cf-turnstile-response": turnstileToken } : {}),
     },
     body: JSON.stringify(body),
     signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),

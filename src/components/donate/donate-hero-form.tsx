@@ -365,7 +365,7 @@ export function HeroForm({
     If it ever answers with a different key, the card could not be confirmed against it, so the
     donor is told plainly rather than shown Stripe's own complaint about an unknown payment.
   */
-  async function startPayment(): Promise<StartedDonation> {
+  async function startPayment(turnstileToken: string): Promise<StartedDonation> {
     if (preview) {
       throw new Error("This is a preview. No payment was taken.");
     }
@@ -375,7 +375,7 @@ export function HeroForm({
     }
 
     const body = buildBody();
-    const started = await submitDonation(body, keyFor(body));
+    const started = await submitDonation(body, keyFor(body), turnstileToken);
 
     if (started.publishableKey !== gateway.key) {
       throw new Error("The payment could not be completed. Please try again.");

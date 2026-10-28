@@ -82,14 +82,22 @@ async function readError(response: Response): Promise<TrackError> {
   return new TrackError(message || "That did not work. Please try again.", code);
 }
 
-export async function requestTrackLink(email: string): Promise<TrackLinkResult> {
+export async function requestTrackLink(
+  email: string,
+  turnstileToken = "",
+): Promise<TrackLinkResult> {
   if (DONATION_API_URL.length === 0) {
     throw new TrackError("The donation platform address is not set for this build.");
   }
 
   const response = await fetch(`${DONATION_API_URL}/api/v1/track-donation/request`, {
     method: "POST",
-    headers: { "content-type": "application/json", accept: "application/json" },
+    headers: {
+      "content-type": "application/json",
+      accept: "application/json",
+      /* Cloudflare's bot check token; the platform checks it before sending any email. */
+      ...(turnstileToken.length > 0 ? { "cf-turnstile-response": turnstileToken } : {}),
+    },
     body: JSON.stringify({
       email: email.trim().toLowerCase(),
       /* The API uses this only for the emailed link, and only if it is a known origin. */
