@@ -15,7 +15,7 @@ const DONATION_API_URL = (process.env.NEXT_PUBLIC_DONATION_API_URL ?? "").replac
 /* Long, because the platform is creating a payment at Stripe when this call is made. */
 const REQUEST_TIMEOUT_MS = 20000;
 
-type DonationInfo = {
+export type DonationInfo = {
   /* Sent only when the donor says they are giving for an organization. */
   organization?: string;
   firstName: string;
@@ -68,7 +68,12 @@ export type DonationSubmitBody = {
     one from its own add-on settings and refuses an id the form does not offer.
   */
   addons?: { items: { addOnId: string; values?: Record<string, string> }[] };
-  info: DonationInfo;
+  info?: DonationInfo;
+  /*
+    The wallet flow starts the payment before the donor details exist. The platform then answers
+    with a donation id, and the later /donations/complete call fills the donor details.
+  */
+  deferDonor?: boolean;
   paymentMethod: "stripe";
   payment:
     | (PaymentBase & {
@@ -92,6 +97,8 @@ export type StartedDonation = {
   /* A monthly gift answers with these: the saved card, and the session that holds the plan. */
   setupIntentId?: string;
   pendingSessionId?: string;
+  /* One-time payments answer with the PaymentIntent id, used to tie /complete to the payment. */
+  paymentIntentId?: string;
 };
 
 function text(value: unknown): string {
@@ -192,7 +199,12 @@ export async function submitDonation(
   const payload = (await response.json().catch(() => null)) as {
     data?: {
       donationId?: unknown;
-      payment?: { publishableKey?: unknown; clientSecret?: unknown; setupIntentId?: unknown };
+      payment?: {
+        publishableKey?: unknown;
+        clientSecret?: unknown;
+        setupIntentId?: unknown;
+        paymentIntentId?: unknown;
+      };
       pendingSessionId?: unknown;
     };
     error?: { message?: unknown };
@@ -212,6 +224,7 @@ export async function submitDonation(
 
   const setupIntentId = text(payload?.data?.payment?.setupIntentId);
   const pendingSessionId = text(payload?.data?.pendingSessionId);
+  const paymentIntentId = text(payload?.data?.payment?.paymentIntentId);
 
   return {
     donationId: text(payload?.data?.donationId),
@@ -219,7 +232,51 @@ export async function submitDonation(
     clientSecret,
     ...(setupIntentId.length > 0 ? { setupIntentId } : {}),
     ...(pendingSessionId.length > 0 ? { pendingSessionId } : {}),
+    ...(paymentIntentId.length > 0 ? { paymentIntentId } : {}),
   };
+}
+
+/*
+  The wallet flow's second half. Google Pay has already collected the card and the billing address,
+  so this sends those details to the donation that was started earlier.
+*/
+export type CompleteDonationBody = {
+  donationId: string;
+  info: DonationInfo;
+  isAnonymous?: boolean;
+  marketingConsent?: boolean;
+  onBehalfOf?: string;
+  paymentIntentId?: string;
+  setupIntentId?: string;
+  pendingSessionId?: string;
+};
+
+export async function completeDonation(
+  body: CompleteDonationBody,
+  idempotencyKey: string,
+): Promise<void> {
+  if (DONATION_API_URL.length === 0) {
+    throw new Error("The donation platform address is not set for this build.");
+  }
+
+  const response = await fetch(`${DONATION_API_URL}/api/v1/donations/complete`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      accept: "application/json",
+      "x-idempotency-key": idempotencyKey,
+    },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+  });
+
+  if (response.ok) return;
+
+  const payload = (await response.json().catch(() => null)) as {
+    error?: { message?: unknown };
+  } | null;
+
+  throw new Error(text(payload?.error?.message) || "The donation details could not be saved.");
 }
 
 /*

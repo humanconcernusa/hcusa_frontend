@@ -6,10 +6,12 @@ import type { UtmData } from "@/content/utm";
 import {
   MONTHLY_TERM,
   allocateAmount,
+  completeDonation,
   fetchReceiptPdf,
   monthlySchedule,
   newPaymentKey,
   submitDonation,
+  type CompleteDonationBody,
   type DonationSubmitBody,
   type DonationUtm,
   type SplitInstallment,
@@ -277,7 +279,11 @@ export function HeroForm({
     };
   }
 
-  function buildBody(addressOverride?: DonationAddress): DonationSubmitBody {
+  function buildBody(
+    addressOverride?: DonationAddress,
+    options: { deferDonor?: boolean } = {},
+  ): DonationSubmitBody {
+    const deferDonor = options.deferDonor === true;
     const donorAddress = addressFor(addressOverride);
     const trimmedOrganization = organization.trim();
     const campaign = campaignFrom(readUtms());
@@ -297,15 +303,19 @@ export function HeroForm({
     return {
       formId: form.apiId,
       source: "hcusa",
-      info: {
-        firstName: firstName.trim(),
-        lastName: lastName.trim(),
-        email: email.trim(),
-        ...(isOrganization && trimmedOrganization.length > 0
-          ? { organization: trimmedOrganization }
-          : {}),
-        ...donorAddress,
-      },
+      ...(deferDonor
+        ? { deferDonor: true }
+        : {
+            info: {
+              firstName: firstName.trim(),
+              lastName: lastName.trim(),
+              email: email.trim(),
+              ...(isOrganization && trimmedOrganization.length > 0
+                ? { organization: trimmedOrganization }
+                : {}),
+              ...donorAddress,
+            },
+          }),
       paymentMethod: "stripe",
       payment: {
         ...paymentBase,
@@ -436,6 +446,36 @@ export function HeroForm({
     }
 
     return started;
+  }
+
+  /*
+    Google Pay's first half. The payment is started with no donor details, so Stripe can draw the
+    wallet button. Google Pay then collects the card and address, and completeGooglePay saves them.
+  */
+  async function startGooglePay(turnstileToken: string): Promise<StartedDonation> {
+    if (preview) {
+      throw new Error("This is a preview. No payment was taken.");
+    }
+
+    if (!gateway) {
+      throw new Error("Card payments are not available right now. Please try again.");
+    }
+
+    const body = buildBody(undefined, { deferDonor: true });
+    const started = await submitDonation(body, keyFor(body), turnstileToken);
+
+    if (started.publishableKey !== gateway.key) {
+      throw new Error("The payment could not be completed. Please try again.");
+    }
+
+    return started;
+  }
+
+  async function completeGooglePay(payload: CompleteDonationBody): Promise<void> {
+    await completeDonation(
+      { ...payload, marketingConsent: false },
+      `${payload.donationId}-complete`,
+    );
   }
 
   /*
@@ -611,9 +651,13 @@ export function HeroForm({
           name={fullName}
           email={email}
           organization={isOrganization ? organization.trim() : ""}
+          firstName={firstName}
+          lastName={lastName}
           payLabel={payLabel}
           preview={preview}
           resolvePayment={startPayment}
+          startGooglePay={startGooglePay}
+          completeGooglePay={completeGooglePay}
           onBillingChange={setBilling}
           onPaid={(status, reference) => {
             setPaidStatus(status);

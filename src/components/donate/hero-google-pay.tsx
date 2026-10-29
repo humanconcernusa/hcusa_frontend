@@ -1,197 +1,100 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { PaymentRequestButtonElement, useStripe } from "@stripe/react-stripe-js";
-import type { PaymentRequest } from "@stripe/stripe-js";
+import {
+  Elements,
+  ExpressCheckoutElement,
+  useElements,
+  useStripe,
+} from "@stripe/react-stripe-js";
+import type { Stripe, StripeExpressCheckoutElementConfirmEvent } from "@stripe/stripe-js";
 import { TURNSTILE_ENABLED } from "@/turnstile";
 import { TurnstileBox } from "@/components/turnstile/turnstile-box";
-import { finalizeDonation, newPaymentKey, type StartedDonation } from "@/donation-payments";
-import type { DonationAddress } from "./hero-parts";
+import {
+  finalizeDonation,
+  type CompleteDonationBody,
+  type StartedDonation,
+} from "@/donation-payments";
+import { stripeLook } from "@/stripe-key";
 
 /*
   Google Pay for the hero popup.
 
-  The wallet is chosen before the card fields are shown. Google Pay returns the payer's billing
-  address, and the platform needs an address BEFORE it will create a payment. So this uses Stripe's
-  Payment Request button, which hands us the wallet's address first. The newer Express Checkout
-  element needs the payment secret before it can confirm, which we cannot get without an address.
+  The flow is split in two, because our platform needs the donor address to create the donation,
+  while Google Pay collects that address inside the wallet.
 
-  The money path is the same as the card: submitDonation creates the payment, then the wallet's
-  payment method is confirmed against it. Monthly saves the card and records the plan.
+  1. startPayment creates the Stripe payment with the amount only. No address.
+  2. Stripe's Express Checkout element draws the Google Pay button.
+  3. Google Pay collects the card and the billing address.
+  4. completePayment sends the wallet's address to the donation that was started in step 1.
+  5. Stripe confirms the payment or the SetupIntent.
+
+  The Express Checkout element is Stripe's modern wallet element. The old Payment Request button
+  is why Google Pay kept reporting "not available" even when the browser had it.
 */
 export function GooglePayOption({
-  total,
+  stripe,
   isMonthly,
   preview = false,
-  resolvePayment,
+  firstName,
+  lastName,
+  email,
+  organization,
+  startPayment,
+  completePayment,
   onPaid,
   onBack,
 }: {
-  total: number;
+  stripe: Stripe;
   isMonthly: boolean;
   preview?: boolean;
-  resolvePayment: (turnstileToken: string, address?: DonationAddress) => Promise<StartedDonation>;
+  firstName: string;
+  lastName: string;
+  email: string;
+  organization: string;
+  startPayment: (turnstileToken: string) => Promise<StartedDonation>;
+  completePayment: (payload: CompleteDonationBody) => Promise<void>;
   onPaid: (status: "succeeded" | "processing", reference?: { donationId: string }) => void;
   onBack: () => void;
 }) {
-  const stripe = useStripe();
-  const [paymentRequest, setPaymentRequest] = useState<PaymentRequest | null>(null);
-  const [available, setAvailable] = useState<boolean | null>(null);
-  const [error, setError] = useState("");
-  const [isPaying, setIsPaying] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState("");
   const [turnstileReset, setTurnstileReset] = useState(0);
-
-  const startedRef = useRef<StartedDonation | null>(null);
-  const resolveRef = useRef(resolvePayment);
-  const onPaidRef = useRef(onPaid);
-  const tokenRef = useRef(turnstileToken);
-  const previewRef = useRef(preview);
-  const finalizeKey = useRef("");
-
-  useEffect(() => { resolveRef.current = resolvePayment; }, [resolvePayment]);
-  useEffect(() => { onPaidRef.current = onPaid; }, [onPaid]);
-  useEffect(() => { tokenRef.current = turnstileToken; }, [turnstileToken]);
-  useEffect(() => { previewRef.current = preview; }, [preview]);
+  const [started, setStarted] = useState<StartedDonation | null>(null);
+  const [error, setError] = useState("");
+  const startRef = useRef(startPayment);
+  const startedRef = useRef(false);
 
   useEffect(() => {
-    if (!stripe || total <= 0) return undefined;
+    startRef.current = startPayment;
+  }, [startPayment]);
 
-    const request = stripe.paymentRequest({
-      country: "US",
-      currency: "usd",
-      total: {
-        label: isMonthly ? "Monthly donation" : "Donation",
-        amount: Math.round(total * 100),
-      },
-      requestPayerName: true,
-      requestPayerEmail: true,
-      /* Temporary: allow every wallet so the log shows what Stripe can see. */
-      disableWallets: [],
-    });
+  const ready = !TURNSTILE_ENABLED || turnstileToken.length > 0;
 
+  useEffect(() => {
+    if (preview || !ready || startedRef.current) return undefined;
+    startedRef.current = true;
     let active = true;
-    void request
-      .canMakePayment()
-      .then((result) => {
-        if (!active) return;
-        /* Temporary: remove once Google Pay is confirmed. */
-        console.log("[google-pay] canMakePayment", result);
-        setAvailable(Boolean(result));
-        /* Set here, in the async callback, so the effect never calls setState directly. */
-        setPaymentRequest(request);
+
+    startRef
+      .current(turnstileToken)
+      .then((value) => {
+        if (active) setStarted(value);
       })
-      .catch((error) => {
+      .catch((caught) => {
         if (!active) return;
-        console.warn("[google-pay] canMakePayment failed", error);
-        setAvailable(false);
-        setPaymentRequest(request);
-      });
-
-    request.on("paymentmethod", async (event) => {
-      if (previewRef.current) {
-        event.complete("fail");
-        setError("This is a preview. No payment was taken.");
-        return;
-      }
-
-      if (TURNSTILE_ENABLED && tokenRef.current.length === 0) {
-        event.complete("fail");
-        setError("Please wait for the security check to finish.");
-        return;
-      }
-
-      setIsPaying(true);
-      setError("");
-
-      try {
-        let current = startedRef.current;
-
-        if (!current) {
-          const address = event.paymentMethod.billing_details.address;
-          current = await resolveRef.current(tokenRef.current, {
-            addressLine1: address?.line1 ?? "",
-            streetName: address?.line2 || address?.line1 || "",
-            city: address?.city ?? "",
-            state: address?.state ?? "",
-            postalCode: address?.postal_code ?? "",
-            country: address?.country ?? "",
-          });
-          startedRef.current = current;
-        }
-
-        if (isMonthly) {
-          const setup = await stripe.confirmCardSetup(current.clientSecret, {
-            payment_method: event.paymentMethod.id,
-          });
-
-          if (setup.error) {
-            event.complete("fail");
-            setError(setup.error.message ?? "The card could not be saved.");
-            return;
-          }
-
-          if (!current.setupIntentId || !current.pendingSessionId) {
-            event.complete("fail");
-            setError("The monthly gift could not be set up. Please try again.");
-            return;
-          }
-
-          if (finalizeKey.current.length === 0) finalizeKey.current = newPaymentKey();
-
-          await finalizeDonation(
-            {
-              paymentMode: "split",
-              pendingSessionId: current.pendingSessionId,
-              setupIntentId: current.setupIntentId,
-            },
-            finalizeKey.current,
-          );
-
-          event.complete("success");
-          onPaidRef.current("succeeded", { donationId: current.donationId });
-          return;
-        }
-
-        const result = await stripe.confirmCardPayment(current.clientSecret, {
-          payment_method: event.paymentMethod.id,
-        });
-
-        if (result.error) {
-          event.complete("fail");
-          setError(result.error.message ?? "The payment could not be completed.");
-          return;
-        }
-
-        const status = result.paymentIntent?.status;
-
-        if (status === "succeeded" || status === "processing") {
-          event.complete("success");
-          onPaidRef.current(status, { donationId: current.donationId });
-          return;
-        }
-
-        event.complete("fail");
-        setError("The payment was not completed. Please try again.");
-      } catch (caught) {
-        event.complete("fail");
+        startedRef.current = false;
         setError(caught instanceof Error ? caught.message : "The payment could not be started.");
         setTurnstileToken("");
         setTurnstileReset((value) => value + 1);
-      } finally {
-        setIsPaying(false);
-      }
-    });
+      });
 
     return () => {
       active = false;
     };
-  }, [stripe, total, isMonthly]);
-
-  const ready = !TURNSTILE_ENABLED || turnstileToken.length > 0;
+  }, [preview, ready, turnstileToken]);
 
   return (
-    <div className="mt-5 flex flex-col gap-4">
+    <div className="mt-5 flex flex-col gap-3">
       <p className="text-[0.8125rem] text-body">
         {isMonthly
           ? "Google Pay saves the card and starts the monthly plan. The first payment is taken today."
@@ -202,24 +105,32 @@ export function GooglePayOption({
 
       {preview ? (
         <p className="text-[0.8125rem] text-body">This is a preview. No payment was taken.</p>
-      ) : available === null ? (
-        <p className="text-[0.8125rem] text-body">Checking Google Pay…</p>
-      ) : available === false ? (
-        <p className="text-[0.8125rem] text-action">
-          Google Pay is not available on this browser or in this region. Use the card option instead.
-        </p>
       ) : !ready ? (
         <p className="text-[0.8125rem] text-body">Complete the security check to continue.</p>
-      ) : paymentRequest ? (
-        <PaymentRequestButtonElement
-          options={{
-            paymentRequest,
-            style: { paymentRequestButton: { theme: "dark", height: "48px" } },
-          }}
-        />
-      ) : null}
-
-      {isPaying ? <p className="text-[0.8125rem] text-body">Processing…</p> : null}
+      ) : !started ? (
+        <p className="text-[0.8125rem] text-body">Preparing Google Pay…</p>
+      ) : (
+        <Elements
+          stripe={stripe}
+          options={{ clientSecret: started.clientSecret, appearance: stripeLook.appearance }}
+        >
+          <GooglePayButtons
+            isMonthly={isMonthly}
+            firstName={firstName}
+            lastName={lastName}
+            email={email}
+            organization={organization}
+            started={started}
+            completePayment={completePayment}
+            onPaid={onPaid}
+            onError={(message) => {
+              setError(message);
+              setTurnstileToken("");
+              setTurnstileReset((value) => value + 1);
+            }}
+          />
+        </Elements>
+      )}
 
       {error.length > 0 ? (
         <p role="alert" className="text-[0.8125rem] text-action">
@@ -231,12 +142,157 @@ export function GooglePayOption({
         <button
           type="button"
           onClick={onBack}
-          disabled={isPaying}
-          className="inline-flex min-h-12 w-full items-center justify-center rounded-md border border-line bg-surface px-6 text-[0.9375rem] font-semibold text-ink transition-colors hover:bg-page disabled:opacity-60 max-sm:min-h-11 max-sm:px-4"
+          className="inline-flex min-h-12 w-full items-center justify-center rounded-md border border-line bg-surface px-6 text-[0.9375rem] font-semibold text-ink transition-colors hover:bg-page max-sm:min-h-11 max-sm:px-4"
         >
           Back
         </button>
       </div>
     </div>
+  );
+}
+
+function GooglePayButtons({
+  isMonthly,
+  firstName,
+  lastName,
+  email,
+  organization,
+  started,
+  completePayment,
+  onPaid,
+  onError,
+}: {
+  isMonthly: boolean;
+  firstName: string;
+  lastName: string;
+  email: string;
+  organization: string;
+  started: StartedDonation;
+  completePayment: (payload: CompleteDonationBody) => Promise<void>;
+  onPaid: (status: "succeeded" | "processing", reference?: { donationId: string }) => void;
+  onError: (message: string) => void;
+}) {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [available, setAvailable] = useState<boolean | null>(null);
+  const [isPaying, setIsPaying] = useState(false);
+
+  async function confirm(event: StripeExpressCheckoutElementConfirmEvent) {
+    if (!stripe || !elements || isPaying) return;
+
+    const address = event.billingDetails?.address;
+    const info = {
+      firstName,
+      lastName,
+      email,
+      ...(organization.trim().length > 0 ? { organization: organization.trim() } : {}),
+      addressLine1: address?.line1 ?? "",
+      streetName: address?.line2 || address?.line1 || "",
+      city: address?.city ?? "",
+      state: address?.state ?? "",
+      postalCode: address?.postal_code ?? "",
+      country: address?.country ?? "",
+    };
+
+    if (!info.addressLine1 || !info.city || !info.country) {
+      const message = "Google Pay did not return a full billing address. Please use the card option.";
+      event.paymentFailed({ reason: "invalid_billing_address", message });
+      onError(message);
+      return;
+    }
+
+    setIsPaying(true);
+
+    try {
+      /* Save the wallet's details on the donation before the charge is made. */
+      await completePayment({
+        donationId: started.donationId,
+        info,
+        paymentIntentId: started.paymentIntentId,
+        setupIntentId: started.setupIntentId,
+        pendingSessionId: started.pendingSessionId,
+      });
+
+      const returnUrl = typeof window !== "undefined" ? window.location.href : "";
+
+      if (isMonthly) {
+        const setup = await stripe.confirmSetup({
+          elements,
+          clientSecret: started.clientSecret,
+          confirmParams: { return_url: returnUrl },
+          redirect: "if_required",
+        });
+
+        if (setup.error) {
+          const message = setup.error.message ?? "The card could not be saved.";
+          event.paymentFailed({ message });
+          onError(message);
+          return;
+        }
+
+        if (!started.pendingSessionId || !started.setupIntentId) {
+          const message = "The monthly gift could not be set up. Please try again.";
+          event.paymentFailed({ message });
+          onError(message);
+          return;
+        }
+
+        await finalizeDonation(
+          {
+            paymentMode: "split",
+            pendingSessionId: started.pendingSessionId,
+            setupIntentId: started.setupIntentId,
+          },
+          `${started.donationId}-finalize`,
+        );
+
+        onPaid("succeeded", { donationId: started.donationId });
+        return;
+      }
+
+      const result = await stripe.confirmPayment({
+        elements,
+        clientSecret: started.clientSecret,
+        confirmParams: { return_url: returnUrl },
+        redirect: "if_required",
+      });
+
+      if (result.error) {
+        const message = result.error.message ?? "The payment could not be completed.";
+        event.paymentFailed({ message });
+        onError(message);
+        return;
+      }
+
+      const status = result.paymentIntent?.status === "processing" ? "processing" : "succeeded";
+      onPaid(status, { donationId: started.donationId });
+    } catch (caught) {
+      const message = caught instanceof Error ? caught.message : "The payment could not be completed.";
+      event.paymentFailed({ message });
+      onError(message);
+    } finally {
+      setIsPaying(false);
+    }
+  }
+
+  return (
+    <>
+      <ExpressCheckoutElement
+        options={{
+          paymentMethods: { googlePay: "always", applePay: "never", link: "never" },
+          buttonHeight: 48,
+        }}
+        onReady={(event) => setAvailable(Boolean(event.availablePaymentMethods?.googlePay))}
+        onConfirm={(event) => void confirm(event)}
+      />
+
+      {available === false ? (
+        <p className="text-[0.8125rem] text-action">
+          Google Pay is not available on this browser. Use the card option instead.
+        </p>
+      ) : null}
+
+      {isPaying ? <p className="text-[0.8125rem] text-body">Processing…</p> : null}
+    </>
   );
 }

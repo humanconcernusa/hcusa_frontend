@@ -16,6 +16,7 @@ import {
   MONTHLY_TERM,
   finalizeDonation,
   newPaymentKey,
+  type CompleteDonationBody,
   type StartedDonation,
 } from "@/donation-payments";
 import { money, type Billing, type DonationAddress, CardIcon, WalletIcon, GOOGLE_PAY_ENABLED } from "./hero-parts";
@@ -363,11 +364,15 @@ export function CardStep({
   stripe,
   billing,
   name,
+  firstName,
+  lastName,
   email,
   organization,
   payLabel,
   preview = false,
   resolvePayment,
+  startGooglePay,
+  completeGooglePay,
   onBillingChange,
   onPaid,
   onBack,
@@ -383,9 +388,11 @@ export function CardStep({
   /* The ticked add-ons by name and price, for the summary. */
   addOns: { id: string; name: string; amount: number }[];
   /* The instance for the platform's default gateway, which the payment is pinned to. */
-  stripe: Stripe | Promise<Stripe | null> | null;
+  stripe: Stripe | null;
   billing: Billing | null;
   name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   /* The organization the donor typed, or an empty string when they are giving as themselves. */
   organization: string;
@@ -393,6 +400,8 @@ export function CardStep({
   /* A preview tab: Pay explains itself instead of starting a payment. */
   preview?: boolean;
   resolvePayment: (turnstileToken: string, address?: DonationAddress) => Promise<StartedDonation>;
+  startGooglePay: (turnstileToken: string) => Promise<StartedDonation>;
+  completeGooglePay: (payload: CompleteDonationBody) => Promise<void>;
   onBillingChange: (billing: Billing) => void;
   onPaid: (status: "succeeded" | "processing", reference?: { donationId: string }) => void;
   onBack: () => void;
@@ -492,7 +501,7 @@ export function CardStep({
         there is a real instance.
       */}
       {stripe ? (
-        <Elements stripe={stripe} options={stripeLook}>
+        <>
           <PaymentMethodChooser
             selected={method}
             googlePayEnabled={GOOGLE_PAY_ENABLED}
@@ -502,18 +511,25 @@ export function CardStep({
           />
 
           {method === "card" ? (
-            cardFields
+            <Elements stripe={stripe} options={stripeLook}>
+              {cardFields}
+            </Elements>
           ) : method === "googlePay" && GOOGLE_PAY_ENABLED ? (
             <GooglePayOption
-              total={value + extra + addOnTotal}
+              stripe={stripe}
               isMonthly={isMonthly}
               preview={preview}
-              resolvePayment={resolvePayment}
+              firstName={firstName}
+              lastName={lastName}
+              email={email}
+              organization={organization}
+              startPayment={startGooglePay}
+              completePayment={completeGooglePay}
               onPaid={onPaid}
               onBack={() => setMethod(null)}
             />
           ) : null}
-        </Elements>
+        </>
       ) : (
         <p className="mt-5 text-[0.8125rem] text-body">
           Preparing the secure payment fields…
