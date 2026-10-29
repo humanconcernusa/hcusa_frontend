@@ -97,7 +97,7 @@ export function SiteFooterBody({ content }: { content: FooterContent }) {
             {/* Kept in the brand column, so a donor finds it without reading the whole footer. */}
             <Link
               href="/track-donation"
-              className="mt-4 inline-block text-[0.8125rem] text-action underline underline-offset-4 hover:text-action-hover"
+              className="mt-4 inline-block text-[0.8125rem] text-action hover:text-action-hover"
             >
               Track Your Donation
             </Link>
