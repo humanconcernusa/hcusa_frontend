@@ -1,11 +1,21 @@
 {
+  "visible": {
+    "hero": true,
+    "why": true,
+    "stories": true,
+    "counters": true,
+    "giving": true,
+    "choose": true,
+    "ctaBand": true
+  },
   "hero": {
     "eyebrow": "Healthcare Access",
     "headingStart": "Saving Lives",
     "headingAccent": "Restoring Dignity",
     "body": "Your support provides medical care, essential treatments, emergency response, and long-term health solutions to vulnerable communities.",
     "cta": "Make A Donation",
-    "image": "/reference_pictures/homepage/learn_more/imgi_79_healthcare.png",
+    "form": "healthcare-1",
+    "image": "https://pub-387995532fb34284b3f927edc6088b7b.r2.dev/media/mvtfh0vf-972e636bdd14.webp",
     "imageAlt": "A Human Concern USA health worker at a clinic desk"
   },
   "why": {
@@ -50,23 +60,30 @@
     "eyebrow": "Provide life-saving care",
     "headingStart": "Giving",
     "headingAccent": "Levels",
-    "cta": "Donate Noww",
     "levels": [
       {
         "amount": "60",
-        "text": "Emergency meals for a family"
+        "text": "Emergency meals for a family",
+        "cta": "Donate Now",
+        "form": "healthcare-1"
       },
       {
         "amount": "100",
-        "text": "Clean water for multiple families"
+        "text": "Clean water for multiple families",
+        "cta": "Donate Now",
+        "form": "healthcare-2"
       },
       {
         "amount": "250",
-        "text": "Medical aid & critical care support"
+        "text": "Medical aid & critical care support",
+        "cta": "Donate Now",
+        "form": "healthcare-3"
       },
       {
         "amount": "500",
-        "text": "Emergency shelter & survival kit"
+        "text": "Emergency shelter & survival kit",
+        "cta": "Donate Now",
+        "form": "healthcare-4"
       }
     ]
   },
@@ -75,7 +92,8 @@
     "headingAccent": "Choose",
     "headingEnd": "Human Concern USA?",
     "cta": "Provide Lifesaving Support",
-    "image": "/reference_pictures/homepage/learn_more/imgi_29_Bangladesh-Trip-2024-192-scaled-1-2048x1366.jpg",
+    "form": "healthcare-4",
+    "image": "https://pub-387995532fb34284b3f927edc6088b7b.r2.dev/media/mvtfhs6r-abb27940a8fb.webp",
     "imageAlt": "Human Concern USA volunteers distributing medical supplies",
     "points": [
       "46 years of trusted humanitarian service",
