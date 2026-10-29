@@ -32,10 +32,9 @@ export type DonationAddress = {
 };
 
 /*
-  Google Pay is disabled for now: the wallet is not being offered through the platform's current
-  Stripe setup. The tile stays visible but cannot be picked. Set this to true to enable it.
+  Google Pay is enabled. Set this to false to disable the tile without removing the code.
 */
-export const GOOGLE_PAY_ENABLED = false;
+export const GOOGLE_PAY_ENABLED = true;
 
 export function money(value: number): string {
   return `$${value.toLocaleString("en-US")}`;

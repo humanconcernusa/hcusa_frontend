@@ -71,9 +71,19 @@ export function GooglePayOption({
     });
 
     let active = true;
-    void request.canMakePayment().then((result) => {
-      if (active) setAvailable(Boolean(result));
-    });
+    void request
+      .canMakePayment()
+      .then((result) => {
+        if (!active) return;
+        setAvailable(Boolean(result));
+        /* Set here, in the async callback, so the effect never calls setState directly. */
+        setPaymentRequest(request);
+      })
+      .catch(() => {
+        if (!active) return;
+        setAvailable(false);
+        setPaymentRequest(request);
+      });
 
     request.on("paymentmethod", async (event) => {
       if (previewRef.current) {
@@ -169,8 +179,6 @@ export function GooglePayOption({
         setIsPaying(false);
       }
     });
-
-    setPaymentRequest(request);
 
     return () => {
       active = false;
