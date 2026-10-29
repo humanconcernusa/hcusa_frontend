@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type FormEvent, type ReactNode } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import {
   AddressElement,
   CardElement,
@@ -19,7 +19,7 @@ import {
   type CompleteDonationBody,
   type StartedDonation,
 } from "@/donation-payments";
-import { money, type Billing, type DonationAddress, CardIcon, GOOGLE_PAY_ENABLED } from "./hero-parts";
+import { money, type Billing, type DonationAddress, CardIcon, WalletIcon, GOOGLE_PAY_ENABLED } from "./hero-parts";
 import { GooglePayOption } from "./hero-google-pay";
 
 /*
@@ -293,26 +293,38 @@ function CardFields({
 */
 function PaymentMethodChooser({
   selected,
-  googlePayNode,
+  googlePayEnabled,
   onCard,
+  onGooglePay,
   onBack,
 }: {
-  selected: "card" | null;
-  googlePayNode: ReactNode;
+  selected: "card" | "googlePay" | null;
+  googlePayEnabled: boolean;
   onCard: () => void;
+  onGooglePay: () => void;
   onBack: () => void;
 }) {
   const base =
     "inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md border bg-surface px-4 text-[0.9375rem] font-semibold transition-colors";
   const chosen = "border-action text-action";
   const idle = "border-line text-ink hover:bg-page";
+  const off = "border-line bg-surface text-body opacity-50 cursor-not-allowed";
 
   return (
     <div className="mt-5 flex flex-col gap-3">
       <p className="text-[0.8125rem] text-body">Choose how you would like to pay.</p>
 
-      {/* Stripe's Google Pay button is the only way to open the wallet sheet. */}
-      {googlePayNode}
+      <button
+        type="button"
+        onClick={googlePayEnabled ? onGooglePay : undefined}
+        disabled={!googlePayEnabled}
+        aria-pressed={selected === "googlePay"}
+        title={!googlePayEnabled ? "Google Pay is not available right now." : undefined}
+        className={`${base} ${!googlePayEnabled ? off : selected === "googlePay" ? chosen : idle}`}
+      >
+        <WalletIcon />
+        Google Pay
+      </button>
 
       <button
         type="button"
@@ -397,7 +409,7 @@ export function CardStep({
   /* One line for the extras: the donor reads the amount, not a list of names. */
   const addOnTotal = addOns.reduce((sum, addOn) => sum + addOn.amount, 0);
   /* Nothing is picked to begin with. The donor chooses the method first. */
-  const [method, setMethod] = useState<"card" | null>(null);
+  const [method, setMethod] = useState<"card" | "googlePay" | null>(null);
 
   const cardFields = (
     <CardFields
@@ -492,27 +504,9 @@ export function CardStep({
         <>
           <PaymentMethodChooser
             selected={method}
-            googlePayNode={
-              GOOGLE_PAY_ENABLED ? (
-                <GooglePayOption
-                  stripe={stripe}
-                  isMonthly={isMonthly}
-                  preview={preview}
-                  firstName={firstName}
-                  lastName={lastName}
-                  email={email}
-                  organization={organization}
-                  startPayment={startGooglePay}
-                  completePayment={completeGooglePay}
-                  onPaid={onPaid}
-                />
-              ) : (
-                <p className="text-[0.8125rem] text-body">
-                  Google Pay is not available right now. Use the card option instead.
-                </p>
-              )
-            }
+            googlePayEnabled={GOOGLE_PAY_ENABLED}
             onCard={() => setMethod("card")}
+            onGooglePay={() => setMethod("googlePay")}
             onBack={onBack}
           />
 
@@ -520,6 +514,20 @@ export function CardStep({
             <Elements stripe={stripe} options={stripeLook}>
               {cardFields}
             </Elements>
+          ) : method === "googlePay" && GOOGLE_PAY_ENABLED ? (
+            <GooglePayOption
+              stripe={stripe}
+              isMonthly={isMonthly}
+              preview={preview}
+              firstName={firstName}
+              lastName={lastName}
+              email={email}
+              organization={organization}
+              startPayment={startGooglePay}
+              completePayment={completeGooglePay}
+              onPaid={onPaid}
+              onBack={() => setMethod(null)}
+            />
           ) : null}
         </>
       ) : (
