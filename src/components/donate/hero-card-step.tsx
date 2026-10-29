@@ -399,8 +399,8 @@ export function CardStep({
 }) {
   /* One line for the extras: the donor reads the amount, not a list of names. */
   const addOnTotal = addOns.reduce((sum, addOn) => sum + addOn.amount, 0);
-  /* The card option is picked by default, so its fields are ready straight away. */
-  const [method, setMethod] = useState<"card" | "googlePay" | null>("card");
+  /* Nothing is picked to begin with. The donor chooses the method first. */
+  const [method, setMethod] = useState<"card" | "googlePay" | null>(null);
 
   const cardFields = (
     <CardFields

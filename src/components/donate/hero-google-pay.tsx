@@ -75,12 +75,15 @@ export function GooglePayOption({
       .canMakePayment()
       .then((result) => {
         if (!active) return;
+        /* Temporary: remove once Google Pay is confirmed. */
+        console.log("[google-pay] canMakePayment", result);
         setAvailable(Boolean(result));
         /* Set here, in the async callback, so the effect never calls setState directly. */
         setPaymentRequest(request);
       })
-      .catch(() => {
+      .catch((error) => {
         if (!active) return;
+        console.warn("[google-pay] canMakePayment failed", error);
         setAvailable(false);
         setPaymentRequest(request);
       });
