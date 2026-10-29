@@ -19,7 +19,7 @@ import { loadDefaultGateway, type CardGateway } from "@/stripe-key";
 import { AmountStep } from "./hero-amount-step";
 import { CardStep } from "./hero-card-step";
 import { DetailsStep } from "./hero-details-step";
-import { Tick, throwScreenConfetti, type Billing } from "./hero-parts";
+import { Tick, throwScreenConfetti, type Billing, type DonationAddress } from "./hero-parts";
 import { readUtms } from "./utm";
 
 /*
@@ -261,8 +261,24 @@ export function HeroForm({
   }
 
   /* The platform's own body. The tip is a figure of its own, so the causes sum to the gift. */
-  function buildBody(): DonationSubmitBody {
+  function addressFor(addressOverride?: DonationAddress): DonationAddress {
+    if (addressOverride) return addressOverride;
+
     const address = billing?.value.address;
+
+    return {
+      addressLine1: address?.line1 ?? "",
+      /* Stripe splits the street over two lines and the platform keeps one, so line 2 wins. */
+      streetName: address?.line2 || address?.line1 || "",
+      city: address?.city ?? "",
+      state: address?.state ?? "",
+      postalCode: address?.postal_code ?? "",
+      country: address?.country ?? "",
+    };
+  }
+
+  function buildBody(addressOverride?: DonationAddress): DonationSubmitBody {
+    const donorAddress = addressFor(addressOverride);
     const trimmedOrganization = organization.trim();
     const campaign = campaignFrom(readUtms());
 
@@ -288,13 +304,7 @@ export function HeroForm({
         ...(isOrganization && trimmedOrganization.length > 0
           ? { organization: trimmedOrganization }
           : {}),
-        addressLine1: address?.line1 ?? "",
-        /* Stripe splits the street over two lines and the platform keeps one, so line 2 wins. */
-        streetName: address?.line2 || address?.line1 || "",
-        city: address?.city ?? "",
-        state: address?.state ?? "",
-        postalCode: address?.postal_code ?? "",
-        country: address?.country ?? "",
+        ...donorAddress,
       },
       paymentMethod: "stripe",
       payment: {
@@ -406,7 +416,10 @@ export function HeroForm({
     If it ever answers with a different key, the card could not be confirmed against it, so the
     donor is told plainly rather than shown Stripe's own complaint about an unknown payment.
   */
-  async function startPayment(turnstileToken: string): Promise<StartedDonation> {
+  async function startPayment(
+    turnstileToken: string,
+    addressOverride?: DonationAddress,
+  ): Promise<StartedDonation> {
     if (preview) {
       throw new Error("This is a preview. No payment was taken.");
     }
@@ -415,7 +428,7 @@ export function HeroForm({
       throw new Error("Card payments are not available right now. Please try again.");
     }
 
-    const body = buildBody();
+    const body = buildBody(addressOverride);
     const started = await submitDonation(body, keyFor(body), turnstileToken);
 
     if (started.publishableKey !== gateway.key) {
@@ -461,7 +474,7 @@ export function HeroForm({
   }
 
   /* The heading changes with the step, so the popup always names where the donor is. */
-  const heading = step === "success" ? "Thank you" : step === "card" ? "Card details" : form.label;
+  const heading = step === "success" ? "Thank you" : step === "card" ? "Payment details" : form.label;
 
   return (
     /* The whole popup body is set in Poppins, so the fields, their labels and the headings match.

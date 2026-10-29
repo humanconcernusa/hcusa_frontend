@@ -301,7 +301,7 @@ export function DetailsStep({
         </p>
       ) : null}
 
-      {/* The card route opens the card step in place. It is the only way to pay, so it fills the row. */}
+      {/* The payment step opens in place. It offers Google Pay or the card fields. */}
       <div className="donate-actions mt-3">
         <button
           type="button"
@@ -309,7 +309,7 @@ export function DetailsStep({
           className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md border border-action bg-surface px-2 text-[0.875rem] font-semibold whitespace-nowrap text-action transition-colors hover:bg-tint max-sm:min-h-11"
         >
           <CardIcon />
-          Debit/Credit Card
+          Continue to payment
         </button>
 
         {cardError.length > 0 ? (

@@ -18,7 +18,8 @@ import {
   newPaymentKey,
   type StartedDonation,
 } from "@/donation-payments";
-import { money, type Billing } from "./hero-parts";
+import { money, type Billing, type DonationAddress, CardIcon, WalletIcon, GOOGLE_PAY_ENABLED } from "./hero-parts";
+import { GooglePayOption } from "./hero-google-pay";
 
 /*
   The card step of the hero popup: what the charge is made of, then Stripe's own card and billing
@@ -50,7 +51,7 @@ function CardFields({
   onBack,
 }: {
   /* Starts the payment, and answers with the secret and, for monthly, the plan's two ids. */
-  resolvePayment: (turnstileToken: string) => Promise<StartedDonation>;
+  resolvePayment: (turnstileToken: string, address?: DonationAddress) => Promise<StartedDonation>;
   isMonthly: boolean;
   /* The wording on the pay button, built by the popup, which knows the cadence. */
   payLabel: string;
@@ -285,6 +286,71 @@ function CardFields({
   );
 }
 
+/*
+  The two ways to pay. Both stay on screen after a choice, so the donor can switch at any time.
+  Nothing reads as picked until they click one.
+*/
+function PaymentMethodChooser({
+  selected,
+  googlePayEnabled,
+  onCard,
+  onGooglePay,
+  onBack,
+}: {
+  selected: "card" | "googlePay" | null;
+  googlePayEnabled: boolean;
+  onCard: () => void;
+  onGooglePay: () => void;
+  onBack: () => void;
+}) {
+  const base =
+    "inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md border bg-surface px-4 text-[0.9375rem] font-semibold transition-colors";
+  const chosen = "border-action text-action";
+  const idle = "border-line text-ink hover:bg-page";
+  const off = "border-line bg-surface text-body opacity-50 cursor-not-allowed";
+
+  return (
+    <div className="mt-5 flex flex-col gap-3">
+      <p className="text-[0.8125rem] text-body">Choose how you would like to pay.</p>
+
+      <button
+        type="button"
+        onClick={googlePayEnabled ? onGooglePay : undefined}
+        disabled={!googlePayEnabled}
+        aria-pressed={selected === "googlePay"}
+        title={!googlePayEnabled ? "Google Pay is not available right now." : undefined}
+        className={`${base} ${!googlePayEnabled ? off : selected === "googlePay" ? chosen : idle}`}
+      >
+        <WalletIcon />
+        Google Pay
+      </button>
+
+      <button
+        type="button"
+        onClick={onCard}
+        aria-pressed={selected === "card"}
+        className={`${base} ${selected === "card" ? chosen : idle}`}
+      >
+        <CardIcon />
+        Debit/Credit Card
+      </button>
+
+      {/* Full width, in the same sticky bar the popup uses, so it cannot be cut off. */}
+      {selected === null ? (
+        <div className="donate-actions mt-2">
+          <button
+            type="button"
+            onClick={onBack}
+            className="inline-flex min-h-12 w-full items-center justify-center rounded-md border border-line bg-surface px-6 text-[0.9375rem] font-semibold text-ink transition-colors hover:bg-page max-sm:min-h-11 max-sm:px-4"
+          >
+            Back
+          </button>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export function CardStep({
   label,
   value,
@@ -326,13 +392,30 @@ export function CardStep({
   payLabel: string;
   /* A preview tab: Pay explains itself instead of starting a payment. */
   preview?: boolean;
-  resolvePayment: (turnstileToken: string) => Promise<StartedDonation>;
+  resolvePayment: (turnstileToken: string, address?: DonationAddress) => Promise<StartedDonation>;
   onBillingChange: (billing: Billing) => void;
   onPaid: (status: "succeeded" | "processing", reference?: { donationId: string }) => void;
   onBack: () => void;
 }) {
   /* One line for the extras: the donor reads the amount, not a list of names. */
   const addOnTotal = addOns.reduce((sum, addOn) => sum + addOn.amount, 0);
+  /* The card option is picked by default, so its fields are ready straight away. */
+  const [method, setMethod] = useState<"card" | "googlePay" | null>("card");
+
+  const cardFields = (
+    <CardFields
+      resolvePayment={resolvePayment}
+      isMonthly={isMonthly}
+      payLabel={payLabel}
+      preview={preview}
+      name={name}
+      email={email}
+      billing={billing}
+      onBillingChange={onBillingChange}
+      onPaid={onPaid}
+      onBack={onBack}
+    />
+  );
 
   return (
     <>
@@ -410,22 +493,30 @@ export function CardStep({
       */}
       {stripe ? (
         <Elements stripe={stripe} options={stripeLook}>
-          <CardFields
-            resolvePayment={resolvePayment}
-            isMonthly={isMonthly}
-            payLabel={payLabel}
-            preview={preview}
-            name={name}
-            email={email}
-            billing={billing}
-            onBillingChange={onBillingChange}
-            onPaid={onPaid}
+          <PaymentMethodChooser
+            selected={method}
+            googlePayEnabled={GOOGLE_PAY_ENABLED}
+            onCard={() => setMethod("card")}
+            onGooglePay={() => setMethod("googlePay")}
             onBack={onBack}
           />
+
+          {method === "card" ? (
+            cardFields
+          ) : method === "googlePay" && GOOGLE_PAY_ENABLED ? (
+            <GooglePayOption
+              total={value + extra + addOnTotal}
+              isMonthly={isMonthly}
+              preview={preview}
+              resolvePayment={resolvePayment}
+              onPaid={onPaid}
+              onBack={() => setMethod(null)}
+            />
+          ) : null}
         </Elements>
       ) : (
         <p className="mt-5 text-[0.8125rem] text-body">
-          Preparing the secure card fields…
+          Preparing the secure payment fields…
         </p>
       )}
     </>

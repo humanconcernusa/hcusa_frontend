@@ -18,6 +18,25 @@ export type Billing = {
   complete: boolean;
 };
 
+/*
+  The donor address the platform expects. A wallet gives the same parts under different names,
+  so this is the one shape the submit body uses.
+*/
+export type DonationAddress = {
+  addressLine1: string;
+  streetName: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  country: string;
+};
+
+/*
+  Google Pay is disabled for now: the wallet is not being offered through the platform's current
+  Stripe setup. The tile stays visible but cannot be picked. Set this to true to enable it.
+*/
+export const GOOGLE_PAY_ENABLED = false;
+
 export function money(value: number): string {
   return `$${value.toLocaleString("en-US")}`;
 }
@@ -94,6 +113,21 @@ export function CardIcon() {
     >
       <rect x="2.5" y="5.5" width="19" height="13" rx="2" />
       <path d="M2.5 9.5h19" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+/* A wallet mark, next to the card one in the payment chooser. */
+export function WalletIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      className="size-4 shrink-0 fill-none stroke-current stroke-[1.6]"
+    >
+      <path d="M4 8.5A2.5 2.5 0 0 1 6.5 6H18a1.5 1.5 0 0 1 1.5 1.5V8" />
+      <rect x="3" y="8" width="18" height="11" rx="2.5" />
+      <path d="M16 13.5h2" strokeLinecap="round" />
     </svg>
   );
 }
