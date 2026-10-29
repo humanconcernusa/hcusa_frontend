@@ -66,8 +66,8 @@ export function GooglePayOption({
       },
       requestPayerName: true,
       requestPayerEmail: true,
-      /* Only Google Pay. Apple Pay, Link and browser-saved cards are left out. */
-      disableWallets: ["applePay", "link", "browserCard"],
+      /* Temporary: allow every wallet so the log shows what Stripe can see. */
+      disableWallets: [],
     });
 
     let active = true;
