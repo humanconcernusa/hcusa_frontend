@@ -12,7 +12,7 @@
     "headingAccent": "Transparency",
     "body": "Explore our annual reports, financial audits, emergency response updates, and impact summaries. We are committed to accountability and clear reporting for our donors, partners, and communities.",
     "cta": "Annual Reports",
-    "image": "https://res.cloudinary.com/impactreports/image/upload/v1790507595/hcusa/home/sag9mjtshdzisnj769vd.jpg",
+    "image": "https://pub-387995532fb34284b3f927edc6088b7b.r2.dev/media/mvtf6luc-3d6952eb5769.webp",
     "imageAlt": "A Human Concern USA field worker sitting with a family"
   },
   "intro": {
@@ -32,7 +32,7 @@
           "title": "Strategic Plan 2023-2026",
           "body": "Details of our commitment to five key pillars: emergency response, child sponsorship, hunger alleviation, clean water access, and local USA programming.",
           "href": "https://drive.google.com/file/d/1T3_wz9-FhsW44CoUyqUfwk9W9yf8yPnZ/view",
-          "image": "https://res.cloudinary.com/impactreports/image/upload/v1790507718/hcusa/home/bbt0g4mcmf2r9v4xyify.webp",
+          "image": "https://pub-387995532fb34284b3f927edc6088b7b.r2.dev/media/mvtf6vrf-907bafd6d814.webp",
           "imageAlt": "The cover of the Human Concern USA Strategic Plan 2023-2026"
         }
       },
@@ -44,7 +44,7 @@
           "title": "HC_USA Annual Report 2025",
           "body": "",
           "href": "https://drive.google.com/file/d/1f-j5p0VkuuNJFDUll4SYHqirc471M-gz/view",
-          "image": "https://res.cloudinary.com/impactreports/image/upload/v1790507738/hcusa/home/le2dxieprwjoxskmxri3.webp",
+          "image": "https://pub-387995532fb34284b3f927edc6088b7b.r2.dev/media/mvtf75xn-c62cef869d61.webp",
           "imageAlt": "The cover of the Human Concern USA Annual Report 2025"
         }
       }
@@ -54,7 +54,8 @@
     "headingStart": "Why",
     "headingAccent": "Choose",
     "headingEnd": "Human Concern USA?",
-    "image": "https://res.cloudinary.com/impactreports/image/upload/v1790507866/hcusa/home/bs7va6zks58lmc8u6aqa.jpg",
+    "form": "general",
+    "image": "https://pub-387995532fb34284b3f927edc6088b7b.r2.dev/media/mvtf7k36-1d4843e29171.webp",
     "imageAlt": "Children supported by Human Concern USA",
     "points": [
       "45+ years of trusted humanitarian service",
@@ -67,8 +68,6 @@
   "global": {
     "headingStart": "Our",
     "headingAccent": "Global",
-    "headingEnd": "Presence",
-    "image": "/reference_pictures/about_us/why_choose_us/imgi_40_2021_ER_Gaza_D54_Photos_Gaza_EDited-4.jpg",
-    "imageAlt": "A world map showing the countries Human Concern USA works in"
+    "headingEnd": "Presence"
   }
 }
