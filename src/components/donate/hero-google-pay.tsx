@@ -43,7 +43,6 @@ export function GooglePayOption({
   startPayment,
   completePayment,
   onPaid,
-  onBack,
 }: {
   stripe: Stripe;
   isMonthly: boolean;
@@ -55,7 +54,6 @@ export function GooglePayOption({
   startPayment: (turnstileToken: string) => Promise<StartedDonation>;
   completePayment: (payload: CompleteDonationBody) => Promise<void>;
   onPaid: (status: "succeeded" | "processing", reference?: { donationId: string }) => void;
-  onBack: () => void;
 }) {
   const [turnstileToken, setTurnstileToken] = useState("");
   const [turnstileReset, setTurnstileReset] = useState(0);
@@ -94,7 +92,7 @@ export function GooglePayOption({
   }, [preview, ready, turnstileToken]);
 
   return (
-    <div className="mt-5 flex flex-col gap-3">
+    <div className="flex flex-col gap-3">
       <p className="text-[0.8125rem] text-body">
         {isMonthly
           ? "Google Pay saves the card and starts the monthly plan. The first payment is taken today."
@@ -137,16 +135,6 @@ export function GooglePayOption({
           {error}
         </p>
       ) : null}
-
-      <div className="donate-actions mt-3">
-        <button
-          type="button"
-          onClick={onBack}
-          className="inline-flex min-h-12 w-full items-center justify-center rounded-md border border-line bg-surface px-6 text-[0.9375rem] font-semibold text-ink transition-colors hover:bg-page max-sm:min-h-11 max-sm:px-4"
-        >
-          Back
-        </button>
-      </div>
     </div>
   );
 }
@@ -280,6 +268,7 @@ function GooglePayButtons({
       <ExpressCheckoutElement
         options={{
           paymentMethods: { googlePay: "always", applePay: "never", link: "never" },
+          buttonType: { googlePay: "donate" },
           buttonHeight: 48,
         }}
         onReady={(event) => setAvailable(Boolean(event.availablePaymentMethods?.googlePay))}
