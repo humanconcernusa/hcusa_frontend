@@ -341,6 +341,7 @@ export async function finalizeDonation(
       code === "PAYMENT_PROCESSING" ||
       code === "FINALIZED_PROCESSING" ||
       code === "REQUEST_IN_PROGRESS" ||
+      code === "PENDING_SESSION_LOCKED" ||
       (response.status === 502 && /processing|pending|not succeeded/i.test(message));
 
     if (!waiting) {
