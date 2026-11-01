@@ -11,7 +11,7 @@ import type { Stripe, StripeExpressCheckoutElementConfirmEvent } from "@stripe/s
 import { TURNSTILE_ENABLED } from "@/turnstile";
 import { TurnstileBox } from "@/components/turnstile/turnstile-box";
 import {
-  waitForDonationRecord,
+  createFirstPayment,
   type CompleteDonationBody,
   type StartedDonation,
 } from "@/donation-payments";
@@ -176,6 +176,8 @@ function GooglePayButtons({
   const elements = useElements();
   const [available, setAvailable] = useState<boolean | null>(null);
   const [isPaying, setIsPaying] = useState(false);
+  /* The wallet card is saved once. A failed first payment must not repeat the SetupIntent. */
+  const setupSavedRef = useRef(false);
 
   async function confirm(event: StripeExpressCheckoutElementConfirmEvent) {
     if (!stripe || !elements || isPaying) return;
@@ -216,18 +218,29 @@ function GooglePayButtons({
       const returnUrl = typeof window !== "undefined" ? window.location.href : "";
 
       if (isMonthly) {
-        const setup = await stripe.confirmSetup({
-          elements,
-          clientSecret: started.clientSecret,
-          confirmParams: { return_url: returnUrl },
-          redirect: "if_required",
-        });
+        if (!setupSavedRef.current) {
+          const setup = await stripe.confirmSetup({
+            elements,
+            clientSecret: started.clientSecret,
+            confirmParams: { return_url: returnUrl },
+            redirect: "if_required",
+          });
 
-        if (setup.error) {
-          const message = setup.error.message ?? "The card could not be saved.";
-          event.paymentFailed({ message });
-          onError(message);
-          return;
+          if (setup.error) {
+            const message = setup.error.message ?? "The card could not be saved.";
+            event.paymentFailed({ message });
+            onError(message);
+            return;
+          }
+
+          if (setup.setupIntent?.status !== "succeeded") {
+            const message = "The card could not be saved. Please check your card and try again.";
+            event.paymentFailed({ message });
+            onError(message);
+            return;
+          }
+
+          setupSavedRef.current = true;
         }
 
         if (!started.pendingSessionId || !started.setupIntentId) {
@@ -237,9 +250,36 @@ function GooglePayButtons({
           return;
         }
 
-        /* The webhook records the plan. Wait one second, then read the real record. */
-        const record = await waitForDonationRecord(started.pendingSessionId);
-        onPaid(record.recorded ? "succeeded" : "processing", { donationId: started.donationId });
+        /*
+          The first payment is taken now, with the wallet card, so 3DS can finish.
+          It is not an off-session charge from the webhook.
+        */
+        const first = await createFirstPayment({
+          pendingSessionId: started.pendingSessionId,
+          setupIntentId: started.setupIntentId,
+        });
+
+        const firstResult = await stripe.confirmCardPayment(first.clientSecret);
+
+        if (firstResult.error) {
+          const message = firstResult.error.message ?? "The first payment could not be completed.";
+          event.paymentFailed({ message });
+          onError(message);
+          return;
+        }
+
+        const firstStatus = firstResult.paymentIntent?.status;
+
+        if (firstStatus !== "succeeded" && firstStatus !== "processing") {
+          const message = "The first payment was not completed. Please check your card and try again.";
+          event.paymentFailed({ message });
+          onError(message);
+          return;
+        }
+
+        onPaid(firstStatus === "processing" ? "processing" : "succeeded", {
+          donationId: first.donationId || started.donationId,
+        });
         return;
       }
 

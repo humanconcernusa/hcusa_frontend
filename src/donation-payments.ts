@@ -164,6 +164,84 @@ export async function waitForDonationRecord(pendingSessionId: string): Promise<D
   return last;
 }
 
+export type StartedFirstPayment = {
+  donationId: string;
+  paymentIntentId: string;
+  clientSecret: string;
+  amount: number;
+};
+
+const FIRST_PAYMENT_LOCK_RETRY_MS = 1000;
+
+/*
+  The first monthly payment, taken while the donor is still on the card step. The server
+  creates a PaymentIntent for installment 1 with the card the SetupIntent saved, and answers
+  with its client secret. The browser confirms it so 3DS can finish.
+*/
+export async function createFirstPayment({
+  pendingSessionId,
+  setupIntentId,
+}: {
+  pendingSessionId: string;
+  setupIntentId: string;
+}): Promise<StartedFirstPayment> {
+  if (DONATION_API_URL.length === 0) {
+    throw new Error("The donation platform address is not set for this build.");
+  }
+
+  type FirstPaymentPayload = {
+    data?: {
+      donationId?: unknown;
+      paymentIntentId?: unknown;
+      clientSecret?: unknown;
+      amount?: unknown;
+    };
+    error?: { code?: unknown; message?: unknown };
+    code?: unknown;
+    message?: unknown;
+  };
+
+  let lastMessage = "The first payment could not be started.";
+
+  for (let attempt = 1; attempt <= 2; attempt += 1) {
+    const response = await fetch(`${DONATION_API_URL}/api/v1/donations/first-payment`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        accept: "application/json",
+        "x-idempotency-key": newPaymentKey(),
+      },
+      body: JSON.stringify({ pendingSessionId, setupIntentId }),
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    });
+
+    const payload = (await response.json().catch(() => null)) as FirstPaymentPayload | null;
+
+    if (response.ok) {
+      const clientSecret = text(payload?.data?.clientSecret);
+      const paymentIntentId = text(payload?.data?.paymentIntentId);
+      if (clientSecret.length === 0 || paymentIntentId.length === 0) {
+        throw new Error("The first payment could not be started.");
+      }
+
+      return {
+        donationId: text(payload?.data?.donationId),
+        paymentIntentId,
+        clientSecret,
+        amount: Number(payload?.data?.amount) || 0,
+      };
+    }
+
+    lastMessage = errorFields(payload).message || lastMessage;
+
+    /* The plan may still be locking in the webhook. One short retry is enough. */
+    if (response.status !== 409 || attempt === 2) break;
+    await delay(FIRST_PAYMENT_LOCK_RETRY_MS);
+  }
+
+  throw new Error(lastMessage);
+}
+
 /* One key per attempt, so a second press asks for the same payment instead of a new one. */
 export function newPaymentKey(): string {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {

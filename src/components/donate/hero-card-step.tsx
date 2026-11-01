@@ -14,7 +14,7 @@ import { TURNSTILE_ENABLED } from "@/turnstile";
 import { TurnstileBox } from "@/components/turnstile/turnstile-box";
 import {
   MONTHLY_TERM,
-  waitForDonationRecord,
+  createFirstPayment,
   type CompleteDonationBody,
   type StartedDonation,
 } from "@/donation-payments";
@@ -71,6 +71,8 @@ function CardFields({
   const [error, setError] = useState("");
   /* Kept for a retry after a declined card, so one attempt does not start several payments. */
   const [started, setStarted] = useState<StartedDonation | null>(null);
+  /* The card is saved once. A failed first payment must not repeat the SetupIntent. */
+  const [cardSaved, setCardSaved] = useState(false);
   /* Cloudflare's token. The platform checks it before it starts the payment. */
   const [turnstileToken, setTurnstileToken] = useState("");
   const [turnstileReset, setTurnstileReset] = useState(0);
@@ -134,11 +136,20 @@ function CardFields({
       };
 
       if (isMonthly) {
-        const setup = await stripe.confirmCardSetup(current.clientSecret, { payment_method: paymentMethod });
+        if (!cardSaved) {
+          const setup = await stripe.confirmCardSetup(current.clientSecret, { payment_method: paymentMethod });
 
-        if (setup.error) {
-          setError(setup.error.message ?? "The card could not be saved.");
-          return;
+          if (setup.error) {
+            setError(setup.error.message ?? "The card could not be saved.");
+            return;
+          }
+
+          if (setup.setupIntent?.status !== "succeeded") {
+            setError("The card could not be saved. Please check your card and try again.");
+            return;
+          }
+
+          setCardSaved(true);
         }
 
         if (!current.setupIntentId || !current.pendingSessionId) {
@@ -146,9 +157,32 @@ function CardFields({
           return;
         }
 
-        /* The webhook records the plan. Wait one second, then read the real record. */
-        const record = await waitForDonationRecord(current.pendingSessionId);
-        onPaid(record.recorded ? "succeeded" : "processing", { donationId: current.donationId });
+        /*
+          The first payment is taken now, on this step, so the bank can show 3DS.
+          It is not an off-session charge from the webhook.
+        */
+        const first = await createFirstPayment({
+          pendingSessionId: current.pendingSessionId,
+          setupIntentId: current.setupIntentId,
+        });
+
+        const firstResult = await stripe.confirmCardPayment(first.clientSecret);
+
+        if (firstResult.error) {
+          setError(firstResult.error.message ?? "The first payment could not be completed.");
+          return;
+        }
+
+        const firstStatus = firstResult.paymentIntent?.status;
+
+        if (firstStatus !== "succeeded" && firstStatus !== "processing") {
+          setError("The first payment was not completed. Please check your card and try again.");
+          return;
+        }
+
+        onPaid(firstStatus === "processing" ? "processing" : "succeeded", {
+          donationId: first.donationId || current.donationId,
+        });
         return;
       }
 
