@@ -149,9 +149,19 @@ export async function fetchDonationStatus(pendingSessionId: string): Promise<Don
   }
 }
 
+const RECORD_POLL_ATTEMPTS = 6;
+const RECORD_POLL_DELAY_MS = 1000;
+
 export async function waitForDonationRecord(pendingSessionId: string): Promise<DonationRecordStatus> {
-  await delay(1000);
-  return fetchDonationStatus(pendingSessionId);
+  let last: DonationRecordStatus = { recorded: false };
+
+  for (let attempt = 1; attempt <= RECORD_POLL_ATTEMPTS; attempt += 1) {
+    await delay(RECORD_POLL_DELAY_MS);
+    last = await fetchDonationStatus(pendingSessionId);
+    if (last.recorded) return last;
+  }
+
+  return last;
 }
 
 /* One key per attempt, so a second press asks for the same payment instead of a new one. */
