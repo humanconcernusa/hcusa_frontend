@@ -105,6 +105,29 @@ function text(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
 }
 
+/* Errors come in two shapes: AppError nests them, the idempotency middleware returns them flat. */
+function errorFields(payload: {
+  error?: { code?: unknown; message?: unknown };
+  code?: unknown;
+  message?: unknown;
+} | null): { code: string; message: string } {
+  return {
+    code: text(payload?.error?.code) || text(payload?.code),
+    message: text(payload?.error?.message) || text(payload?.message),
+  };
+}
+
+function wait(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/* The middleware sets Retry-After while another request with the same key is still running. */
+function retryAfterMs(response: Response, fallback: number): number {
+  const seconds = Number(response.headers.get("retry-after"));
+  if (Number.isFinite(seconds) && seconds > 0) return Math.min(seconds * 1000, 15000);
+  return fallback;
+}
+
 /* One key per attempt, so a second press asks for the same payment instead of a new one. */
 export function newPaymentKey(): string {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -183,20 +206,7 @@ export async function submitDonation(
     throw new Error("The donation platform address is not set for this build.");
   }
 
-  const response = await fetch(`${DONATION_API_URL}/api/v1/donations/submit`, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      accept: "application/json",
-      "x-idempotency-key": idempotencyKey,
-      /* Cloudflare's bot check token; the platform checks it before taking the donation. */
-      ...(turnstileToken.length > 0 ? { "cf-turnstile-response": turnstileToken } : {}),
-    },
-    body: JSON.stringify(body),
-    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-  });
-
-  const payload = (await response.json().catch(() => null)) as {
+  type SubmitPayload = {
     data?: {
       donationId?: unknown;
       payment?: {
@@ -207,11 +217,46 @@ export async function submitDonation(
       };
       pendingSessionId?: unknown;
     };
-    error?: { message?: unknown };
-  } | null;
+    error?: { code?: unknown; message?: unknown };
+    code?: unknown;
+    message?: unknown;
+  };
 
-  if (!response.ok) {
-    throw new Error(text(payload?.error?.message) || "The payment could not be started.");
+  let payload: SubmitPayload | null = null;
+
+  for (let attempt = 1; attempt <= 2; attempt += 1) {
+    const response = await fetch(`${DONATION_API_URL}/api/v1/donations/submit`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        accept: "application/json",
+        "x-idempotency-key": idempotencyKey,
+        /* Cloudflare's bot check token; the platform checks it before taking the donation. */
+        ...(turnstileToken.length > 0 ? { "cf-turnstile-response": turnstileToken } : {}),
+      },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    });
+
+    const parsed = (await response.json().catch(() => null)) as SubmitPayload | null;
+
+    if (response.ok) {
+      payload = parsed;
+      break;
+    }
+
+    const { code, message } = errorFields(parsed);
+
+    if (code === "IDEMPOTENCY_LOCK_CONFLICT" && attempt < 2) {
+      await wait(retryAfterMs(response, 1500));
+      continue;
+    }
+
+    throw new Error(message || "The payment could not be started.");
+  }
+
+  if (!payload) {
+    throw new Error("The payment could not be started.");
   }
 
   const publishableKey = text(payload?.data?.payment?.publishableKey);
@@ -259,24 +304,37 @@ export async function completeDonation(
     throw new Error("The donation platform address is not set for this build.");
   }
 
-  const response = await fetch(`${DONATION_API_URL}/api/v1/donations/complete`, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      accept: "application/json",
-      "x-idempotency-key": idempotencyKey,
-    },
-    body: JSON.stringify(body),
-    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-  });
+  for (let attempt = 1; attempt <= 2; attempt += 1) {
+    const response = await fetch(`${DONATION_API_URL}/api/v1/donations/complete`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        accept: "application/json",
+        "x-idempotency-key": idempotencyKey,
+      },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    });
 
-  if (response.ok) return;
+    if (response.ok) return;
 
-  const payload = (await response.json().catch(() => null)) as {
-    error?: { message?: unknown };
-  } | null;
+    const payload = (await response.json().catch(() => null)) as {
+      error?: { code?: unknown; message?: unknown };
+      code?: unknown;
+      message?: unknown;
+    } | null;
 
-  throw new Error(text(payload?.error?.message) || "The donation details could not be saved.");
+    const { code, message } = errorFields(payload);
+
+    if (code === "IDEMPOTENCY_LOCK_CONFLICT" && attempt < 2) {
+      await wait(retryAfterMs(response, 1500));
+      continue;
+    }
+
+    throw new Error(message || "The donation details could not be saved.");
+  }
+
+  return;
 }
 
 /*
@@ -329,20 +387,18 @@ export async function finalizeDonation(
 
     const payload = (await response.json().catch(() => null)) as {
       error?: { code?: unknown; message?: unknown };
+      code?: unknown;
+      message?: unknown;
     } | null;
 
-    const code = text(payload?.error?.code);
-    const message = text(payload?.error?.message);
+    const { code, message } = errorFields(payload);
 
     if (code === "ALREADY_FINALIZED") return { pending: false };
 
     const waiting =
       code === "SETUP_INTENT_NOT_SUCCEEDED" ||
-      code === "PAYMENT_PROCESSING" ||
-      code === "FINALIZED_PROCESSING" ||
-      code === "REQUEST_IN_PROGRESS" ||
       code === "PENDING_SESSION_LOCKED" ||
-      response.status >= 500;
+      code === "IDEMPOTENCY_LOCK_CONFLICT";
 
     if (!waiting) {
       throw new Error(
@@ -351,7 +407,7 @@ export async function finalizeDonation(
     }
 
     if (attempt < FINALIZE_RETRIES) {
-      await new Promise((resolve) => setTimeout(resolve, FINALIZE_RETRY_DELAY_MS * attempt));
+      await wait(retryAfterMs(response, FINALIZE_RETRY_DELAY_MS * attempt));
     }
   }
 
