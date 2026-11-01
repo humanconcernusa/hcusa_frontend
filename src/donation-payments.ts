@@ -117,17 +117,6 @@ function errorFields(payload: {
   };
 }
 
-function wait(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-/* The middleware sets Retry-After while another request with the same key is still running. */
-function retryAfterMs(response: Response, fallback: number): number {
-  const seconds = Number(response.headers.get("retry-after"));
-  if (Number.isFinite(seconds) && seconds > 0) return Math.min(seconds * 1000, 15000);
-  return fallback;
-}
-
 /* One key per attempt, so a second press asks for the same payment instead of a new one. */
 export function newPaymentKey(): string {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -222,36 +211,23 @@ export async function submitDonation(
     message?: unknown;
   };
 
-  let payload: SubmitPayload | null = null;
+  const response = await fetch(`${DONATION_API_URL}/api/v1/donations/submit`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      accept: "application/json",
+      "x-idempotency-key": idempotencyKey,
+      /* Cloudflare's bot check token; the platform checks it before taking the donation. */
+      ...(turnstileToken.length > 0 ? { "cf-turnstile-response": turnstileToken } : {}),
+    },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+  });
 
-  for (let attempt = 1; attempt <= 2; attempt += 1) {
-    const response = await fetch(`${DONATION_API_URL}/api/v1/donations/submit`, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        accept: "application/json",
-        "x-idempotency-key": idempotencyKey,
-        /* Cloudflare's bot check token; the platform checks it before taking the donation. */
-        ...(turnstileToken.length > 0 ? { "cf-turnstile-response": turnstileToken } : {}),
-      },
-      body: JSON.stringify(body),
-      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-    });
+  const payload = (await response.json().catch(() => null)) as SubmitPayload | null;
 
-    const parsed = (await response.json().catch(() => null)) as SubmitPayload | null;
-
-    if (response.ok) {
-      payload = parsed;
-      break;
-    }
-
-    const { code, message } = errorFields(parsed);
-
-    if (code === "IDEMPOTENCY_LOCK_CONFLICT" && attempt < 2) {
-      await wait(retryAfterMs(response, 1500));
-      continue;
-    }
-
+  if (!response.ok) {
+    const { message } = errorFields(payload);
     throw new Error(message || "The payment could not be started.");
   }
 
@@ -304,8 +280,49 @@ export async function completeDonation(
     throw new Error("The donation platform address is not set for this build.");
   }
 
-  for (let attempt = 1; attempt <= 2; attempt += 1) {
-    const response = await fetch(`${DONATION_API_URL}/api/v1/donations/complete`, {
+  const response = await fetch(`${DONATION_API_URL}/api/v1/donations/complete`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      accept: "application/json",
+      "x-idempotency-key": idempotencyKey,
+    },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+  });
+
+  if (response.ok) return;
+
+  const payload = (await response.json().catch(() => null)) as {
+    error?: { code?: unknown; message?: unknown };
+    code?: unknown;
+    message?: unknown;
+  } | null;
+
+  const { message } = errorFields(payload);
+
+  throw new Error(message || "The donation details could not be saved.");
+}
+
+/*
+  Confirms a monthly donation with the platform, once Stripe has saved the card. The webhook records
+  the same plan, so this is only the fast path. If another process is already recording it, the
+  donor goes to the thank-you screen and the webhook finishes the job.
+*/
+export type FinalizeResult = { pending: boolean };
+
+export async function finalizeDonation(
+  body: { paymentMode: "split"; pendingSessionId: string; setupIntentId: string },
+  idempotencyKey: string,
+): Promise<FinalizeResult> {
+  if (DONATION_API_URL.length === 0) {
+    throw new Error("The donation platform address is not set for this build.");
+  }
+
+  let response: Response;
+
+  try {
+    response = await fetch(`${DONATION_API_URL}/api/v1/donations/finalize`, {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -315,103 +332,34 @@ export async function completeDonation(
       body: JSON.stringify(body),
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
-
-    if (response.ok) return;
-
-    const payload = (await response.json().catch(() => null)) as {
-      error?: { code?: unknown; message?: unknown };
-      code?: unknown;
-      message?: unknown;
-    } | null;
-
-    const { code, message } = errorFields(payload);
-
-    if (code === "IDEMPOTENCY_LOCK_CONFLICT" && attempt < 2) {
-      await wait(retryAfterMs(response, 1500));
-      continue;
-    }
-
-    throw new Error(message || "The donation details could not be saved.");
+  } catch {
+    /* The card is saved and the webhook records the plan, so a network miss is not a failure. */
+    return { pending: true };
   }
 
-  return;
-}
+  if (response.ok) return { pending: false };
 
-/*
-  Confirms a monthly gift with the platform, once Stripe has saved the card. Until this runs the plan
-  is not recorded anywhere, so it is the second half of the monthly step. The key is reused on a
-  retry, so a second press cannot set up a second plan.
-*/
-export type FinalizeResult = { pending: boolean };
+  const payload = (await response.json().catch(() => null)) as {
+    error?: { code?: unknown; message?: unknown };
+    code?: unknown;
+    message?: unknown;
+  } | null;
 
-const FINALIZE_RETRIES = 4;
-const FINALIZE_RETRY_DELAY_MS = 1500;
+  const { code, message } = errorFields(payload);
 
-/*
-  Records the monthly plan. The webhook also records it, so a "not settled yet" answer is a
-  waiting state, not a failure. Retry a few times with the same key, then let the donor go to the
-  thank-you screen and let the webhook finish the job.
-*/
-export async function finalizeDonation(
-  body: { paymentMode: "split"; pendingSessionId: string; setupIntentId: string },
-  idempotencyKey: string,
-): Promise<FinalizeResult> {
-  if (DONATION_API_URL.length === 0) {
-    throw new Error("The donation platform address is not set for this build.");
+  if (code === "ALREADY_FINALIZED") return { pending: false };
+
+  /* Another process is already recording this plan. The webhook will finish it. */
+  if (
+    code === "PENDING_SESSION_LOCKED" ||
+    code === "IDEMPOTENCY_LOCK_CONFLICT" ||
+    code === "SETUP_INTENT_NOT_SUCCEEDED" ||
+    response.status >= 500
+  ) {
+    return { pending: true };
   }
 
-  for (let attempt = 1; attempt <= FINALIZE_RETRIES; attempt += 1) {
-    let response: Response | null = null;
-
-    try {
-      response = await fetch(`${DONATION_API_URL}/api/v1/donations/finalize`, {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          accept: "application/json",
-          "x-idempotency-key": idempotencyKey,
-        },
-        body: JSON.stringify(body),
-        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-      });
-    } catch (caught) {
-      if (attempt < FINALIZE_RETRIES) {
-        await new Promise((resolve) => setTimeout(resolve, FINALIZE_RETRY_DELAY_MS * attempt));
-        continue;
-      }
-      throw caught;
-    }
-
-    if (!response) continue;
-    if (response.ok) return { pending: false };
-
-    const payload = (await response.json().catch(() => null)) as {
-      error?: { code?: unknown; message?: unknown };
-      code?: unknown;
-      message?: unknown;
-    } | null;
-
-    const { code, message } = errorFields(payload);
-
-    if (code === "ALREADY_FINALIZED") return { pending: false };
-
-    const waiting =
-      code === "SETUP_INTENT_NOT_SUCCEEDED" ||
-      code === "PENDING_SESSION_LOCKED" ||
-      code === "IDEMPOTENCY_LOCK_CONFLICT";
-
-    if (!waiting) {
-      throw new Error(
-        message || `The monthly donation could not be saved (${response.status}).`,
-      );
-    }
-
-    if (attempt < FINALIZE_RETRIES) {
-      await wait(retryAfterMs(response, FINALIZE_RETRY_DELAY_MS * attempt));
-    }
-  }
-
-  return { pending: true };
+  throw new Error(message || `The monthly donation could not be saved (${response.status}).`);
 }
 
 /*
