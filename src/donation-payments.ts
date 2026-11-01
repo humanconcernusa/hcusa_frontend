@@ -342,10 +342,12 @@ export async function finalizeDonation(
       code === "FINALIZED_PROCESSING" ||
       code === "REQUEST_IN_PROGRESS" ||
       code === "PENDING_SESSION_LOCKED" ||
-      (response.status === 502 && /processing|pending|not succeeded/i.test(message));
+      response.status >= 500;
 
     if (!waiting) {
-      throw new Error(message || "The monthly donation could not be saved.");
+      throw new Error(
+        message || `The monthly donation could not be saved (${response.status}).`,
+      );
     }
 
     if (attempt < FINALIZE_RETRIES) {
