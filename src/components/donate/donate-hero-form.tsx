@@ -211,20 +211,18 @@ export function HeroForm({
     : "";
 
   /*
-    A receipt is issued only for a settled charge. A monthly gift's first payment is scheduled for
-    later, and a card that came back "processing" has not settled yet, so the button is shown but
-    disabled with the reason underneath.
+    A receipt is issued only for a settled charge. A monthly donation's first payment is charged at
+    setup, so the endpoint decides. A one-time card that came back "processing" has not settled, so
+    its button stays disabled until it does.
   */
-  const receiptReady = !isMonthly && paidStatus === "succeeded";
+  const receiptReady = isMonthly || paidStatus === "succeeded";
   const canDownloadReceipt =
     receiptReady && Boolean(receipt?.donationId) && email.trim().length > 0;
   const receiptNote = canDownloadReceipt
     ? ""
-    : isMonthly
-      ? "Your receipt is emailed after the first payment."
-      : paidStatus === "processing"
-        ? "Your receipt is emailed once the card payment completes."
-        : "Your receipt is on its way to your inbox.";
+    : paidStatus === "processing"
+      ? "Your receipt is emailed once the card payment completes."
+      : "Your receipt is on its way to your inbox.";
 
   function togglePurpose(id: string) {
     setPurposes((current) =>
