@@ -117,6 +117,43 @@ function errorFields(payload: {
   };
 }
 
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+type DonationRecordStatus = { recorded: boolean; donationId?: string };
+
+/* Ask the API whether the monthly plan is really written. This is the real record, not a reply code. */
+export async function fetchDonationStatus(pendingSessionId: string): Promise<DonationRecordStatus> {
+  if (!pendingSessionId || DONATION_API_URL.length === 0) return { recorded: false };
+
+  try {
+    const response = await fetch(
+      `${DONATION_API_URL}/api/v1/donations/status?pendingSessionId=${encodeURIComponent(pendingSessionId)}`,
+      {
+        headers: { accept: "application/json" },
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      },
+    );
+    if (!response.ok) return { recorded: false };
+
+    const payload = (await response.json().catch(() => null)) as {
+      data?: { recorded?: unknown; donationId?: unknown };
+    } | null;
+
+    const recorded = payload?.data?.recorded === true;
+    const donationId = text(payload?.data?.donationId);
+    return { recorded, ...(donationId.length > 0 ? { donationId } : {}) };
+  } catch {
+    return { recorded: false };
+  }
+}
+
+export async function waitForDonationRecord(pendingSessionId: string): Promise<DonationRecordStatus> {
+  await delay(1000);
+  return fetchDonationStatus(pendingSessionId);
+}
+
 /* One key per attempt, so a second press asks for the same payment instead of a new one. */
 export function newPaymentKey(): string {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -302,64 +339,6 @@ export async function completeDonation(
   const { message } = errorFields(payload);
 
   throw new Error(message || "The donation details could not be saved.");
-}
-
-/*
-  Confirms a monthly donation with the platform, once Stripe has saved the card. The webhook records
-  the same plan, so this is only the fast path. If another process is already recording it, the
-  donor goes to the thank-you screen and the webhook finishes the job.
-*/
-export type FinalizeResult = { pending: boolean };
-
-export async function finalizeDonation(
-  body: { paymentMode: "split"; pendingSessionId: string; setupIntentId: string },
-  idempotencyKey: string,
-): Promise<FinalizeResult> {
-  if (DONATION_API_URL.length === 0) {
-    throw new Error("The donation platform address is not set for this build.");
-  }
-
-  let response: Response;
-
-  try {
-    response = await fetch(`${DONATION_API_URL}/api/v1/donations/finalize`, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        accept: "application/json",
-        "x-idempotency-key": idempotencyKey,
-      },
-      body: JSON.stringify(body),
-      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-    });
-  } catch {
-    /* The card is saved and the webhook records the plan, so a network miss is not a failure. */
-    return { pending: true };
-  }
-
-  if (response.ok) return { pending: false };
-
-  const payload = (await response.json().catch(() => null)) as {
-    error?: { code?: unknown; message?: unknown };
-    code?: unknown;
-    message?: unknown;
-  } | null;
-
-  const { code, message } = errorFields(payload);
-
-  if (code === "ALREADY_FINALIZED") return { pending: false };
-
-  /* Another process is already recording this plan. The webhook will finish it. */
-  if (
-    code === "PENDING_SESSION_LOCKED" ||
-    code === "IDEMPOTENCY_LOCK_CONFLICT" ||
-    code === "SETUP_INTENT_NOT_SUCCEEDED" ||
-    response.status >= 500
-  ) {
-    return { pending: true };
-  }
-
-  throw new Error(message || `The monthly donation could not be saved (${response.status}).`);
 }
 
 /*

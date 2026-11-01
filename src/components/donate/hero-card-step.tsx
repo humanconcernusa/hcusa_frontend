@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import {
   AddressElement,
   CardElement,
@@ -14,8 +14,7 @@ import { TURNSTILE_ENABLED } from "@/turnstile";
 import { TurnstileBox } from "@/components/turnstile/turnstile-box";
 import {
   MONTHLY_TERM,
-  finalizeDonation,
-  newPaymentKey,
+  waitForDonationRecord,
   type CompleteDonationBody,
   type StartedDonation,
 } from "@/donation-payments";
@@ -72,8 +71,6 @@ function CardFields({
   const [error, setError] = useState("");
   /* Kept for a retry after a declined card, so one attempt does not start several payments. */
   const [started, setStarted] = useState<StartedDonation | null>(null);
-  /* One key for the monthly confirmation, so a retry cannot record the plan twice. */
-  const finalizeKey = useRef("");
   /* Cloudflare's token. The platform checks it before it starts the payment. */
   const [turnstileToken, setTurnstileToken] = useState("");
   const [turnstileReset, setTurnstileReset] = useState(0);
@@ -149,19 +146,9 @@ function CardFields({
           return;
         }
 
-        if (finalizeKey.current.length === 0) finalizeKey.current = newPaymentKey();
-
-        const finalized = await finalizeDonation(
-          {
-            paymentMode: "split",
-            pendingSessionId: current.pendingSessionId,
-            setupIntentId: current.setupIntentId,
-          },
-          finalizeKey.current,
-        );
-
-        /* The webhook records the plan if it is not ready yet. The donor still gets the thank-you. */
-        onPaid(finalized.pending ? "processing" : "succeeded", { donationId: current.donationId });
+        /* The webhook records the plan. Wait one second, then read the real record. */
+        const record = await waitForDonationRecord(current.pendingSessionId);
+        onPaid(record.recorded ? "succeeded" : "processing", { donationId: current.donationId });
         return;
       }
 

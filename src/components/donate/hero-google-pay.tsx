@@ -11,7 +11,7 @@ import type { Stripe, StripeExpressCheckoutElementConfirmEvent } from "@stripe/s
 import { TURNSTILE_ENABLED } from "@/turnstile";
 import { TurnstileBox } from "@/components/turnstile/turnstile-box";
 import {
-  finalizeDonation,
+  waitForDonationRecord,
   type CompleteDonationBody,
   type StartedDonation,
 } from "@/donation-payments";
@@ -237,16 +237,9 @@ function GooglePayButtons({
           return;
         }
 
-        const finalized = await finalizeDonation(
-          {
-            paymentMode: "split",
-            pendingSessionId: started.pendingSessionId,
-            setupIntentId: started.setupIntentId,
-          },
-          `${started.donationId}-finalize`,
-        );
-
-        onPaid(finalized.pending ? "processing" : "succeeded", { donationId: started.donationId });
+        /* The webhook records the plan. Wait one second, then read the real record. */
+        const record = await waitForDonationRecord(started.pendingSessionId);
+        onPaid(record.recorded ? "succeeded" : "processing", { donationId: started.donationId });
         return;
       }
 
