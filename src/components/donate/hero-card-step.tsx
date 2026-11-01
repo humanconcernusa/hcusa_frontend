@@ -145,13 +145,13 @@ function CardFields({
         }
 
         if (!current.setupIntentId || !current.pendingSessionId) {
-          setError("The monthly gift could not be set up. Please try again.");
+          setError("The monthly donation could not be set up. Please try again.");
           return;
         }
 
         if (finalizeKey.current.length === 0) finalizeKey.current = newPaymentKey();
 
-        await finalizeDonation(
+        const finalized = await finalizeDonation(
           {
             paymentMode: "split",
             pendingSessionId: current.pendingSessionId,
@@ -160,8 +160,8 @@ function CardFields({
           finalizeKey.current,
         );
 
-        /* The plan is recorded. The first payment is taken on its own date, which is today. */
-        onPaid("succeeded", { donationId: current.donationId });
+        /* The webhook records the plan if it is not ready yet. The donor still gets the thank-you. */
+        onPaid(finalized.pending ? "processing" : "succeeded", { donationId: current.donationId });
         return;
       }
 

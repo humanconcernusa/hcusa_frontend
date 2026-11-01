@@ -538,10 +538,12 @@ export function HeroForm({
             <Tick />
           </span>
           <p className="mt-4 text-[1rem] text-body">
-            {isMonthly ? "Your monthly gift of " : "Your donation of "}
+            {isMonthly ? "Your monthly donation of " : "Your donation of "}
             <span className="font-semibold text-ink">{totalLabel}</span>
             {paidStatus === "processing"
-              ? " is being processed. Stripe emails you once it completes."
+              ? isMonthly
+                ? " is being set up. We will email you when it is active."
+                : " is being processed. Stripe emails you once it completes."
               : isMonthly
                 ? " has started. Thank you."
                 : " was received. Thank you."}
@@ -560,7 +562,7 @@ export function HeroForm({
               <dl className="mt-2 divide-y divide-divider text-[0.8125rem]">
                 <ReceiptRow label="Campaign" value={form.label} />
                 <ReceiptRow
-                  label={isMonthly ? "Monthly gift" : "Donation amount"}
+                  label={isMonthly ? "Monthly donation" : "Donation amount"}
                   value={money2(value)}
                 />
                 {extra > 0 ? (

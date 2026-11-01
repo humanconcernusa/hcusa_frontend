@@ -231,13 +231,13 @@ function GooglePayButtons({
         }
 
         if (!started.pendingSessionId || !started.setupIntentId) {
-          const message = "The monthly gift could not be set up. Please try again.";
+          const message = "The monthly donation could not be set up. Please try again.";
           event.paymentFailed({ message });
           onError(message);
           return;
         }
 
-        await finalizeDonation(
+        const finalized = await finalizeDonation(
           {
             paymentMode: "split",
             pendingSessionId: started.pendingSessionId,
@@ -246,7 +246,7 @@ function GooglePayButtons({
           `${started.donationId}-finalize`,
         );
 
-        onPaid("succeeded", { donationId: started.donationId });
+        onPaid(finalized.pending ? "processing" : "succeeded", { donationId: started.donationId });
         return;
       }
 

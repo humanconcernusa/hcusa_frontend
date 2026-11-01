@@ -284,32 +284,75 @@ export async function completeDonation(
   is not recorded anywhere, so it is the second half of the monthly step. The key is reused on a
   retry, so a second press cannot set up a second plan.
 */
+export type FinalizeResult = { pending: boolean };
+
+const FINALIZE_RETRIES = 4;
+const FINALIZE_RETRY_DELAY_MS = 1500;
+
+/*
+  Records the monthly plan. The webhook also records it, so a "not settled yet" answer is a
+  waiting state, not a failure. Retry a few times with the same key, then let the donor go to the
+  thank-you screen and let the webhook finish the job.
+*/
 export async function finalizeDonation(
   body: { paymentMode: "split"; pendingSessionId: string; setupIntentId: string },
   idempotencyKey: string,
-): Promise<void> {
+): Promise<FinalizeResult> {
   if (DONATION_API_URL.length === 0) {
     throw new Error("The donation platform address is not set for this build.");
   }
 
-  const response = await fetch(`${DONATION_API_URL}/api/v1/donations/finalize`, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      accept: "application/json",
-      "x-idempotency-key": idempotencyKey,
-    },
-    body: JSON.stringify(body),
-    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-  });
+  for (let attempt = 1; attempt <= FINALIZE_RETRIES; attempt += 1) {
+    let response: Response | null = null;
 
-  if (response.ok) return;
+    try {
+      response = await fetch(`${DONATION_API_URL}/api/v1/donations/finalize`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          accept: "application/json",
+          "x-idempotency-key": idempotencyKey,
+        },
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      });
+    } catch (caught) {
+      if (attempt < FINALIZE_RETRIES) {
+        await new Promise((resolve) => setTimeout(resolve, FINALIZE_RETRY_DELAY_MS * attempt));
+        continue;
+      }
+      throw caught;
+    }
 
-  const payload = (await response.json().catch(() => null)) as {
-    error?: { message?: unknown };
-  } | null;
+    if (!response) continue;
+    if (response.ok) return { pending: false };
 
-  throw new Error(text(payload?.error?.message) || "The monthly gift could not be saved.");
+    const payload = (await response.json().catch(() => null)) as {
+      error?: { code?: unknown; message?: unknown };
+    } | null;
+
+    const code = text(payload?.error?.code);
+    const message = text(payload?.error?.message);
+
+    if (code === "ALREADY_FINALIZED") return { pending: false };
+
+    const waiting =
+      code === "SETUP_INTENT_NOT_SUCCEEDED" ||
+      code === "PAYMENT_PROCESSING" ||
+      code === "FINALIZED_PROCESSING" ||
+      code === "REQUEST_IN_PROGRESS" ||
+      (response.status === 502 && /processing|pending|not succeeded/i.test(message));
+
+    if (!waiting) {
+      throw new Error(message || "The monthly donation could not be saved.");
+    }
+
+    if (attempt < FINALIZE_RETRIES) {
+      await new Promise((resolve) => setTimeout(resolve, FINALIZE_RETRY_DELAY_MS * attempt));
+    }
+  }
+
+  return { pending: true };
 }
 
 /*
