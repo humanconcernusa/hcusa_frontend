@@ -13,7 +13,6 @@ import { stripeLook } from "@/stripe-key";
 import { TURNSTILE_ENABLED } from "@/turnstile";
 import { TurnstileBox } from "@/components/turnstile/turnstile-box";
 import {
-  MONTHLY_TERM,
   createFirstPayment,
   type CompleteDonationBody,
   type StartedDonation,
@@ -505,7 +504,7 @@ export function CardStep({
         <div className="flex items-baseline justify-between gap-4">
           <dt className="text-body">Donation type</dt>
           <dd className="font-semibold text-ink">
-            {isMonthly ? `Monthly · ${MONTHLY_TERM} payments` : "One-time"}
+            {isMonthly ? "Monthly · ongoing until you cancel" : "One-time"}
           </dd>
         </div>
 

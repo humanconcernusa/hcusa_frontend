@@ -578,7 +578,7 @@ export function HeroForm({
                   label="Frequency"
                   value={
                     isMonthly
-                      ? `Monthly · ${MONTHLY_TERM} payments · first payment today`
+                      ? "Monthly · ongoing until you cancel · first payment today"
                       : "One-time"
                   }
                 />
