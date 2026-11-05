@@ -63,6 +63,8 @@ export type DonationSubmitBody = {
   formId: string;
   /* Which site this is. The platform records it, so its admin can tell a hcusa gift apart. */
   source: string;
+  /* A monthly gift here keeps running until the donor cancels. */
+  openEnded?: boolean;
   /*
     The extras the donor ticked. Only the id and the typed values travel; the platform prices each
     one from its own add-on settings and refuses an id the form does not offer.
@@ -270,10 +272,10 @@ export function allocateAmount(total: number, causeIds: string[]): DonationAlloc
 }
 
 /*
-  How many monthly payments a gift runs for. The platform bills a fixed list of dates rather than an
-  open-ended subscription, so the popup fixes the term and says so on the card screen.
+  How many monthly dates the platform keeps ready ahead. The plan is open-ended: a worker adds
+  the next month before the horizon runs out. This is not the end of the plan.
 */
-export const MONTHLY_TERM = 12;
+export const INITIAL_HORIZON_MONTHS = 12;
 
 function daysInUtcMonth(year: number, monthIndex: number): number {
   return new Date(Date.UTC(year, monthIndex + 1, 0)).getUTCDate();
@@ -287,7 +289,7 @@ function daysInUtcMonth(year: number, monthIndex: number): number {
 export function monthlySchedule(
   amount: number,
   causeIds: string[],
-  term = MONTHLY_TERM,
+  term = INITIAL_HORIZON_MONTHS,
 ): SplitInstallment[] {
   const first = new Date(Date.now() + 60 * 60 * 1000);
 

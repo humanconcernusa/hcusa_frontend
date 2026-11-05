@@ -38,6 +38,9 @@ export type TrackedDonation = {
   paymentMode: string;
   scheduleType: string | null;
   scheduleState: string | null;
+  openEnded?: boolean;
+  recurringAmount?: number | null;
+  canCancel?: boolean;
   tipAmount: number;
   status: { key: string; label: string };
   scheduleSummary: {
@@ -146,6 +149,30 @@ export async function fetchTrackedDonations(token: string): Promise<TrackedDonat
       ? (payload.data.items as TrackedDonation[])
       : [],
   };
+}
+
+export async function cancelTrackedDonation({
+  token,
+  donationId,
+}: {
+  token: string;
+  donationId: string;
+}): Promise<void> {
+  if (DONATION_API_URL.length === 0) {
+    throw new TrackError("The donation platform address is not set for this build.");
+  }
+
+  const response = await fetch(`${DONATION_API_URL}/api/v1/track-donation/donation/cancel`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      accept: "application/json",
+    },
+    body: JSON.stringify({ token, donationId, source: SOURCE }),
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+  });
+
+  if (!response.ok) throw await readError(response);
 }
 
 export async function fetchTrackedDonation(

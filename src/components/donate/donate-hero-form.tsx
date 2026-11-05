@@ -4,7 +4,6 @@ import { useEffect, useRef, useState, type RefObject } from "react";
 import { addOnAmount, extraPercent, presetsFor, type DonateForm } from "@/content/donate";
 import type { UtmData } from "@/content/utm";
 import {
-  MONTHLY_TERM,
   allocateAmount,
   completeDonation,
   fetchReceiptPdf,
@@ -288,10 +287,10 @@ export function HeroForm({
 
     /*
       The tip is a figure of its own, so the cause split covers the gift only. A monthly gift sends
-      the whole plan as the amount, because the platform checks that the dates add up to it.
+      the monthly amount. Its horizon dates are separate; the plan keeps extending until cancel.
     */
     const paymentBase = {
-      amount: isMonthly ? Number((value * MONTHLY_TERM).toFixed(2)) : value,
+      amount: Number(value.toFixed(2)),
       currency: "USD",
       ...(extra > 0 ? { platformTipAmount: extra } : {}),
       /* The gateway the card fields were drawn with: the platform charges on that account. */
@@ -301,6 +300,7 @@ export function HeroForm({
     return {
       formId: form.apiId,
       source: "hcusa",
+      ...(isMonthly ? { openEnded: true } : {}),
       ...(deferDonor
         ? { deferDonor: true }
         : {

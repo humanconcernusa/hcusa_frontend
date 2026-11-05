@@ -7,6 +7,7 @@ import { useSearchParams } from "next/navigation";
 import { TURNSTILE_ENABLED } from "@/turnstile";
 import { TurnstileBox } from "@/components/turnstile/turnstile-box";
 import {
+  cancelTrackedDonation,
   fetchTrackedDonation,
   fetchTrackedDonations,
   HUMAN_CONCERN_LOGIN_URL,
@@ -201,7 +202,7 @@ function Details({ item }: { item: TrackedDonation }) {
         <div className="flex justify-between gap-4 sm:block">
           <dt className="text-body">Status</dt>
           <dd className={`text-right sm:text-left ${statusTone(item.status?.key)}`}>
-            {item.status?.label || "—"}
+            {item.scheduleState === "cancelled" ? "Cancelled" : item.status?.label || "—"}
           </dd>
         </div>
       </dl>
@@ -237,12 +238,29 @@ function Details({ item }: { item: TrackedDonation }) {
 function DonationCard({ token, item }: { token: string; item: TrackedDonation }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
   const [error, setError] = useState("");
   const [details, setDetails] = useState<TrackedDonation | null>(null);
 
   const recurring = isRecurring(item);
   const summary = item.scheduleSummary;
   const next = Array.isArray(summary?.upcoming) ? summary.upcoming[0] : null;
+
+  async function cancelPlan() {
+    if (isCancelling) return;
+    if (!window.confirm("Cancel this monthly plan? No more payments will be taken.")) return;
+
+    setIsCancelling(true);
+    setError("");
+
+    try {
+      await cancelTrackedDonation({ token, donationId: item.donationId });
+      window.location.reload();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "The plan could not be cancelled.");
+      setIsCancelling(false);
+    }
+  }
 
   async function toggle() {
     if (isOpen) {
@@ -281,17 +299,36 @@ function DonationCard({ token, item }: { token: string; item: TrackedDonation })
         <div className="text-right">
           <p className="font-semibold text-ink">{money(item.amount, item.currency)}</p>
           <p className={`text-[0.8125rem] ${statusTone(item.status?.key)}`}>
-            {item.status?.label || "—"}
+            {item.scheduleState === "cancelled" ? "Cancelled" : item.status?.label || "—"}
           </p>
         </div>
       </div>
 
       {recurring && summary ? (
         <p className="mt-3 text-[0.8125rem] leading-relaxed text-body">
-          {summary.paidCount} of {summary.total} payments made ·{" "}
+          {item.scheduleState === "cancelled"
+            ? "Plan cancelled"
+            : item.openEnded
+              ? "Ongoing monthly"
+              : `${summary.paidCount} of ${summary.total} payments made`} ·{" "}
           {money(summary.paidTotal, item.currency)} paid
           {next ? ` · next ${money(next.amount, item.currency)} on ${dateText(next.dueDate)}` : ""}
         </p>
+      ) : null}
+
+      {item.canCancel ? (
+        <button
+          type="button"
+          onClick={() => void cancelPlan()}
+          disabled={isCancelling}
+          className="mt-3 rounded-full border border-action/30 px-4 py-1.5 text-[0.8125rem] font-medium text-action transition-colors hover:bg-tint disabled:opacity-60"
+        >
+          {isCancelling ? "Cancelling…" : "Cancel monthly plan"}
+        </button>
+      ) : null}
+
+      {error.length > 0 ? (
+        <p className="mt-2 text-[0.8125rem] text-action">{error}</p>
       ) : null}
 
       <button
