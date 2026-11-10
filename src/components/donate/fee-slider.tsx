@@ -23,7 +23,10 @@ export function FeeSlider({
   onChange: (value: number) => void;
 }) {
   const [isSliding, setIsSliding] = useState(false);
-  const filled = `${(value / MAX_FEE_PERCENT) * 100}%`;
+  const ratio = Math.min(1, Math.max(0, value / MAX_FEE_PERCENT));
+  const filled = `${ratio * 100}%`;
+  /* The bar stays the same red, but it starts faint and becomes solid as the figure rises. */
+  const fillOpacity = 0.2 + ratio * 0.8;
 
   return (
     <div className="mt-4">
@@ -53,13 +56,13 @@ export function FeeSlider({
         {/* The glow behind the filled part, then the filled part itself. */}
         <div
           aria-hidden="true"
-          className="absolute h-2 rounded-full bg-action/40 blur-[6px] transition-[width] duration-200"
-          style={{ width: filled }}
+          className="absolute h-2 rounded-full bg-action/40 blur-[6px] transition-[width,opacity] duration-200"
+          style={{ width: filled, opacity: fillOpacity }}
         />
         <div
           aria-hidden="true"
-          className="absolute h-2 rounded-full bg-action transition-[width] duration-200"
-          style={{ width: filled }}
+          className="absolute h-2 rounded-full bg-action transition-[width,opacity] duration-200"
+          style={{ width: filled, opacity: fillOpacity }}
         />
 
         <label htmlFor="hero-fee-percent" className="sr-only">
