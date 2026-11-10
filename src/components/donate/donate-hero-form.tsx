@@ -23,6 +23,15 @@ import { DetailsStep } from "./hero-details-step";
 import { Tick, throwScreenConfetti, type Billing, type DonationAddress } from "./hero-parts";
 import { readUtms } from "./utm";
 
+/* The admin's chosen starting amount for this cadence, or the first row if it is missing. */
+function defaultPresetAmount(form: DonateForm, monthly: boolean): string {
+  const list = presetsFor(form, monthly);
+  const preferred = monthly ? form.defaultMonthlyAmount : form.defaultAmount;
+  const picked = preferred === undefined ? undefined : list.find((preset) => preset.amount === preferred);
+
+  return String((picked ?? list[0])?.amount ?? "");
+}
+
 /*
   The donation popup's form: the amount, the details, then the card fields.
 
@@ -90,8 +99,8 @@ export function HeroForm({
   /* Drawn inside another site's page: there is nothing to close, so no Done button. */
   embedded?: boolean;
 }) {
-  /* Nothing is picked to begin with; a tier or the custom row turns red only once it is chosen. */
-  const [amount, setAmount] = useState("");
+  /* The admin picks the starting tier for each cadence, so the form opens ready to continue. */
+  const [amount, setAmount] = useState(() => defaultPresetAmount(form, false));
   /* True while the custom row is the one in use, so no tier reads as selected. */
   const [isCustom, setIsCustom] = useState(false);
   const [isMonthly, setIsMonthly] = useState(false);
@@ -233,8 +242,8 @@ export function HeroForm({
   /* Monthly gets a heart rising up, not a confetti burst: the gift is a promise, not a party. */
   function pickCadence(monthly: boolean) {
     setIsMonthly(monthly);
-    /* Each type has its own amounts, so the picked one is let go. */
-    setAmount("");
+    /* Each type has its own amounts, so it starts on its own default tier. */
+    setAmount(defaultPresetAmount(form, monthly));
     setIsCustom(false);
     setAmountError("");
   }

@@ -71,6 +71,9 @@ export type DonateForm = {
     popup offers the one-time list for both.
   */
   monthlyPresets?: DonatePreset[];
+  /* The amount the popup starts on, for each cadence. */
+  defaultAmount?: number;
+  defaultMonthlyAmount?: number;
   /*
     Whether this form offers a monthly gift. The admin turns it on for the form, and monthly only
     appears when it is on: the platform refuses a monthly gift for a form that has not allowed one.

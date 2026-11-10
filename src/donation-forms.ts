@@ -123,6 +123,13 @@ function readAddOns(value: unknown): DonateAddOn[] {
     .filter((addOn): addOn is DonateAddOn => addOn !== null);
 }
 
+/* The admin's starting amount, but only while that row still exists. */
+function readDefaultAmount(value: unknown, presets: DonatePreset[]): number | null {
+  const amount = asNumber(value);
+  if (amount <= 0) return null;
+  return presets.some((preset) => preset.amount === amount) ? amount : null;
+}
+
 function readForm(value: unknown): DonateForm | null {
   const row = (value ?? {}) as Record<string, unknown>;
 
@@ -141,6 +148,13 @@ function readForm(value: unknown): DonateForm | null {
 
   const monthlyPresets = readPresets(row.monthlyPresets);
   if (monthlyPresets.length > 0) form.monthlyPresets = monthlyPresets;
+
+  const defaultAmount = readDefaultAmount(row.defaultAmount, presets);
+  if (defaultAmount !== null) form.defaultAmount = defaultAmount;
+
+  const monthlyChoices = monthlyPresets.length > 0 ? monthlyPresets : presets;
+  const defaultMonthlyAmount = readDefaultAmount(row.defaultMonthlyAmount, monthlyChoices);
+  if (defaultMonthlyAmount !== null) form.defaultMonthlyAmount = defaultMonthlyAmount;
 
   const purposes = readPurposes(row.purposes);
   if (purposes.length > 0) form.purposes = purposes;

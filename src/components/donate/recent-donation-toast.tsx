@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 
 import { fetchRecentDonations, type RecentDonation } from "@/recent-donations";
 import { useDonate } from "./donate-context";
@@ -32,6 +33,20 @@ function amountText(item: RecentDonation): string {
 
 export function RecentDonationToast() {
   const { isOpen, open } = useDonate();
+  const pathname = usePathname() ?? "";
+  /*
+    A shared form link, an embed and the admin preview are the form on its own, not the site.
+    The corner notice belongs to the site and would sit on top of the form, so it is not drawn
+    on those pages.
+  */
+  const isFormOnlyPage =
+    pathname === "/donate/form" ||
+    pathname.startsWith("/donate/form/") ||
+    pathname === "/donate/embed" ||
+    pathname.startsWith("/donate/embed/") ||
+    pathname === "/donate/preview" ||
+    pathname.startsWith("/donate/preview/");
+
   const [items, setItems] = useState<RecentDonation[]>([]);
   const [index, setIndex] = useState(0);
   /* Which notice is on screen; null means none. Set from the timers only, never during a render. */
@@ -39,6 +54,8 @@ export function RecentDonationToast() {
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
+    if (isFormOnlyPage) return undefined;
+
     let active = true;
 
     void fetchRecentDonations(MAX_ITEMS)
@@ -52,10 +69,10 @@ export function RecentDonationToast() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [isFormOnlyPage]);
 
   useEffect(() => {
-    if (dismissed || isOpen || items.length === 0) return undefined;
+    if (isFormOnlyPage || dismissed || isOpen || items.length === 0) return undefined;
 
     const delay = index === 0 ? FIRST_DELAY_MS : BETWEEN_DELAY_MS;
 
@@ -69,11 +86,11 @@ export function RecentDonationToast() {
       window.clearTimeout(show);
       window.clearTimeout(next);
     };
-  }, [dismissed, index, isOpen, items.length]);
+  }, [dismissed, index, isFormOnlyPage, isOpen, items.length]);
 
   const item = shown === null ? null : items[shown];
 
-  if (!item || isOpen || dismissed) return null;
+  if (isFormOnlyPage || !item || isOpen || dismissed) return null;
 
   return (
     <div
