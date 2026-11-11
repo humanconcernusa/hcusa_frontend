@@ -259,7 +259,6 @@ export const PAGE_KEYS = [
   "flood-relief",
   "food-aid",
   "footer",
-  "forms",
   "gaza-scholarship",
   "header",
   "healthcare",
