@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Poppins, Roboto } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
 import { BackToTop } from "@/components/back-to-top";
@@ -11,16 +10,29 @@ import {
   getPublishedQuickDonate,
 } from "@/content/published";
 
-const poppins = Poppins({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
+/*
+  Both families are stored in this repo and loaded locally, so the build never calls Google.
+  A Google Fonts build-time fetch can return a link Turbopack cannot read at random.
+*/
+const poppins = localFont({
+  src: [
+    { path: "./fonts/Poppins-400.woff2", weight: "400", style: "normal" },
+    { path: "./fonts/Poppins-500.woff2", weight: "500", style: "normal" },
+    { path: "./fonts/Poppins-600.woff2", weight: "600", style: "normal" },
+    { path: "./fonts/Poppins-700.woff2", weight: "700", style: "normal" },
+    { path: "./fonts/Poppins-800.woff2", weight: "800", style: "normal" },
+  ],
   variable: "--font-poppins",
   display: "swap",
 });
 
-const roboto = Roboto({
-  subsets: ["latin"],
-  weight: ["400", "500", "700", "800"],
+const roboto = localFont({
+  src: [
+    { path: "./fonts/Roboto-400.woff2", weight: "400", style: "normal" },
+    { path: "./fonts/Roboto-500.woff2", weight: "500", style: "normal" },
+    { path: "./fonts/Roboto-700.woff2", weight: "700", style: "normal" },
+    { path: "./fonts/Roboto-800.woff2", weight: "800", style: "normal" },
+  ],
   variable: "--font-roboto",
   display: "swap",
 });
