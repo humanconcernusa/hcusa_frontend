@@ -194,6 +194,12 @@ function readForm(value: unknown): DonateForm | null {
   if (row.feePercent !== null && row.feePercent !== undefined) {
     form.feePercent = asNumber(row.feePercent);
   }
+  if (row.feeMinPercent !== null && row.feeMinPercent !== undefined) {
+    form.feeMinPercent = asNumber(row.feeMinPercent);
+  }
+  if (row.feeMaxPercent !== null && row.feeMaxPercent !== undefined) {
+    form.feeMaxPercent = asNumber(row.feeMaxPercent);
+  }
 
   const addOns = readAddOns(row.addons);
   if (addOns.length > 0) form.addons = addOns;

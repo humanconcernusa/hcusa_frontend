@@ -23,6 +23,8 @@ export function AmountStep({
   extra,
   amountError,
   showFee,
+  feeMin = 0,
+  feeMax = 20,
   currencySymbol = "$",
   onPickCadence,
   onPickAmount,
@@ -43,6 +45,9 @@ export function AmountStep({
   amountError: string;
   /* The admin can put a slider on this popup; it waits until an amount is picked. */
   showFee: boolean;
+  /* The lowest and highest percent the fee slider allows. */
+  feeMin?: number;
+  feeMax?: number;
   /* The chosen currency's sign, e.g. "$" or "€". */
   currencySymbol?: string;
   onPickCadence: (monthly: boolean) => void;
@@ -208,7 +213,7 @@ export function AmountStep({
 
       {showFee ? (
         <>
-          <FeeSlider value={feePercent} onChange={onFeeChange} />
+          <FeeSlider value={feePercent} onChange={onFeeChange} min={feeMin} max={feeMax} />
 
           <p className="mt-3 text-[0.8125rem] leading-snug text-body">
             {feePercent > 0 ? (

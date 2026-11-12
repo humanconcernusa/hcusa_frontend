@@ -99,6 +99,9 @@ export type DonateForm = {
     MAX_FEE_PERCENT. Left out, the popup shows no slider at all.
   */
   feePercent?: number;
+  /* The lowest and highest percent the fee slider allows. Absent means 0 and 20. */
+  feeMinPercent?: number;
+  feeMaxPercent?: number;
   /* The extras this form offers. Empty or absent means no add-on section is drawn. */
   addons?: DonateAddOn[];
   /* The base currency. Absent means USD. */

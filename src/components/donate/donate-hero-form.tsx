@@ -137,8 +137,23 @@ export function HeroForm({
   /* True while the custom row is the one in use, so no tier reads as selected. */
   const [isCustom, setIsCustom] = useState(false);
   const [isMonthly, setIsMonthly] = useState(false);
+  /*
+    The fee slider's range and start. The donor cannot move outside Min..Max, and the default is
+    clamped into that range in case the admin set values that no longer fit.
+  */
+  const feeMin = typeof form.feeMinPercent === "number" ? form.feeMinPercent : 0;
+  const feeMaxRaw = typeof form.feeMaxPercent === "number" ? form.feeMaxPercent : 20;
+  const feeMax = Math.max(feeMin + 1, feeMaxRaw);
+  const feeConfigured =
+    form.feePercent !== undefined ||
+    form.feeMinPercent !== undefined ||
+    form.feeMaxPercent !== undefined;
+  const feeStart = typeof form.feePercent === "number"
+    ? Math.min(feeMax, Math.max(feeMin, form.feePercent))
+    : feeMin;
+
   /* The slider starts on the figure the admin set for this popup. */
-  const [feePercent, setFeePercent] = useState(form.feePercent ?? 0);
+  const [feePercent, setFeePercent] = useState(feeStart);
   /* The purposes are a multi-choice list, so two or more can be picked at once. Kept by id. */
   const [purposes, setPurposes] = useState<string[]>([]);
   /* The add-ons the donor ticked, and the values typed into a formula add-on's inputs. */
@@ -757,7 +772,9 @@ export function HeroForm({
             feePercent={feePercent}
             extra={extra}
             amountError={amountError}
-            showFee={form.feePercent !== undefined && value > 0}
+            showFee={feeConfigured && value > 0}
+            feeMin={feeMin}
+            feeMax={feeMax}
             currencySymbol={symbol}
             onPickCadence={pickCadence}
             onPickAmount={(picked) => {
