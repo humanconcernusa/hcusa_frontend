@@ -564,12 +564,39 @@ export function HeroForm({
        The Stripe fields are a separate document and keep their own font. */
     <div className="font-display">
       {/* The heading is centred on the done state, because everything under it is. */}
-      <h2
-        id="donate-title"
-        className={`text-[1.25rem] font-semibold text-ink ${step === "success" ? "text-center" : ""}`}
-      >
-        {heading}
-      </h2>
+      <div className={`flex items-center gap-3 ${step === "success" ? "justify-center" : "justify-between"}`}>
+        <h2
+          id="donate-title"
+          className={`text-[1.25rem] font-semibold text-ink ${step === "success" ? "text-center" : ""}`}
+        >
+          {heading}
+        </h2>
+
+        {/* A small pill, only when the form offers more than one currency. */}
+        {step === "form" && currencyOptions.length > 1 ? (
+          <label className="shrink-0">
+            <span className="sr-only">Currency</span>
+            <select
+              value={currency}
+              onChange={(event) => {
+                const code = event.target.value;
+                const option = currencyOptions.find((row) => row.code === code);
+                setCurrency(code);
+                setAmount(defaultPresetAmount(form, isMonthly, option));
+                setIsCustom(false);
+                setAmountError("");
+              }}
+              className="h-8 cursor-pointer rounded-full border border-line bg-page px-3 text-[0.75rem] font-semibold text-ink outline-none transition-colors focus:border-action"
+            >
+              {currencyOptions.map((option) => (
+                <option key={option.code} value={option.code}>
+                  {option.code}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
+      </div>
 
       {step === "success" ? (
         /*
@@ -720,33 +747,6 @@ export function HeroForm({
         />
       ) : (
         <>
-          {currencyOptions.length > 1 ? (
-            <div className="mb-4">
-              <label className="block text-[0.8125rem] font-semibold text-ink" htmlFor="donate-currency">
-                Currency
-              </label>
-              <select
-                id="donate-currency"
-                value={currency}
-                onChange={(event) => {
-                  const code = event.target.value;
-                  const option = currencyOptions.find((row) => row.code === code);
-                  setCurrency(code);
-                  setAmount(defaultPresetAmount(form, isMonthly, option));
-                  setIsCustom(false);
-                  setAmountError("");
-                }}
-                className="mt-2 w-full rounded-xl border border-line bg-surface px-3 py-2.5 text-[0.9375rem] text-ink outline-none transition-colors focus:border-action"
-              >
-                {currencyOptions.map((option) => (
-                  <option key={option.code} value={option.code}>
-                    {option.code}
-                  </option>
-                ))}
-              </select>
-            </div>
-          ) : null}
-
           <AmountStep
             amounts={amounts}
             amount={amount}
