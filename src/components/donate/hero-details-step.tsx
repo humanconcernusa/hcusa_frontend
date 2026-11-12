@@ -37,6 +37,7 @@ export function DetailsStep({
   totalLabel,
   showTotal,
   cardError,
+  currencySymbol = "$",
   onOpenCard,
 }: {
   /* The extras this form offers. Empty means the section is not drawn at all. */
@@ -66,6 +67,8 @@ export function DetailsStep({
   totalLabel: string;
   showTotal: boolean;
   cardError: string;
+  /* The chosen currency's sign, e.g. "$" or "€". */
+  currencySymbol?: string;
   onOpenCard: () => void;
 }) {
   return (
@@ -104,7 +107,7 @@ export function DetailsStep({
                           {addOn.name}
                         </span>
                         <span className="shrink-0 text-[0.8125rem] font-semibold text-action">
-                          {money(addOnAmount(addOn, values))}
+                          {money(addOnAmount(addOn, values), currencySymbol)}
                         </span>
                       </span>
 

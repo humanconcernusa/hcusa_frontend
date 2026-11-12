@@ -23,6 +23,7 @@ export function AmountStep({
   extra,
   amountError,
   showFee,
+  currencySymbol = "$",
   onPickCadence,
   onPickAmount,
   onCustomFocus,
@@ -42,6 +43,8 @@ export function AmountStep({
   amountError: string;
   /* The admin can put a slider on this popup; it waits until an amount is picked. */
   showFee: boolean;
+  /* The chosen currency's sign, e.g. "$" or "€". */
+  currencySymbol?: string;
   onPickCadence: (monthly: boolean) => void;
   onPickAmount: (amount: number) => void;
   onCustomFocus: () => void;
@@ -160,7 +163,7 @@ export function AmountStep({
                   selected ? "bg-action text-white" : "bg-page text-ink"
                 }`}
               >
-                {money(preset.amount)}
+                {money(preset.amount, currencySymbol)}
               </span>
 
               {text.length > 0 ? (
@@ -181,7 +184,7 @@ export function AmountStep({
               isCustom ? "bg-action text-white" : "bg-page text-ink"
             }`}
           >
-            $
+            {currencySymbol}
           </span>
 
           <input
@@ -191,7 +194,7 @@ export function AmountStep({
             onFocus={onCustomFocus}
             onChange={(event) => onCustomChange(event.target.value)}
             placeholder="Enter a custom amount"
-            aria-label="Custom donation amount in dollars"
+            aria-label={`Custom donation amount in ${currencySymbol}`}
             className="min-h-0 w-full rounded-md bg-transparent text-[0.9375rem] text-ink outline-none placeholder:text-[#8a8a8a]"
           />
         </label>
@@ -212,7 +215,7 @@ export function AmountStep({
               <>
                 I&apos;ll give an additional{" "}
                 <span className="font-semibold text-ink">{feePercent}%</span>, equivalent to{" "}
-                <span className="font-semibold text-ink">{money(extra)}</span>, to help cover
+                <span className="font-semibold text-ink">{money(extra, currencySymbol)}</span>, to help cover
                 processing fees and other costs.
               </>
             ) : (

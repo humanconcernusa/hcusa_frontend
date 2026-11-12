@@ -55,6 +55,16 @@ export type DonateAddOn = {
   };
 };
 
+/* One currency the popup offers, with its own converted amount lists. */
+export type DonateCurrencyOption = {
+  code: string;
+  rate: number | null;
+  presets: DonatePreset[];
+  monthlyPresets: DonatePreset[];
+  defaultAmount: number | null;
+  defaultMonthlyAmount: number | null;
+};
+
 export type DonateForm = {
   /*
     The slug. The site's own content points at a popup by slug (`form: "palestine"`), so this is
@@ -91,7 +101,29 @@ export type DonateForm = {
   feePercent?: number;
   /* The extras this form offers. Empty or absent means no add-on section is drawn. */
   addons?: DonateAddOn[];
+  /* The base currency. Absent means USD. */
+  currency?: string;
+  /* Every currency the form offers, the base first. Absent means one currency only. */
+  currencies?: DonateCurrencyOption[];
 };
+
+/* A short symbol for the common currencies. Unknown codes fall back to the code itself. */
+const CURRENCY_SYMBOLS: Record<string, string> = {
+  USD: "$",
+  EUR: "€",
+  GBP: "£",
+  CAD: "CA$",
+  AUD: "A$",
+  CHF: "CHF",
+  SEK: "kr",
+  NOK: "kr",
+  DKK: "kr",
+};
+
+export function currencySymbol(code: string | undefined): string {
+  const key = String(code ?? "").trim().toUpperCase();
+  return CURRENCY_SYMBOLS[key] ?? (key || "$");
+}
 
 /*
   The price of an add-on for the values typed. The platform multiplies the base by each input, and

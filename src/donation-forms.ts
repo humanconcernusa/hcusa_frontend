@@ -12,6 +12,7 @@
 import type {
   DonateAddOn,
   DonateAddOnInput,
+  DonateCurrencyOption,
   DonateForm,
   DonatePreset,
   DonatePurpose,
@@ -130,6 +131,34 @@ function readDefaultAmount(value: unknown, presets: DonatePreset[]): number | nu
   return presets.some((preset) => preset.amount === amount) ? amount : null;
 }
 
+/* One option per currency. A row with no code or no amounts is dropped. */
+function readCurrencyOptions(value: unknown): DonateCurrencyOption[] {
+  if (!Array.isArray(value)) return [];
+
+  return value
+    .map((entry) => {
+      const row = (entry ?? {}) as Record<string, unknown>;
+      const code = asText(row.code).toUpperCase();
+      const presets = readPresets(row.presets);
+      const monthlyPresets = readPresets(row.monthlyPresets);
+
+      if (!/^[A-Z]{3}$/.test(code) || presets.length === 0) return null;
+
+      return {
+        code,
+        rate: typeof row.rate === "number" ? row.rate : null,
+        presets,
+        monthlyPresets,
+        defaultAmount: readDefaultAmount(row.defaultAmount, presets),
+        defaultMonthlyAmount: readDefaultAmount(
+          row.defaultMonthlyAmount,
+          monthlyPresets.length > 0 ? monthlyPresets : presets,
+        ),
+      } satisfies DonateCurrencyOption;
+    })
+    .filter((option): option is DonateCurrencyOption => option !== null);
+}
+
 function readForm(value: unknown): DonateForm | null {
   const row = (value ?? {}) as Record<string, unknown>;
 
@@ -168,6 +197,15 @@ function readForm(value: unknown): DonateForm | null {
 
   const addOns = readAddOns(row.addons);
   if (addOns.length > 0) form.addons = addOns;
+
+  const currencies = readCurrencyOptions(row.currencies);
+  if (currencies.length > 0) {
+    form.currencies = currencies;
+    form.currency = currencies[0].code;
+  } else {
+    const base = asText(row.currency).toUpperCase();
+    if (base.length > 0) form.currency = base;
+  }
 
   return form;
 }

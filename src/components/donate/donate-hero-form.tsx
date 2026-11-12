@@ -1,7 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState, type RefObject } from "react";
-import { addOnAmount, extraPercent, presetsFor, type DonateForm } from "@/content/donate";
+import {
+  addOnAmount,
+  currencySymbol,
+  extraPercent,
+  presetsFor,
+  type DonateCurrencyOption,
+  type DonateForm,
+} from "@/content/donate";
 import type { UtmData } from "@/content/utm";
 import {
   allocateAmount,
@@ -23,11 +30,33 @@ import { DetailsStep } from "./hero-details-step";
 import { Tick, throwScreenConfetti, type Billing, type DonationAddress } from "./hero-parts";
 import { readUtms } from "./utm";
 
+/* The chosen currency's amounts, with the form's base list as the fallback. */
+function presetsForCurrency(
+  form: DonateForm,
+  monthly: boolean,
+  option?: DonateCurrencyOption,
+): { amount: number; blurb: string }[] {
+  const own = monthly
+    ? (option?.monthlyPresets && option.monthlyPresets.length > 0 ? option.monthlyPresets : option?.presets)
+    : option?.presets;
+
+  if (own && own.length > 0) return own;
+  return presetsFor(form, monthly);
+}
+
 /* The admin's chosen starting amount for this cadence, or the first row if it is missing. */
-function defaultPresetAmount(form: DonateForm, monthly: boolean): string {
-  const list = presetsFor(form, monthly);
-  const preferred = monthly ? form.defaultMonthlyAmount : form.defaultAmount;
-  const picked = preferred === undefined ? undefined : list.find((preset) => preset.amount === preferred);
+function defaultPresetAmount(
+  form: DonateForm,
+  monthly: boolean,
+  option?: DonateCurrencyOption,
+): string {
+  const list = presetsForCurrency(form, monthly, option);
+  const preferred = monthly
+    ? (option?.defaultMonthlyAmount ?? form.defaultMonthlyAmount)
+    : (option?.defaultAmount ?? form.defaultAmount);
+  const picked = preferred === undefined || preferred === null
+    ? undefined
+    : list.find((preset) => preset.amount === preferred);
 
   return String((picked ?? list[0])?.amount ?? "");
 }
@@ -79,8 +108,8 @@ function ReceiptRow({
   );
 }
 
-function money2(amount: number): string {
-  return `$${amount.toFixed(2)}`;
+function money2(amount: number, symbol = "$"): string {
+  return `${symbol}${amount.toFixed(2)}`;
 }
 
 export function HeroForm({
@@ -99,8 +128,12 @@ export function HeroForm({
   /* Drawn inside another site's page: there is nothing to close, so no Done button. */
   embedded?: boolean;
 }) {
+  const currencyOptions = form.currencies && form.currencies.length > 0 ? form.currencies : [];
+  const initialCurrencyCode = currencyOptions[0]?.code ?? form.currency ?? "USD";
+  const [currency, setCurrency] = useState(initialCurrencyCode);
+
   /* The admin picks the starting tier for each cadence, so the form opens ready to continue. */
-  const [amount, setAmount] = useState(() => defaultPresetAmount(form, false));
+  const [amount, setAmount] = useState(() => defaultPresetAmount(form, false, currencyOptions[0]));
   /* True while the custom row is the one in use, so no tier reads as selected. */
   const [isCustom, setIsCustom] = useState(false);
   const [isMonthly, setIsMonthly] = useState(false);
@@ -176,8 +209,11 @@ export function HeroForm({
     .map((part) => part.trim())
     .filter((part) => part.length > 0)
     .join(" ");
-  /* The type decides which amounts are offered: a form may keep a monthly list of its own. */
-  const amounts = presetsFor(form, isMonthly);
+  const activeCurrency =
+    currencyOptions.find((option) => option.code === currency) ?? currencyOptions[0] ?? null;
+  const symbol = currencySymbol(currency);
+  /* The type and the currency decide which amounts are offered. */
+  const amounts = presetsForCurrency(form, isMonthly, activeCurrency ?? undefined);
   /* The extras the donor ticked, priced from the platform's own add-on settings. */
   const addOnList = form.addons ?? [];
   const chosenAddOnsDetail = addOnList
@@ -192,7 +228,7 @@ export function HeroForm({
   /* The same total the server works out, so the button and the charge agree. */
   const extra = extraPercent(value, feePercent);
   const total = value + extra + addOnTotal;
-  const totalLabel = `$${total.toFixed(2)}`;
+  const totalLabel = `${symbol}${total.toFixed(2)}`;
   /* The pay button names what it does, and the cadence on a monthly gift. */
   const payLabel = isMonthly ? `Donate ${totalLabel}/Month` : `Donate ${totalLabel}`;
   /* The chosen purposes by name, for the summary and for the monthly route. */
@@ -242,8 +278,8 @@ export function HeroForm({
   /* Monthly gets a heart rising up, not a confetti burst: the gift is a promise, not a party. */
   function pickCadence(monthly: boolean) {
     setIsMonthly(monthly);
-    /* Each type has its own amounts, so it starts on its own default tier. */
-    setAmount(defaultPresetAmount(form, monthly));
+    /* Each type and currency has its own amounts, so it starts on its own default tier. */
+    setAmount(defaultPresetAmount(form, monthly, activeCurrency ?? undefined));
     setIsCustom(false);
     setAmountError("");
   }
@@ -300,7 +336,7 @@ export function HeroForm({
     */
     const paymentBase = {
       amount: Number(value.toFixed(2)),
-      currency: "USD",
+      currency,
       ...(extra > 0 ? { platformTipAmount: extra } : {}),
       /* The gateway the card fields were drawn with: the platform charges on that account. */
       ...(gateway ? { gatewayConfigurationId: gateway.configurationId } : {}),
@@ -570,13 +606,13 @@ export function HeroForm({
                 <ReceiptRow label="Campaign" value={form.label} />
                 <ReceiptRow
                   label={isMonthly ? "Monthly donation" : "Donation amount"}
-                  value={money2(value)}
+                  value={money2(value, symbol)}
                 />
                 {extra > 0 ? (
-                  <ReceiptRow label="Platform fee" value={money2(extra)} />
+                  <ReceiptRow label="Platform fee" value={money2(extra, symbol)} />
                 ) : null}
                 {chosenAddOnsDetail.map((addOn) => (
-                  <ReceiptRow key={addOn.id} label={addOn.name} value={money2(addOn.amount)} />
+                  <ReceiptRow key={addOn.id} label={addOn.name} value={money2(addOn.amount, symbol)} />
                 ))}
                 <ReceiptRow
                   label={isMonthly ? "Charged each month" : "Total charged"}
@@ -654,6 +690,7 @@ export function HeroForm({
           causeLabels={chosenPurposes.map((purpose) => purpose.name)}
           isMonthly={isMonthly}
           totalLabel={totalLabel}
+          currencySymbol={symbol}
           addOns={chosenAddOnsDetail}
           stripe={gateway ? gateway.stripe : null}
           billing={billing}
@@ -683,6 +720,33 @@ export function HeroForm({
         />
       ) : (
         <>
+          {currencyOptions.length > 1 ? (
+            <div className="mb-4">
+              <label className="block text-[0.8125rem] font-semibold text-ink" htmlFor="donate-currency">
+                Currency
+              </label>
+              <select
+                id="donate-currency"
+                value={currency}
+                onChange={(event) => {
+                  const code = event.target.value;
+                  const option = currencyOptions.find((row) => row.code === code);
+                  setCurrency(code);
+                  setAmount(defaultPresetAmount(form, isMonthly, option));
+                  setIsCustom(false);
+                  setAmountError("");
+                }}
+                className="mt-2 w-full rounded-xl border border-line bg-surface px-3 py-2.5 text-[0.9375rem] text-ink outline-none transition-colors focus:border-action"
+              >
+                {currencyOptions.map((option) => (
+                  <option key={option.code} value={option.code}>
+                    {option.code}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : null}
+
           <AmountStep
             amounts={amounts}
             amount={amount}
@@ -694,6 +758,7 @@ export function HeroForm({
             extra={extra}
             amountError={amountError}
             showFee={form.feePercent !== undefined && value > 0}
+            currencySymbol={symbol}
             onPickCadence={pickCadence}
             onPickAmount={(picked) => {
               setAmount(String(picked));
@@ -725,6 +790,7 @@ export function HeroForm({
             addOnValues={addOnValues}
             onToggleAddOn={toggleAddOn}
             onAddOnValue={setAddOnValue}
+            currencySymbol={symbol}
             purposes={form.purposes ?? []}
             chosen={purposes}
             purposeError={purposeError}

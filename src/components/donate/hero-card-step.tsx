@@ -380,6 +380,7 @@ export function CardStep({
   causeLabels,
   isMonthly,
   totalLabel,
+  currencySymbol = "$",
   addOns,
   stripe,
   billing,
@@ -405,6 +406,8 @@ export function CardStep({
   causeLabels: string[];
   isMonthly: boolean;
   totalLabel: string;
+  /* The chosen currency's sign, e.g. "$" or "€". */
+  currencySymbol?: string;
   /* The ticked add-ons by name and price, for the summary. */
   addOns: { id: string; name: string; amount: number }[];
   /* The instance for the platform's default gateway, which the payment is pinned to. */
@@ -471,20 +474,20 @@ export function CardStep({
         <div className="flex items-baseline justify-between gap-4">
           <dt className="text-body">Donation amount</dt>
           <dd className="font-semibold text-ink">
-            {money(value)}
+            {money(value, currencySymbol)}
             {isMonthly ? " / month" : ""}
           </dd>
         </div>
 
         <div className="flex items-baseline justify-between gap-4">
           <dt className="text-body">{feePercent > 0 ? `Fees (${feePercent}%)` : "Fees"}</dt>
-          <dd className="font-semibold text-ink">{money(extra)}</dd>
+          <dd className="font-semibold text-ink">{money(extra, currencySymbol)}</dd>
         </div>
 
         {addOnTotal > 0 ? (
           <div className="flex items-baseline justify-between gap-4">
             <dt className="text-body">Add-ons</dt>
-            <dd className="font-semibold text-ink">{money(addOnTotal)}</dd>
+            <dd className="font-semibold text-ink">{money(addOnTotal, currencySymbol)}</dd>
           </div>
         ) : null}
 

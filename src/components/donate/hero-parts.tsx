@@ -36,8 +36,8 @@ export type DonationAddress = {
 */
 export const GOOGLE_PAY_ENABLED = true;
 
-export function money(value: number): string {
-  return `$${value.toLocaleString("en-US")}`;
+export function money(value: number, symbol = "$"): string {
+  return `${symbol}${value.toLocaleString("en-US")}`;
 }
 
 /* A tier's wording is stored with a leading dash, which the popup drops. */
