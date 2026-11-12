@@ -35,13 +35,17 @@ export function RecentDonationToast() {
   const { isOpen, open } = useDonate();
   const pathname = usePathname() ?? "";
   /*
-    A shared form link, an embed and the admin preview are the form on its own, not the site.
-    The corner notice belongs to the site and would sit on top of the form, so it is not drawn
-    on those pages.
+    The embed and the admin preview are the form inside another surface, so the corner notice
+    would sit on top of it and stays out.
+
+    The share link (/donate/form) is a donation page of its own, so the notice is useful there.
+    Its Donate button is hidden on that page: the form is already open, and pressing it would
+    cover the form with the popup.
   */
+  const isSharedFormPage =
+    pathname === "/donate/form" || pathname.startsWith("/donate/form/");
+
   const isFormOnlyPage =
-    pathname === "/donate/form" ||
-    pathname.startsWith("/donate/form/") ||
     pathname === "/donate/embed" ||
     pathname.startsWith("/donate/embed/") ||
     pathname === "/donate/preview" ||
@@ -115,13 +119,15 @@ export function RecentDonationToast() {
           ) : null}
         </div>
 
-        <button
-          type="button"
-          onClick={() => open()}
-          className="shrink-0 cursor-pointer rounded-full bg-action px-3 py-1.5 text-[0.75rem] font-medium text-white transition-colors hover:bg-action-hover"
-        >
-          Donate
-        </button>
+        {isSharedFormPage ? null : (
+          <button
+            type="button"
+            onClick={() => open()}
+            className="shrink-0 cursor-pointer rounded-full bg-action px-3 py-1.5 text-[0.75rem] font-medium text-white transition-colors hover:bg-action-hover"
+          >
+            Donate
+          </button>
+        )}
 
         <button
           type="button"
