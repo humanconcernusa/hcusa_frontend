@@ -1,6 +1,11 @@
 "use client";
 
-import { addOnAmount, type DonateAddOn, type DonatePurpose } from "@/content/donate";
+import {
+  addOnAmount,
+  type DonateAddOn,
+  type DonateCustomNote,
+  type DonatePurpose,
+} from "@/content/donate";
 import { CardIcon, detailsField, money } from "./hero-parts";
 
 /*
@@ -25,13 +30,20 @@ export function DetailsStep({
   firstName,
   lastName,
   email,
+  marketingConsent,
+  showMarketingConsent = true,
   organization,
   isOrganization,
   onFirstName,
   onLastName,
   onEmail,
+  onToggleMarketingConsent,
   onOrganization,
   onToggleOrganization,
+  customNotes,
+  noteValues,
+  onNoteValue,
+  noteErrors,
   nameError,
   emailError,
   totalLabel,
@@ -55,13 +67,21 @@ export function DetailsStep({
   firstName: string;
   lastName: string;
   email: string;
+  marketingConsent: boolean;
+  showMarketingConsent?: boolean;
   organization: string;
   isOrganization: boolean;
   onFirstName: (value: string) => void;
   onLastName: (value: string) => void;
   onEmail: (value: string) => void;
+  onToggleMarketingConsent: (on: boolean) => void;
   onOrganization: (value: string) => void;
   onToggleOrganization: (on: boolean) => void;
+  /* The extra questions the admin added. Empty means the section is not drawn. */
+  customNotes: DonateCustomNote[];
+  noteValues: Record<string, string | boolean>;
+  onNoteValue: (key: string, value: string | boolean) => void;
+  noteErrors: Record<string, string>;
   nameError: string;
   emailError: string;
   totalLabel: string;
@@ -271,6 +291,21 @@ export function DetailsStep({
         </p>
       ) : null}
 
+      {/* Optional: the donor allows the platform to email updates and future appeals. */}
+      {showMarketingConsent ? (
+        <label className="mt-4 flex cursor-pointer items-start gap-3 text-[0.8125rem] text-body">
+          <input
+            type="checkbox"
+            checked={marketingConsent}
+            onChange={(event) => onToggleMarketingConsent(event.target.checked)}
+            className="mt-0.5 size-4 shrink-0 accent-action"
+          />
+          <span className="leading-snug">
+            Yes, send me updates about this campaign and future appeals.
+          </span>
+        </label>
+      ) : null}
+
       {/* Giving as an organization is optional, and it opens the name field when ticked. */}
       <label className="mt-4 flex cursor-pointer items-center gap-3 text-[0.8125rem] text-body">
         <input
@@ -294,6 +329,97 @@ export function DetailsStep({
             placeholder="Organization"
             className={`${detailsField} border-line`}
           />
+        </>
+      ) : null}
+
+      {customNotes.length > 0 ? (
+        <>
+          <div className="mt-5 border-t border-divider" />
+          <p className="mt-5 text-[0.8125rem] font-normal text-ink">Additional details</p>
+
+          <div className="mt-2.5 flex flex-col gap-4">
+            {customNotes.map((field) => {
+              const value = noteValues[field.key];
+              const error = noteErrors[field.key] || "";
+
+              return (
+                <div key={field.id || field.key}>
+                  <label className="text-[0.75rem] text-body">
+                    {field.label}
+                    {field.required ? <span className="text-action"> *</span> : null}
+                  </label>
+
+                  {field.type === "input" ? (
+                    <input
+                      value={String(value ?? "")}
+                      onChange={(event) => onNoteValue(field.key, event.target.value)}
+                      placeholder={field.placeholder || ""}
+                      className={`${detailsField} ${error ? "border-action" : "border-line"}`}
+                    />
+                  ) : field.type === "textarea" ? (
+                    <textarea
+                      rows={3}
+                      value={String(value ?? "")}
+                      onChange={(event) => onNoteValue(field.key, event.target.value)}
+                      placeholder={field.placeholder || ""}
+                      className={`${detailsField} resize-none ${error ? "border-action" : "border-line"}`}
+                    />
+                  ) : field.type === "select" ? (
+                    <select
+                      value={String(value ?? "")}
+                      onChange={(event) => onNoteValue(field.key, event.target.value)}
+                      className={`${detailsField} cursor-pointer ${error ? "border-action" : "border-line"}`}
+                    >
+                      <option value="">Select an option</option>
+                      {field.options.map((option) => (
+                        <option key={option.id || option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  ) : field.type === "radio" ? (
+                    <div className="mt-1 flex flex-col gap-2">
+                      {field.options.map((option) => (
+                        <label
+                          key={option.id || option.value}
+                          className="flex cursor-pointer items-center gap-2 text-[0.8125rem] text-body"
+                        >
+                          <input
+                            type="radio"
+                            name={`hero-note-${field.key}`}
+                            checked={value === option.value}
+                            onChange={() => onNoteValue(field.key, option.value)}
+                            className="size-4 shrink-0 accent-action"
+                          />
+                          {option.label}
+                        </label>
+                      ))}
+                    </div>
+                  ) : (
+                    <label className="mt-1 flex cursor-pointer items-center gap-2 text-[0.8125rem] text-body">
+                      <input
+                        type="checkbox"
+                        checked={value === true}
+                        onChange={(event) => onNoteValue(field.key, event.target.checked)}
+                        className="size-4 shrink-0 accent-action"
+                      />
+                      Yes
+                    </label>
+                  )}
+
+                  {field.helpText ? (
+                    <span className="mt-1 block text-[0.6875rem] text-body">{field.helpText}</span>
+                  ) : null}
+
+                  {error ? (
+                    <span role="alert" className="mt-1 block text-[0.75rem] text-action">
+                      {error}
+                    </span>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
         </>
       ) : null}
 

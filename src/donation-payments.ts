@@ -65,6 +65,10 @@ export type DonationSubmitBody = {
   source: string;
   /* A monthly gift here keeps running until the donor cancels. */
   openEnded?: boolean;
+  /* The donor allows the platform to email updates and future appeals. */
+  marketingConsent?: boolean;
+  /* Answers to the form's custom questions, keyed by the question's own key. */
+  customNotes?: Record<string, string | boolean>;
   /*
     The extras the donor ticked. Only the id and the typed values travel; the platform prices each
     one from its own add-on settings and refuses an id the form does not offer.
@@ -393,6 +397,7 @@ export type CompleteDonationBody = {
   info: DonationInfo;
   isAnonymous?: boolean;
   marketingConsent?: boolean;
+  customNotes?: Record<string, string | boolean>;
   onBehalfOf?: string;
   paymentIntentId?: string;
   setupIntentId?: string;

@@ -55,6 +55,19 @@ export type DonateAddOn = {
   };
 };
 
+/* One extra question the admin adds to a simple form. */
+export type DonateCustomNote = {
+  id: string;
+  key: string;
+  label: string;
+  type: "input" | "textarea" | "select" | "radio" | "checkbox";
+  required: boolean;
+  helpText?: string;
+  placeholder?: string;
+  defaultValue?: string | boolean;
+  options: { id: string; label: string; value: string }[];
+};
+
 /* One currency the popup offers, with its own converted amount lists. */
 export type DonateCurrencyOption = {
   code: string;
@@ -90,6 +103,11 @@ export type DonateForm = {
   */
   allowMonthly?: boolean;
   /*
+    How the "send me updates" checkbox starts. Set in the admin's Public Display step.
+    Absent means checked.
+  */
+  marketingConsentMode?: "checked" | "unchecked" | "hidden";
+  /*
     Which purposes this form offers. Empty or absent means the form shows no pills, and a form
     with none asks for no purpose before it will take a card.
   */
@@ -104,6 +122,8 @@ export type DonateForm = {
   feeMaxPercent?: number;
   /* The extras this form offers. Empty or absent means no add-on section is drawn. */
   addons?: DonateAddOn[];
+  /* Extra questions the admin added to this form. Empty or absent means none are drawn. */
+  customNotes?: DonateCustomNote[];
   /* The base currency. Absent means USD. */
   currency?: string;
   /* Every currency the form offers, the base first. Absent means one currency only. */

@@ -13,6 +13,7 @@ import type {
   DonateAddOn,
   DonateAddOnInput,
   DonateCurrencyOption,
+  DonateCustomNote,
   DonateForm,
   DonatePreset,
   DonatePurpose,
@@ -124,6 +125,53 @@ function readAddOns(value: unknown): DonateAddOn[] {
     .filter((addOn): addOn is DonateAddOn => addOn !== null);
 }
 
+/* The extra questions the admin added. A row the popup cannot draw is dropped. */
+function readCustomNotes(value: unknown): DonateCustomNote[] {
+  if (!Array.isArray(value)) return [];
+
+  const types = ["input", "textarea", "select", "radio", "checkbox"];
+
+  return value
+    .map((entry) => {
+      const row = (entry ?? {}) as Record<string, unknown>;
+      const key = asText(row.key);
+      const label = asText(row.label);
+      const rawType = asText(row.type);
+      const type = (types.includes(rawType) ? rawType : "input") as DonateCustomNote["type"];
+
+      if (key.length === 0 || label.length === 0) return null;
+
+      const options = Array.isArray(row.options)
+        ? row.options
+            .map((item) => {
+              const option = (item ?? {}) as Record<string, unknown>;
+              return {
+                id: asText(option.id),
+                label: asText(option.label),
+                value: asText(option.value),
+              };
+            })
+            .filter((option) => option.label.length > 0 && option.value.length > 0)
+        : [];
+
+      if ((type === "select" || type === "radio") && options.length < 2) return null;
+
+      return {
+        id: asText(row.id) || key,
+        key,
+        label,
+        type,
+        required: row.required === true,
+        helpText: asText(row.helpText),
+        placeholder: asText(row.placeholder),
+        defaultValue:
+          typeof row.defaultValue === "boolean" ? row.defaultValue : asText(row.defaultValue),
+        options,
+      } satisfies DonateCustomNote;
+    })
+    .filter((note): note is DonateCustomNote => note !== null);
+}
+
 /* The admin's starting amount, but only while that row still exists. */
 function readDefaultAmount(value: unknown, presets: DonatePreset[]): number | null {
   const amount = asNumber(value);
@@ -191,6 +239,12 @@ function readForm(value: unknown): DonateForm | null {
   /* Monthly is offered only when the form's admin allowed it. */
   if (row.allowRecurringDonations === true) form.allowMonthly = true;
 
+  /* Admin → Public Display: how the marketing opt-in starts. */
+  const consentMode = asText(row.marketingConsentMode).toLowerCase();
+  if (consentMode === "checked" || consentMode === "unchecked" || consentMode === "hidden") {
+    form.marketingConsentMode = consentMode;
+  }
+
   if (row.feePercent !== null && row.feePercent !== undefined) {
     form.feePercent = asNumber(row.feePercent);
   }
@@ -203,6 +257,9 @@ function readForm(value: unknown): DonateForm | null {
 
   const addOns = readAddOns(row.addons);
   if (addOns.length > 0) form.addons = addOns;
+
+  const customNotes = readCustomNotes(row.customNotes);
+  if (customNotes.length > 0) form.customNotes = customNotes;
 
   const currencies = readCurrencyOptions(row.currencies);
   if (currencies.length > 0) {

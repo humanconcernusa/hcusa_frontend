@@ -40,8 +40,15 @@ function presetsForCurrency(
     ? (option?.monthlyPresets && option.monthlyPresets.length > 0 ? option.monthlyPresets : option?.presets)
     : option?.presets;
 
-  if (own && own.length > 0) return own;
-  return presetsFor(form, monthly);
+  /* A converted currency shows clean whole amounts. The base currency keeps its own values. */
+  const roundConverted = (list: { amount: number; blurb: string }[]) => {
+    const base = form.currency || "USD";
+    if (!option?.code || option.code === base) return list;
+    return list.map((preset) => ({ ...preset, amount: Math.round(preset.amount) }));
+  };
+
+  if (own && own.length > 0) return roundConverted(own);
+  return roundConverted(presetsFor(form, monthly));
 }
 
 /* The admin's chosen starting amount for this cadence, or the first row if it is missing. */
@@ -56,7 +63,9 @@ function defaultPresetAmount(
     : (option?.defaultAmount ?? form.defaultAmount);
   const picked = preferred === undefined || preferred === null
     ? undefined
-    : list.find((preset) => preset.amount === preferred);
+    : list.find(
+        (preset) => preset.amount === preferred || preset.amount === Math.round(Number(preferred)),
+      );
 
   return String((picked ?? list[0])?.amount ?? "");
 }
@@ -115,12 +124,15 @@ function money2(amount: number, symbol = "$"): string {
 export function HeroForm({
   form,
   onClose,
+  onDirtyChange,
   confettiCanvas,
   preview = false,
   embedded = false,
 }: {
   form: DonateForm;
   onClose: () => void;
+  /* Tells the popup shell whether the donor has entered anything worth warning about. */
+  onDirtyChange?: (dirty: boolean) => void;
   /* Owned by the popup's overlay, so the burst covers the screen above the blurred wash. */
   confettiCanvas: RefObject<HTMLCanvasElement | null>;
   /* Drawn in an admin preview tab: everything works up to Pay, and Pay takes nothing. */
@@ -162,6 +174,14 @@ export function HeroForm({
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
+  const [marketingConsent, setMarketingConsent] = useState(
+    () => form.marketingConsentMode !== "unchecked" && form.marketingConsentMode !== "hidden",
+  );
+
+  /* Re-apply the admin's default when a different form is opened in the same modal. */
+  useEffect(() => {
+    setMarketingConsent(form.marketingConsentMode !== "unchecked" && form.marketingConsentMode !== "hidden");
+  }, [form.apiId, form.marketingConsentMode]);
   /* A donor may give on behalf of an organization; the name field shows only when they say so. */
   const [isOrganization, setIsOrganization] = useState(false);
   const [organization, setOrganization] = useState("");
@@ -170,6 +190,21 @@ export function HeroForm({
   const [nameError, setNameError] = useState("");
   const [emailError, setEmailError] = useState("");
   const [purposeError, setPurposeError] = useState("");
+  /* The admin's extra questions: the answers, and the ones that still need one. */
+  const [noteValues, setNoteValues] = useState<Record<string, string | boolean>>(() => {
+    const initial: Record<string, string | boolean> = {};
+
+    for (const field of form.customNotes ?? []) {
+      if (field.type === "checkbox") {
+        if (field.defaultValue === true) initial[field.key] = true;
+      } else if (typeof field.defaultValue === "string" && field.defaultValue.length > 0) {
+        initial[field.key] = field.defaultValue;
+      }
+    }
+
+    return initial;
+  });
+  const [noteErrors, setNoteErrors] = useState<Record<string, string>>({});
 
   /* Which screen the popup is showing: the form, the card fields, or the done state. */
   const [step, setStep] = useState<"form" | "card" | "success">("form");
@@ -360,6 +395,7 @@ export function HeroForm({
     return {
       formId: form.apiId,
       source: "hcusa",
+      marketingConsent,
       ...(isMonthly ? { openEnded: true } : {}),
       ...(deferDonor
         ? { deferDonor: true }
@@ -390,6 +426,8 @@ export function HeroForm({
             }),
       },
       ...(Object.keys(campaign).length > 0 ? { utm: campaign } : {}),
+      /* The questions sit on the details step, so they are answered before any payment starts. */
+      ...(Object.keys(noteAnswers()).length > 0 ? { customNotes: noteAnswers() } : {}),
       /* Only the ticked add-ons travel; the platform prices them from its own settings. */
       ...(chosenAddOns.length > 0
         ? {
@@ -402,6 +440,28 @@ export function HeroForm({
           }
         : {}),
     };
+  }
+
+  /* Only the questions the donor answered travel; the platform keeps only the form's own keys. */
+  function noteAnswers(): Record<string, string | boolean> {
+    const out: Record<string, string | boolean> = {};
+
+    for (const [key, value] of Object.entries(noteValues)) {
+      if (value === "" || value === undefined || value === null) continue;
+      out[key] = value;
+    }
+
+    return out;
+  }
+
+  function setNoteValue(key: string, value: string | boolean) {
+    setNoteValues((prev) => ({ ...prev, [key]: value }));
+    setNoteErrors((prev) => {
+      if (!prev[key]) return prev;
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
   }
 
   function keyFor(body: DonationSubmitBody): string {
@@ -454,15 +514,26 @@ export function HeroForm({
 
     setAmountError(nextAmountError);
     setNameError(nextNameError);
+    const nextNoteErrors: Record<string, string> = {};
+    for (const field of form.customNotes ?? []) {
+      if (!field.required) continue;
+      const answer = noteValues[field.key];
+      const empty =
+        field.type === "checkbox" ? answer !== true : String(answer ?? "").trim() === "";
+      if (empty) nextNoteErrors[field.key] = "This is required.";
+    }
+
     setEmailError(nextEmailError);
     setPurposeError(nextPurposeError);
+    setNoteErrors(nextNoteErrors);
     setCardError("");
 
     if (
       nextAmountError.length > 0 ||
       nextNameError.length > 0 ||
       nextEmailError.length > 0 ||
-      nextPurposeError.length > 0
+      nextPurposeError.length > 0 ||
+      Object.keys(nextNoteErrors).length > 0
     ) {
       return;
     }
@@ -531,7 +602,7 @@ export function HeroForm({
 
   async function completeGooglePay(payload: CompleteDonationBody): Promise<void> {
     await completeDonation(
-      { ...payload, marketingConsent: false },
+      { ...payload, marketingConsent, ...(Object.keys(noteAnswers()).length > 0 ? { customNotes: noteAnswers() } : {}) },
       `${payload.donationId}-complete`,
     );
   }
@@ -570,6 +641,25 @@ export function HeroForm({
       setIsDownloading(false);
     }
   }
+
+  /*
+    True when the donor has typed or picked something that would be lost on close. The amount
+    always has a default, so it does not count on its own.
+  */
+  const hasDonorInput =
+    step !== "success" &&
+    (firstName.trim().length > 0 ||
+      lastName.trim().length > 0 ||
+      email.trim().length > 0 ||
+      (isOrganization && organization.trim().length > 0) ||
+      purposes.length > 0 ||
+      chosenAddOns.length > 0 ||
+      isCustom ||
+      (feeConfigured && feePercent !== feeStart));
+
+  useEffect(() => {
+    onDirtyChange?.(hasDonorInput);
+  }, [hasDonorInput, onDirtyChange]);
 
   /* The heading changes with the step, so the popup always names where the donor is. */
   const heading = step === "success" ? "Thank you" : step === "card" ? "Payment details" : form.label;
@@ -815,6 +905,13 @@ export function HeroForm({
             firstName={firstName}
             lastName={lastName}
             email={email}
+            marketingConsent={marketingConsent}
+            onToggleMarketingConsent={setMarketingConsent}
+            showMarketingConsent={form.marketingConsentMode !== "hidden"}
+            customNotes={form.customNotes ?? []}
+            noteValues={noteValues}
+            onNoteValue={setNoteValue}
+            noteErrors={noteErrors}
             organization={organization}
             isOrganization={isOrganization}
             onFirstName={(next) => {
