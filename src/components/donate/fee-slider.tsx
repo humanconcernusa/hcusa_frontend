@@ -32,7 +32,7 @@ export function FeeSlider({
   const safeMax = Math.max(safeMin + 1, Math.min(100, Number(max) || MAX_FEE_PERCENT));
   const ratio = Math.min(1, Math.max(0, (value - safeMin) / (safeMax - safeMin)));
   const filled = `${ratio * 100}%`;
-  const ticks = [0, 5, 10, 15, 20].filter((tick) => tick >= safeMin && tick <= safeMax);
+  const ticks = TICKS.filter((tick) => tick >= safeMin && tick <= safeMax);
   const scaleTicks = ticks.length >= 2 ? ticks : [safeMin, safeMax];
   /* The bar stays the same red, but it starts faint and becomes solid as the figure rises. */
   const fillOpacity = 0.2 + ratio * 0.8;

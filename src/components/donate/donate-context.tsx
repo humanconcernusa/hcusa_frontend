@@ -129,8 +129,16 @@ export function DonateProvider({ children }: { children: ReactNode }) {
       {children}
 
       {activeForm ? (
-        /* Keyed by form, so the amount resets when a different trigger opens it. */
-        <DonateModal key={activeForm.id} open={isOpen} form={activeForm} onClose={close} />
+        /*
+          Keyed by form and open state, so a fresh popup starts clean and a different trigger
+          resets the amount.
+        */
+        <DonateModal
+          key={`${activeForm.id}:${isOpen ? "open" : "closed"}`}
+          open={isOpen}
+          form={activeForm}
+          onClose={close}
+        />
       ) : (
         <DonatePending
           open={isOpen}

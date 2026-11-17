@@ -70,14 +70,6 @@ export function DonateModal({
     };
   }, [confirmClose, dirty, open, onClose]);
 
-  /* A fresh popup starts clean, even if the last one was closed with input in it. */
-  useEffect(() => {
-    if (!open) {
-      setDirty(false);
-      setConfirmClose(false);
-    }
-  }, [open]);
-
   /* Put the keyboard on the safe choice, not on the one that throws the form away. */
   useEffect(() => {
     if (confirmClose) keepButton.current?.focus();

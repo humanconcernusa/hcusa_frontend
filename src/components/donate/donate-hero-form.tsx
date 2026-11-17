@@ -174,14 +174,23 @@ export function HeroForm({
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
-  const [marketingConsent, setMarketingConsent] = useState(
-    () => form.marketingConsentMode !== "unchecked" && form.marketingConsentMode !== "hidden",
-  );
-
-  /* Re-apply the admin's default when a different form is opened in the same modal. */
-  useEffect(() => {
-    setMarketingConsent(form.marketingConsentMode !== "unchecked" && form.marketingConsentMode !== "hidden");
-  }, [form.apiId, form.marketingConsentMode]);
+  /*
+    The admin's default, plus the donor's own choice. The key changes with the form and its
+    consent mode, so a new form starts from its own default without an effect.
+  */
+  const defaultMarketingConsent =
+    form.marketingConsentMode !== "unchecked" && form.marketingConsentMode !== "hidden";
+  const marketingConsentKey = `${form.apiId}:${form.marketingConsentMode ?? ""}`;
+  const [marketingConsentChoice, setMarketingConsentChoice] = useState<{
+    key: string;
+    value: boolean;
+  } | null>(null);
+  const marketingConsent =
+    marketingConsentChoice?.key === marketingConsentKey
+      ? marketingConsentChoice.value
+      : defaultMarketingConsent;
+  const setMarketingConsent = (on: boolean) =>
+    setMarketingConsentChoice({ key: marketingConsentKey, value: on });
   /* A donor may give on behalf of an organization; the name field shows only when they say so. */
   const [isOrganization, setIsOrganization] = useState(false);
   const [organization, setOrganization] = useState("");
