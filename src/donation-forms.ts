@@ -132,7 +132,7 @@ function readCustomNotes(value: unknown): DonateCustomNote[] {
   const types = ["input", "textarea", "select", "radio", "checkbox"];
 
   return value
-    .map((entry) => {
+    .map((entry): DonateCustomNote | null => {
       const row = (entry ?? {}) as Record<string, unknown>;
       const key = asText(row.key);
       const label = asText(row.label);
