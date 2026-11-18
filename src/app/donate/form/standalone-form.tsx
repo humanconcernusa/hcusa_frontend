@@ -4,6 +4,7 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { HeroForm } from "@/components/donate/donate-hero-form";
 import { fetchDonationForms } from "@/donation-forms";
+import { captureUtms } from "@/components/donate/utm";
 import type { DonateForm } from "@/content/donate";
 
 /*
@@ -28,6 +29,11 @@ function DonationFormBody({ embedded }: { embedded: boolean }) {
   const [error, setError] = useState("");
   const [isLoaded, setIsLoaded] = useState(false);
   const confettiCanvas = useRef<HTMLCanvasElement | null>(null);
+
+  /* This page also serves the embed, which has no DonateProvider to capture the URL. */
+  useEffect(() => {
+    captureUtms();
+  }, []);
 
   useEffect(() => {
     if (slug.length === 0) return;

@@ -28,7 +28,7 @@ import { AmountStep } from "./hero-amount-step";
 import { CardStep } from "./hero-card-step";
 import { DetailsStep } from "./hero-details-step";
 import { Tick, throwScreenConfetti, type Billing, type DonationAddress } from "./hero-parts";
-import { readUtms } from "./utm";
+import { readFirstTouch, readUtms } from "./utm";
 
 /* The chosen currency's amounts, with the form's base list as the fallback. */
 function presetsForCurrency(
@@ -388,6 +388,7 @@ export function HeroForm({
     const donorAddress = addressFor(addressOverride);
     const trimmedOrganization = organization.trim();
     const campaign = campaignFrom(readUtms());
+    const firstTouch = campaignFrom(readFirstTouch());
 
     /*
       The tip is a figure of its own, so the cause split covers the gift only. A monthly gift sends
@@ -435,6 +436,7 @@ export function HeroForm({
             }),
       },
       ...(Object.keys(campaign).length > 0 ? { utm: campaign } : {}),
+      ...(Object.keys(firstTouch).length > 0 ? { firstTouch } : {}),
       /* The questions sit on the details step, so they are answered before any payment starts. */
       ...(Object.keys(noteAnswers()).length > 0 ? { customNotes: noteAnswers() } : {}),
       /* Only the ticked add-ons travel; the platform prices them from its own settings. */

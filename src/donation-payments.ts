@@ -93,6 +93,7 @@ export type DonationSubmitBody = {
         scheduleConfig: { dates: SplitInstallment[] };
       });
   utm?: DonationUtm;
+  firstTouch?: DonationUtm;
 };
 
 export type StartedDonation = {
