@@ -1,0 +1,23 @@
+# Keeps the public site's dependencies current. A weekly pull request is easier to review than a
+# surprise one, and it means a security fix arrives on its own rather than being noticed late.
+#
+# Nothing here is applied automatically: every update arrives as a pull request for review, and
+# the deploy workflow builds it before it can reach the site.
+
+version: 2
+
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      # Development-only packages can move together in one pull request.
+      dev-dependencies:
+        dependency-type: development
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
