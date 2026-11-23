@@ -23,11 +23,11 @@ export function YouthHero({ content }: { content: YouthPageContent["hero"] }) {
       <div className="container-page pt-32 pb-16 lg:min-h-[34rem] lg:pt-[9rem] lg:pb-[6rem]">
         <div className="max-w-[35.22rem] rounded-card bg-surface p-7 shadow-raised lg:p-8">
           <span className="inline-flex items-center gap-2.5 rounded-full bg-tint px-4 py-2">
-            <PodiumIcon className="size-5 shrink-0 origin-center animate-heartbeat text-action" />
+            <PodiumIcon className="size-4 md:size-5 shrink-0 origin-center animate-heartbeat text-action" />
 
             {/* Two explicit lines: the label hugs its text, so no dead space is left before the
                 dots at the end of the pill. */}
-            <span className="text-[0.625rem] leading-[1.15] font-medium tracking-[0.12em] text-action uppercase">
+            <span className="text-[0.725rem] md:text-[1rem] md:leading-[1.15] leading-3 font-medium md:tracking-[0.12em] text-action ">
               {content.eyebrowLines.map((line) => (
                 <span key={line} className="block">
                   {line}

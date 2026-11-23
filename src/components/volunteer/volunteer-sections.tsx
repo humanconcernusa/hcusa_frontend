@@ -8,6 +8,7 @@ import {
   ReliefIcon,
 } from "@/components/volunteer/volunteer-icons";
 import type { VolunteerPageContent } from "@/content/volunteer";
+import { assetUrl } from "@/media";
 
 /*
   The four bands the Volunteer page does not share with any other. Every glyph is drawn in
@@ -68,20 +69,20 @@ export function Opportunities({ content }: { content: VolunteerPageContent["oppo
           {content.headingStart} <span className="accent">{content.headingAccent}</span>
         </h2>
 
-        <ul className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <ul className="mt-12 grid gap-5 grid-cols-2 lg:grid-cols-4">
           {content.cards.map((card, index) => {
             const Glyph = OPPORTUNITY_GLYPHS[index];
 
             return (
               <li
                 key={card.title}
-                className="rounded-card border border-line bg-surface p-6 shadow-card"
+                className="rounded-card border border-line bg-surface md:p-6 p-4 shadow-card"
               >
-                <span className="grid size-14 place-items-center rounded-xl bg-tint">
-                  <Glyph className="size-10" />
+                <span className="grid md:size-14 size-12 place-items-center rounded-xl bg-tint">
+                  <Glyph className="md:size-10 size-8" />
                 </span>
 
-                <p className="mt-5 text-[1.0625rem] font-medium text-ink">{card.title}</p>
+                <p className="mt-5 md:text-[1.0625rem]  font-medium text-ink">{card.title}</p>
               </li>
             );
           })}
@@ -116,7 +117,7 @@ export function VolunteerExperiences({
           <span className="inline-flex items-center gap-2.5 rounded-full border border-white/20 bg-white/5 py-1 pr-4 pl-1">
             <span className="grid size-7 shrink-0 place-items-center rounded-full bg-action">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/images/volunteer/heart.svg" alt="" className="size-[18px]" />
+              <img src={assetUrl("/images/volunteer/heart.svg")} alt="" className="size-[18px]" />
             </span>
             <span className="text-[0.75rem] font-medium tracking-[0.14em] text-white uppercase">
               {content.eyebrow}

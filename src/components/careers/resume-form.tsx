@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui";
 import type { CareerPageContent } from "@/content/careers";
+import { assetUrl } from "@/media";
 
 /*
   Submit Your Resume.
@@ -66,7 +67,7 @@ export function ResumeForm({ content }: { content: CareerPageContent["resume"] }
             />
 
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/images/careers/upload.svg" alt="" className="size-10" />
+            <img src={assetUrl("/images/careers/upload.svg")} alt="" className="size-10" />
 
             <span className="text-[0.9375rem] text-body">
               <span className="font-semibold text-action">{content.uploadBold}</span>{" "}

@@ -15,7 +15,7 @@
     "body": "Your support provides essential food packs, meals, and sustainable nourishment to families facing hunger and crisis worldwide.",
     "cta": "Make A Donation",
     "form": "general",
-    "image": "/images/food-aid/hero.webp",
+    "image": "https://pub-387995532fb34284b3f927edc6088b7b.r2.dev/media/mvtfmb29-74d2971fef23.webp",
     "imageAlt": "A Human Concern USA volunteer handing out food parcels"
   },
   "why": {
@@ -26,6 +26,7 @@
     "lead": "",
     "body": "Hunger affects more than 828 million people globally, including children at risk of acute malnutrition. Human Concern USA delivers emergency food packages, cooked meals, and long-term nutrition programs to support vulnerable communities. Your donation ensures families can survive, rebuild, and thrive.",
     "cta": "Help Save Lives",
+    "form": "food-aid",
     "cards": [
       {
         "title": "Medical Treatments"
@@ -93,7 +94,7 @@
     "headingEnd": "Human Concern USA?",
     "cta": "Provide Lifesaving Support",
     "form": "general",
-    "image": "/images/food-aid/why-choose.jpg",
+    "image": "https://pub-387995532fb34284b3f927edc6088b7b.r2.dev/media/mvtfldry-4cf47a3215be.webp",
     "imageAlt": "A Human Concern USA field worker sitting with a family",
     "points": [
       "Serving vulnerable communities with transparency and dignity.",

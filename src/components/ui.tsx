@@ -24,7 +24,7 @@ export function Media({
         fill
         sizes={sizes}
         style={objectPosition ? { objectPosition } : undefined}
-        className="object-cover"
+        className="object-cover object-center"
       />
     </div>
   );
@@ -156,9 +156,9 @@ export function PlayButton({
       type="button"
       onClick={onClick}
       aria-label={label}
-      className="absolute top-1/2 left-1/2 grid size-16 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-surface shadow-raised transition-transform duration-150 hover:scale-105"
+      className="absolute top-1/2 left-1/2 grid md:size-16 size-14 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-surface shadow-raised transition-transform duration-150 hover:scale-105"
     >
-      <svg viewBox="0 0 24 24" aria-hidden="true" className="ml-1 size-6 fill-brand">
+      <svg viewBox="0 0 24 24" aria-hidden="true" className="md:ml-1 size-6 fill-brand">
         <path d="M8 5v14l11-7z" />
       </svg>
     </button>

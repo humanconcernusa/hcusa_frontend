@@ -5,7 +5,7 @@ import type { TravelPageContent } from "@/content/travel";
 /* About Travel With Human Concern USA: a centred heading, the paragraph, the wide photo, one button. */
 export function AboutTravel({ content }: { content: TravelPageContent["about"] }) {
   return (
-    <section className="bg-surface py-20 lg:py-28">
+    <section className="bg-surface pt-20 lg:pt-28 pb-10">
       <div className="container-page">
         <h2 className="mx-auto max-w-[46rem] text-center text-[2rem] leading-[1.1] font-semibold lg:text-[3rem]">
           {content.headingStart} <span className="accent">{content.headingAccent}</span>{" "}

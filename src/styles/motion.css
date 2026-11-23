@@ -44,6 +44,74 @@
 }
 
 /*
+  The heart that floats up when Monthly is picked.
+
+  It drifts like a leaf: a slow rise, a gentle leftward sway with a slight tilt, and a soft fade.
+  Three animations share the same 3.6s clock but never touch the same property:
+
+    rise   - the `translate` property, straight up
+    drift  - `transform`, moving left and turning a little each way
+    fade   - `opacity`
+
+  Keeping `translate` and `transform` apart is what lets the rise and the sway run at the same
+  time; putting both in `transform` would make one cancel the other.
+*/
+.hero-heart-rise {
+  animation:
+    hero-heart-rise-up 3.6s cubic-bezier(0.3, 0, 0.25, 1) forwards,
+    hero-heart-rise-drift 3.6s ease-in-out forwards,
+    hero-heart-rise-fade 3.6s ease-in-out forwards;
+  will-change: translate, transform, opacity;
+  backface-visibility: hidden;
+}
+
+@keyframes hero-heart-rise-up {
+  from {
+    translate: 0 4px;
+  }
+  to {
+    translate: 0 -240px;
+  }
+}
+
+@keyframes hero-heart-rise-drift {
+  0% {
+    transform: translateX(0) rotate(-6deg) scale(0.72);
+  }
+  30% {
+    transform: translateX(-16px) rotate(5deg) scale(0.88);
+  }
+  60% {
+    transform: translateX(-38px) rotate(-4deg) scale(1);
+  }
+  100% {
+    transform: translateX(-64px) rotate(6deg) scale(1.08);
+  }
+}
+
+@keyframes hero-heart-rise-fade {
+  0% {
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  78% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-heart-rise {
+    animation: none;
+    opacity: 0;
+  }
+}
+
+/*
   The program cards on every phone width, up to sm.
 
   Two cards side by side leave the title, the progress bar and the button too little room, so the

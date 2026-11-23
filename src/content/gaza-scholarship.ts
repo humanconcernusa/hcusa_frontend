@@ -82,11 +82,11 @@ const ASSETS = "/images/gaza-scholarship";
 export const gazaScholarshipDefaults: GazaPageContent = {
   hero: {
     badge: "Emergency Relief",
-    headingStart: "Rebuild",
-    headingAccent: "Futures",
-    headingAccentTwo: "Through",
-    headingMiddle: "Education",
-    headingEnd: "in Gaza",
+    headingStart: "Palestine",
+    headingAccent: "Hardship",
+    headingAccentTwo: "",
+    headingMiddle: "Fund",
+    headingEnd: "",
     body: "Amid crisis and destruction, thousands of students in Gaza are fighting to continue their education. You can help restore hope and rebuild lives by supporting emergency scholarship assistance.",
     cta: "Donate Now",
     form: "gaza",

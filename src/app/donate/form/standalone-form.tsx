@@ -4,13 +4,14 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { HeroForm } from "@/components/donate/donate-hero-form";
 import { fetchDonationForms } from "@/donation-forms";
+import { captureUtms } from "@/components/donate/utm";
 import type { DonateForm } from "@/content/donate";
 
 /*
   One donation form, drawn on a page of its own.
 
   Two shapes, one form:
-  - the shareable page at /donate/form, with the site header and footer around it;
+  - the shareable page at /donate/form, showing only the form;
   - the embedded page at /donate/embed, meant to sit in an iframe on another site.
 
   Both use the same HeroForm as the popup, so the fields, the fee slider and the card step are the
@@ -28,6 +29,11 @@ function DonationFormBody({ embedded }: { embedded: boolean }) {
   const [error, setError] = useState("");
   const [isLoaded, setIsLoaded] = useState(false);
   const confettiCanvas = useRef<HTMLCanvasElement | null>(null);
+
+  /* This page also serves the embed, which has no DonateProvider to capture the URL. */
+  useEffect(() => {
+    captureUtms();
+  }, []);
 
   useEffect(() => {
     if (slug.length === 0) return;

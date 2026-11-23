@@ -20,6 +20,64 @@ export type DonatePurpose = {
   name: string;
 };
 
+/*
+  One input a formula add-on asks for. `select` carries its choices; the others are numbers.
+*/
+export type DonateAddOnInput = {
+  key: string;
+  label: string;
+  type: "int" | "number" | "select";
+  required: boolean;
+  min: number | null;
+  max: number | null;
+  step: number | null;
+  defaultValue: string | number | null;
+  options: { value: string; label: string }[];
+};
+
+/*
+  One extra the form offers. The price and the fund code live on the platform's add-on, never on
+  the form, so the popup only shows what the platform already decided.
+*/
+export type DonateAddOn = {
+  id: string;
+  name: string;
+  iconEmoji: string;
+  shortDescription: string;
+  amountFieldLabel: string;
+  amount: number;
+  labelUnderAmount: string;
+  pricing: {
+    type: "fixed" | "formula";
+    baseUnitAmount: number | null;
+    formula: string;
+    inputs: DonateAddOnInput[];
+  };
+};
+
+/* One extra question the admin adds to a simple form. */
+export type DonateCustomNote = {
+  id: string;
+  key: string;
+  label: string;
+  type: "input" | "textarea" | "select" | "radio" | "checkbox";
+  required: boolean;
+  helpText?: string;
+  placeholder?: string;
+  defaultValue?: string | boolean;
+  options: { id: string; label: string; value: string }[];
+};
+
+/* One currency the popup offers, with its own converted amount lists. */
+export type DonateCurrencyOption = {
+  code: string;
+  rate: number | null;
+  presets: DonatePreset[];
+  monthlyPresets: DonatePreset[];
+  defaultAmount: number | null;
+  defaultMonthlyAmount: number | null;
+};
+
 export type DonateForm = {
   /*
     The slug. The site's own content points at a popup by slug (`form: "palestine"`), so this is
@@ -36,11 +94,19 @@ export type DonateForm = {
     popup offers the one-time list for both.
   */
   monthlyPresets?: DonatePreset[];
+  /* The amount the popup starts on, for each cadence. */
+  defaultAmount?: number;
+  defaultMonthlyAmount?: number;
   /*
     Whether this form offers a monthly gift. The admin turns it on for the form, and monthly only
     appears when it is on: the platform refuses a monthly gift for a form that has not allowed one.
   */
   allowMonthly?: boolean;
+  /*
+    How the "send me updates" checkbox starts. Set in the admin's Public Display step.
+    Absent means checked.
+  */
+  marketingConsentMode?: "checked" | "unchecked" | "hidden";
   /*
     Which purposes this form offers. Empty or absent means the form shows no pills, and a form
     with none asks for no purpose before it will take a card.
@@ -51,7 +117,55 @@ export type DonateForm = {
     MAX_FEE_PERCENT. Left out, the popup shows no slider at all.
   */
   feePercent?: number;
+  /* The lowest and highest percent the fee slider allows. Absent means 0 and 20. */
+  feeMinPercent?: number;
+  feeMaxPercent?: number;
+  /* The extras this form offers. Empty or absent means no add-on section is drawn. */
+  addons?: DonateAddOn[];
+  /* Extra questions the admin added to this form. Empty or absent means none are drawn. */
+  customNotes?: DonateCustomNote[];
+  /* The base currency. Absent means USD. */
+  currency?: string;
+  /* Every currency the form offers, the base first. Absent means one currency only. */
+  currencies?: DonateCurrencyOption[];
 };
+
+/* A short symbol for the common currencies. Unknown codes fall back to the code itself. */
+const CURRENCY_SYMBOLS: Record<string, string> = {
+  USD: "$",
+  EUR: "€",
+  GBP: "£",
+  CAD: "CA$",
+  AUD: "A$",
+  CHF: "CHF",
+  SEK: "kr",
+  NOK: "kr",
+  DKK: "kr",
+};
+
+export function currencySymbol(code: string | undefined): string {
+  const key = String(code ?? "").trim().toUpperCase();
+  return CURRENCY_SYMBOLS[key] ?? (key || "$");
+}
+
+/*
+  The price of an add-on for the values typed. The platform multiplies the base by each input, and
+  it recomputes the same figure when the donation is submitted.
+*/
+export function addOnAmount(addOn: DonateAddOn, values: Record<string, string>): number {
+  const pricing = addOn.pricing;
+
+  if (!pricing || pricing.type !== "formula") return addOn.amount;
+
+  const base =
+    typeof pricing.baseUnitAmount === "number" ? pricing.baseUnitAmount : addOn.amount;
+
+  return pricing.inputs.reduce((total, input) => {
+    const raw = values[input.key] ?? input.defaultValue ?? 1;
+    const n = Number(raw);
+    return total * (Number.isFinite(n) ? n : 1);
+  }, base);
+}
 
 /* The most a donor can add on top through the slider, as a percentage of their gift. */
 export const MAX_FEE_PERCENT = 20;

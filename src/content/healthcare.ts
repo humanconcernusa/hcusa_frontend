@@ -29,6 +29,7 @@ export type HealthcareSectionKey =
   | "giving"
   | "choose"
   | "ctaBand";
+  const ASSETS = "/images/improving-healthcare";
 
 export const HEALTHCARE_SECTION_LABELS: Record<HealthcareSectionKey, string> = {
   hero: "Hero",
@@ -75,6 +76,8 @@ export type HealthcarePageContent = {
     headingAccent: string;
     headingEnd: string;
     videoId: string;
+    image: string;
+    imageAlt: string;
   };
   counters: {
     firstLabel: string;
@@ -149,6 +152,8 @@ export const healthcareDefaults: HealthcarePageContent = {
     headingAccent: "Stories",
     headingEnd: "of Healing & Hope",
     videoId: "3279slWUlwA",
+    image: `${ASSETS}/video.jpg`,
+    imageAlt: `Meet those whose lives changed`,
   },
   counters: {
     firstLabel: "Patients",

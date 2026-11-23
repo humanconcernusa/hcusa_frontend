@@ -24,6 +24,7 @@ import {
   type ChildSponsorshipPageContent,
 } from "./child-sponsorship";
 import { contactDefaults, type ContactPageContent } from "./contact";
+import { donateFallbackDefaults, type DonateFallbackContent } from "./donate-fallback";
 import { floodReliefDefaults, type FloodReliefPageContent } from "./flood-relief";
 import { foodAidDefaults, type FoodAidPageContent } from "./food-aid";
 import { footerDefaults, type FooterContent } from "./footer";
@@ -33,6 +34,10 @@ import { healthcareDefaults, type HealthcarePageContent } from "./healthcare";
 import { homeDefaults, type HomePageContent } from "./home";
 import { lebanonDefaults, type LebanonPageContent } from "./lebanon-emergency";
 import { ourTeamDefaults, type OurTeamPageContent } from "./our-team";
+import {
+  palestineHardshipDefaults,
+  type PalestineHardshipPageContent,
+} from "./palestine-hardship-fund";
 import { palestineDefaults, type PalestinePageContent } from "./palestine-relief";
 import { privacyDefaults, type PrivacyPageContent } from "./privacy";
 import { quickDonateDefaults, type QuickDonateContent } from "./quick-donate";
@@ -130,6 +135,11 @@ export async function getPublishedQuickDonate(): Promise<QuickDonateContent> {
   return readPublished("quick-donate", quickDonateDefaults);
 }
 
+/* The popup shown when a donation form cannot be opened. Used on every page. */
+export async function getPublishedDonateFallback(): Promise<DonateFallbackContent> {
+  return readPublished("donate-fallback", donateFallbackDefaults);
+}
+
 export async function getPublishedFooter(): Promise<FooterContent> {
   return readPublished("footer", footerDefaults);
 }
@@ -153,6 +163,10 @@ export const gazaScholarshipStore = publishedStore<GazaPageContent>(
 export const lebanonStore = publishedStore<LebanonPageContent>(
   "lebanon-emergency",
   lebanonDefaults,
+);
+export const palestineHardshipStore = publishedStore<PalestineHardshipPageContent>(
+  "palestine-hardship-fund",
+  palestineHardshipDefaults,
 );
 export const palestineStore = publishedStore<PalestinePageContent>(
   "palestine-relief",
@@ -241,16 +255,17 @@ export const PAGE_KEYS = [
   "careers",
   "child-sponsorship",
   "contact",
+  "donate-fallback",
   "flood-relief",
   "food-aid",
   "footer",
-  "forms",
   "gaza-scholarship",
   "header",
   "healthcare",
   "home",
   "lebanon-emergency",
   "our-team",
+  "palestine-hardship-fund",
   "palestine-relief",
   "privacy",
   "quick-donate",

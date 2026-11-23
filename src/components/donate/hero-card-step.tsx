@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import {
   AddressElement,
   CardElement,
@@ -10,13 +10,15 @@ import {
 } from "@stripe/react-stripe-js";
 import type { Stripe } from "@stripe/stripe-js";
 import { stripeLook } from "@/stripe-key";
+import { TURNSTILE_ENABLED } from "@/turnstile";
+import { TurnstileBox } from "@/components/turnstile/turnstile-box";
 import {
-  MONTHLY_TERM,
-  finalizeDonation,
-  newPaymentKey,
+  createFirstPayment,
+  type CompleteDonationBody,
   type StartedDonation,
 } from "@/donation-payments";
-import { money, type Billing } from "./hero-parts";
+import { money, type Billing, type DonationAddress, CardIcon, WalletIcon, GOOGLE_PAY_ENABLED } from "./hero-parts";
+import { GooglePayOption } from "./hero-google-pay";
 
 /*
   The card step of the hero popup: what the charge is made of, then Stripe's own card and billing
@@ -48,7 +50,7 @@ function CardFields({
   onBack,
 }: {
   /* Starts the payment, and answers with the secret and, for monthly, the plan's two ids. */
-  resolvePayment: () => Promise<StartedDonation>;
+  resolvePayment: (turnstileToken: string, address?: DonationAddress) => Promise<StartedDonation>;
   isMonthly: boolean;
   /* The wording on the pay button, built by the popup, which knows the cadence. */
   payLabel: string;
@@ -58,7 +60,8 @@ function CardFields({
   email: string;
   billing: Billing | null;
   onBillingChange: (billing: Billing) => void;
-  onPaid: (status: "succeeded" | "processing") => void;
+  /* The reference is the platform's donation id, shown on the thank-you receipt. */
+  onPaid: (status: "succeeded" | "processing", reference?: { donationId: string }) => void;
   onBack: () => void;
 }) {
   const stripe = useStripe();
@@ -67,8 +70,11 @@ function CardFields({
   const [error, setError] = useState("");
   /* Kept for a retry after a declined card, so one attempt does not start several payments. */
   const [started, setStarted] = useState<StartedDonation | null>(null);
-  /* One key for the monthly confirmation, so a retry cannot record the plan twice. */
-  const finalizeKey = useRef("");
+  /* The card is saved once. A failed first payment must not repeat the SetupIntent. */
+  const [cardSaved, setCardSaved] = useState(false);
+  /* Cloudflare's token. The platform checks it before it starts the payment. */
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const [turnstileReset, setTurnstileReset] = useState(0);
 
   async function pay(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -90,6 +96,12 @@ function CardFields({
       return;
     }
 
+    /* Pay waits for Cloudflare's token, so no payment is ever started without the check. */
+    if (!preview && TURNSTILE_ENABLED && turnstileToken.length === 0) {
+      setError("Please wait for the security check to finish.");
+      return;
+    }
+
     setIsPaying(true);
     setError("");
 
@@ -98,9 +110,20 @@ function CardFields({
         The payment is started on this press, not when the screen opened, so a donor who never
         presses Pay leaves nothing behind. A retry after a decline reuses what came back.
       */
-      const current = started ?? (await resolvePayment());
+      let current = started;
 
-      if (!started) setStarted(current);
+      if (!current) {
+        try {
+          current = await resolvePayment(turnstileToken);
+        } catch (caught) {
+          /* A token works once, so a retry after a failed start needs a fresh one. */
+          setTurnstileToken("");
+          setTurnstileReset((value) => value + 1);
+          throw caught;
+        }
+
+        setStarted(current);
+      }
 
       const paymentMethod = {
         card,
@@ -112,31 +135,53 @@ function CardFields({
       };
 
       if (isMonthly) {
-        const setup = await stripe.confirmCardSetup(current.clientSecret, { payment_method: paymentMethod });
+        if (!cardSaved) {
+          const setup = await stripe.confirmCardSetup(current.clientSecret, { payment_method: paymentMethod });
 
-        if (setup.error) {
-          setError(setup.error.message ?? "The card could not be saved.");
-          return;
+          if (setup.error) {
+            setError(setup.error.message ?? "The card could not be saved.");
+            return;
+          }
+
+          if (setup.setupIntent?.status !== "succeeded") {
+            setError("The card could not be saved. Please check your card and try again.");
+            return;
+          }
+
+          setCardSaved(true);
         }
 
         if (!current.setupIntentId || !current.pendingSessionId) {
-          setError("The monthly gift could not be set up. Please try again.");
+          setError("The monthly donation could not be set up. Please try again.");
           return;
         }
 
-        if (finalizeKey.current.length === 0) finalizeKey.current = newPaymentKey();
+        /*
+          The first payment is taken now, on this step, so the bank can show 3DS.
+          It is not an off-session charge from the webhook.
+        */
+        const first = await createFirstPayment({
+          pendingSessionId: current.pendingSessionId,
+          setupIntentId: current.setupIntentId,
+        });
 
-        await finalizeDonation(
-          {
-            paymentMode: "split",
-            pendingSessionId: current.pendingSessionId,
-            setupIntentId: current.setupIntentId,
-          },
-          finalizeKey.current,
-        );
+        const firstResult = await stripe.confirmCardPayment(first.clientSecret);
 
-        /* The plan is recorded. The first payment is taken on its own date, which is today. */
-        onPaid("succeeded");
+        if (firstResult.error) {
+          setError(firstResult.error.message ?? "The first payment could not be completed.");
+          return;
+        }
+
+        const firstStatus = firstResult.paymentIntent?.status;
+
+        if (firstStatus !== "succeeded" && firstStatus !== "processing") {
+          setError("The first payment was not completed. Please check your card and try again.");
+          return;
+        }
+
+        onPaid(firstStatus === "processing" ? "processing" : "succeeded", {
+          donationId: first.donationId || current.donationId,
+        });
         return;
       }
 
@@ -154,7 +199,7 @@ function CardFields({
         gets thanked; Stripe's receipt is what confirms the final outcome.
       */
       if (status === "succeeded" || status === "processing") {
-        onPaid(status);
+        onPaid(status, { donationId: current.donationId });
         return;
       }
 
@@ -221,6 +266,11 @@ function CardFields({
         />
       </div>
 
+      {/* The preview takes no payment, so it needs no check. */}
+      {preview ? null : (
+        <TurnstileBox onToken={setTurnstileToken} resetKey={turnstileReset} className="mt-1" />
+      )}
+
       {error.length > 0 ? (
         <p role="alert" className="text-[0.8125rem] text-action">
           {error}
@@ -240,7 +290,9 @@ function CardFields({
           </button>
           <button
             type="submit"
-            disabled={!stripe || isPaying}
+            disabled={
+              !stripe || isPaying || (!preview && TURNSTILE_ENABLED && turnstileToken.length === 0)
+            }
             className="inline-flex min-h-12 items-center justify-center rounded-md bg-action px-3 text-[0.9375rem] font-semibold whitespace-nowrap text-white transition-colors hover:bg-action-hover disabled:pointer-events-none disabled:opacity-60 max-sm:min-h-11"
           >
             {isPaying ? "Processing..." : payLabel}
@@ -255,6 +307,71 @@ function CardFields({
   );
 }
 
+/*
+  The two ways to pay. Both stay on screen after a choice, so the donor can switch at any time.
+  Nothing reads as picked until they click one.
+*/
+function PaymentMethodChooser({
+  selected,
+  googlePayEnabled,
+  onCard,
+  onGooglePay,
+  onBack,
+}: {
+  selected: "card" | "googlePay" | null;
+  googlePayEnabled: boolean;
+  onCard: () => void;
+  onGooglePay: () => void;
+  onBack: () => void;
+}) {
+  const base =
+    "inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md border bg-surface px-4 text-[0.9375rem] font-semibold transition-colors";
+  const chosen = "border-action text-action";
+  const idle = "border-line text-ink hover:bg-page";
+  const off = "border-line bg-surface text-body opacity-50 cursor-not-allowed";
+
+  return (
+    <div className="mt-5 flex flex-col gap-3">
+      <p className="text-[0.8125rem] text-body">Choose how you would like to pay.</p>
+
+      <button
+        type="button"
+        onClick={googlePayEnabled ? onGooglePay : undefined}
+        disabled={!googlePayEnabled}
+        aria-pressed={selected === "googlePay"}
+        title={!googlePayEnabled ? "Google Pay is not available right now." : undefined}
+        className={`${base} ${!googlePayEnabled ? off : selected === "googlePay" ? chosen : idle}`}
+      >
+        <WalletIcon />
+        Google Pay
+      </button>
+
+      <button
+        type="button"
+        onClick={onCard}
+        aria-pressed={selected === "card"}
+        className={`${base} ${selected === "card" ? chosen : idle}`}
+      >
+        <CardIcon />
+        Debit/Credit Card
+      </button>
+
+      {/* Full width, in the same sticky bar the popup uses, so it cannot be cut off. */}
+      {selected === null ? (
+        <div className="donate-actions mt-2">
+          <button
+            type="button"
+            onClick={onBack}
+            className="inline-flex min-h-12 w-full items-center justify-center rounded-md border border-line bg-surface px-6 text-[0.9375rem] font-semibold text-ink transition-colors hover:bg-page max-sm:min-h-11 max-sm:px-4"
+          >
+            Back
+          </button>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export function CardStep({
   label,
   value,
@@ -263,13 +380,20 @@ export function CardStep({
   causeLabels,
   isMonthly,
   totalLabel,
+  currencySymbol = "$",
+  addOns,
   stripe,
   billing,
   name,
+  firstName,
+  lastName,
   email,
+  organization,
   payLabel,
   preview = false,
   resolvePayment,
+  startGooglePay,
+  completeGooglePay,
   onBillingChange,
   onPaid,
   onBack,
@@ -282,19 +406,49 @@ export function CardStep({
   causeLabels: string[];
   isMonthly: boolean;
   totalLabel: string;
+  /* The chosen currency's sign, e.g. "$" or "€". */
+  currencySymbol?: string;
+  /* The ticked add-ons by name and price, for the summary. */
+  addOns: { id: string; name: string; amount: number }[];
   /* The instance for the platform's default gateway, which the payment is pinned to. */
-  stripe: Stripe | Promise<Stripe | null> | null;
+  stripe: Stripe | null;
   billing: Billing | null;
   name: string;
+  firstName: string;
+  lastName: string;
   email: string;
+  /* The organization the donor typed, or an empty string when they are giving as themselves. */
+  organization: string;
   payLabel: string;
   /* A preview tab: Pay explains itself instead of starting a payment. */
   preview?: boolean;
-  resolvePayment: () => Promise<StartedDonation>;
+  resolvePayment: (turnstileToken: string, address?: DonationAddress) => Promise<StartedDonation>;
+  startGooglePay: (turnstileToken: string) => Promise<StartedDonation>;
+  completeGooglePay: (payload: CompleteDonationBody) => Promise<void>;
   onBillingChange: (billing: Billing) => void;
-  onPaid: (status: "succeeded" | "processing") => void;
+  onPaid: (status: "succeeded" | "processing", reference?: { donationId: string }) => void;
   onBack: () => void;
 }) {
+  /* One line for the extras: the donor reads the amount, not a list of names. */
+  const addOnTotal = addOns.reduce((sum, addOn) => sum + addOn.amount, 0);
+  /* Nothing is picked to begin with. The donor chooses the method first. */
+  const [method, setMethod] = useState<"card" | "googlePay" | null>(null);
+
+  const cardFields = (
+    <CardFields
+      resolvePayment={resolvePayment}
+      isMonthly={isMonthly}
+      payLabel={payLabel}
+      preview={preview}
+      name={name}
+      email={email}
+      billing={billing}
+      onBillingChange={onBillingChange}
+      onPaid={onPaid}
+      onBack={onBack}
+    />
+  );
+
   return (
     <>
       <p className="mt-4 text-[0.8125rem] text-body">
@@ -303,18 +457,39 @@ export function CardStep({
 
       {/* What the charge is made of, so it can be read over before the card is entered. */}
       <dl className="mt-4 flex flex-col gap-2 rounded-lg border border-line bg-page px-4 py-3 text-[0.8125rem]">
+        {name.trim().length > 0 ? (
+          <div className="flex items-baseline justify-between gap-4">
+            <dt className="shrink-0 text-body">Donor</dt>
+            <dd className="min-w-0 truncate text-right font-semibold text-ink">{name}</dd>
+          </div>
+        ) : null}
+
+        {organization.trim().length > 0 ? (
+          <div className="flex items-baseline justify-between gap-4">
+            <dt className="shrink-0 text-body">Organization</dt>
+            <dd className="min-w-0 truncate text-right font-semibold text-ink">{organization}</dd>
+          </div>
+        ) : null}
+
         <div className="flex items-baseline justify-between gap-4">
           <dt className="text-body">Donation amount</dt>
           <dd className="font-semibold text-ink">
-            {money(value)}
+            {money(value, currencySymbol)}
             {isMonthly ? " / month" : ""}
           </dd>
         </div>
 
         <div className="flex items-baseline justify-between gap-4">
           <dt className="text-body">{feePercent > 0 ? `Fees (${feePercent}%)` : "Fees"}</dt>
-          <dd className="font-semibold text-ink">{money(extra)}</dd>
+          <dd className="font-semibold text-ink">{money(extra, currencySymbol)}</dd>
         </div>
+
+        {addOnTotal > 0 ? (
+          <div className="flex items-baseline justify-between gap-4">
+            <dt className="text-body">Add-ons</dt>
+            <dd className="font-semibold text-ink">{money(addOnTotal, currencySymbol)}</dd>
+          </div>
+        ) : null}
 
         {causeLabels.length > 0 ? (
           <div className="flex items-baseline justify-between gap-4">
@@ -332,7 +507,7 @@ export function CardStep({
         <div className="flex items-baseline justify-between gap-4">
           <dt className="text-body">Donation type</dt>
           <dd className="font-semibold text-ink">
-            {isMonthly ? `Monthly · ${MONTHLY_TERM} payments` : "One-time"}
+            {isMonthly ? "Monthly · ongoing until you cancel" : "One-time"}
           </dd>
         </div>
 
@@ -342,20 +517,47 @@ export function CardStep({
         </div>
       </dl>
 
-      <Elements stripe={stripe} options={stripeLook}>
-        <CardFields
-          resolvePayment={resolvePayment}
-          isMonthly={isMonthly}
-          payLabel={payLabel}
-          preview={preview}
-          name={name}
-          email={email}
-          billing={billing}
-          onBillingChange={onBillingChange}
-          onPaid={onPaid}
-          onBack={onBack}
-        />
-      </Elements>
+      {/*
+        Stripe refuses to change the `stripe` prop after <Elements> has mounted. Mounting it while
+        the gateway is still loading (null) left the card fields dead for the rest of the visit,
+        and only closing and reopening the popup brought them back. So <Elements> now waits until
+        there is a real instance.
+      */}
+      {stripe ? (
+        <>
+          <PaymentMethodChooser
+            selected={method}
+            googlePayEnabled={GOOGLE_PAY_ENABLED}
+            onCard={() => setMethod("card")}
+            onGooglePay={() => setMethod("googlePay")}
+            onBack={onBack}
+          />
+
+          {method === "card" ? (
+            <Elements stripe={stripe} options={stripeLook}>
+              {cardFields}
+            </Elements>
+          ) : method === "googlePay" && GOOGLE_PAY_ENABLED ? (
+            <GooglePayOption
+              stripe={stripe}
+              isMonthly={isMonthly}
+              preview={preview}
+              firstName={firstName}
+              lastName={lastName}
+              email={email}
+              organization={organization}
+              startPayment={startGooglePay}
+              completePayment={completeGooglePay}
+              onPaid={onPaid}
+              onBack={() => setMethod(null)}
+            />
+          ) : null}
+        </>
+      ) : (
+        <p className="mt-5 text-[0.8125rem] text-body">
+          Preparing the secure payment fields…
+        </p>
+      )}
     </>
   );
 }

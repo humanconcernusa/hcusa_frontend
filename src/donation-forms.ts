@@ -9,7 +9,15 @@
   NEXT_PUBLIC_ because the browser makes the call; the value is inlined at build time.
 */
 
-import type { DonateForm, DonatePreset, DonatePurpose } from "@/content/donate";
+import type {
+  DonateAddOn,
+  DonateAddOnInput,
+  DonateCurrencyOption,
+  DonateCustomNote,
+  DonateForm,
+  DonatePreset,
+  DonatePurpose,
+} from "@/content/donate";
 
 const DONATION_API_URL = (process.env.NEXT_PUBLIC_DONATION_API_URL ?? "").replace(/\/+$/, "");
 
@@ -50,6 +58,155 @@ function readPurposes(value: unknown): DonatePurpose[] {
     .filter((purpose) => purpose.id.length > 0 && purpose.name.length > 0);
 }
 
+function readAddOnInput(value: unknown): DonateAddOnInput | null {
+  const row = (value ?? {}) as Record<string, unknown>;
+  const key = asText(row.key);
+  const label = asText(row.label);
+
+  if (key.length === 0 || label.length === 0) return null;
+
+  const type = row.type === "select" ? "select" : row.type === "number" ? "number" : "int";
+
+  return {
+    key,
+    label,
+    type,
+    required: row.required !== false,
+    min: typeof row.min === "number" ? row.min : null,
+    max: typeof row.max === "number" ? row.max : null,
+    step: typeof row.step === "number" ? row.step : null,
+    defaultValue:
+      typeof row.defaultValue === "string" || typeof row.defaultValue === "number"
+        ? row.defaultValue
+        : null,
+    options: Array.isArray(row.options)
+      ? row.options
+          .map((entry) => {
+            const option = (entry ?? {}) as { value?: unknown; label?: unknown };
+            return { value: asText(option.value), label: asText(option.label) };
+          })
+          .filter((option) => option.value.length > 0)
+      : [],
+  };
+}
+
+/* The extras the form offers. A row without an id cannot be paid for, so it is dropped. */
+function readAddOns(value: unknown): DonateAddOn[] {
+  if (!Array.isArray(value)) return [];
+
+  return value
+    .map((entry) => {
+      const row = (entry ?? {}) as Record<string, unknown>;
+      const id = asText(row.id);
+      const pricing = (row.pricing ?? {}) as Record<string, unknown>;
+
+      if (id.length === 0) return null;
+
+      const inputs = Array.isArray(pricing.inputs)
+        ? pricing.inputs.map(readAddOnInput).filter((input): input is DonateAddOnInput => input !== null)
+        : [];
+
+      return {
+        id,
+        name: asText(row.name) || "Add-on",
+        iconEmoji: asText(row.iconEmoji),
+        shortDescription: asText(row.shortDescription),
+        amountFieldLabel: asText(row.amountFieldLabel),
+        amount: asNumber(row.amount),
+        labelUnderAmount: asText(row.labelUnderAmount),
+        pricing: {
+          type: pricing.type === "formula" ? "formula" : "fixed",
+          baseUnitAmount: typeof pricing.baseUnitAmount === "number" ? pricing.baseUnitAmount : null,
+          formula: asText(pricing.formula),
+          inputs,
+        },
+      } satisfies DonateAddOn;
+    })
+    .filter((addOn): addOn is DonateAddOn => addOn !== null);
+}
+
+/* The extra questions the admin added. A row the popup cannot draw is dropped. */
+function readCustomNotes(value: unknown): DonateCustomNote[] {
+  if (!Array.isArray(value)) return [];
+
+  const types = ["input", "textarea", "select", "radio", "checkbox"];
+
+  return value
+    .map((entry): DonateCustomNote | null => {
+      const row = (entry ?? {}) as Record<string, unknown>;
+      const key = asText(row.key);
+      const label = asText(row.label);
+      const rawType = asText(row.type);
+      const type = (types.includes(rawType) ? rawType : "input") as DonateCustomNote["type"];
+
+      if (key.length === 0 || label.length === 0) return null;
+
+      const options = Array.isArray(row.options)
+        ? row.options
+            .map((item) => {
+              const option = (item ?? {}) as Record<string, unknown>;
+              return {
+                id: asText(option.id),
+                label: asText(option.label),
+                value: asText(option.value),
+              };
+            })
+            .filter((option) => option.label.length > 0 && option.value.length > 0)
+        : [];
+
+      if ((type === "select" || type === "radio") && options.length < 2) return null;
+
+      return {
+        id: asText(row.id) || key,
+        key,
+        label,
+        type,
+        required: row.required === true,
+        helpText: asText(row.helpText),
+        placeholder: asText(row.placeholder),
+        defaultValue:
+          typeof row.defaultValue === "boolean" ? row.defaultValue : asText(row.defaultValue),
+        options,
+      } satisfies DonateCustomNote;
+    })
+    .filter((note): note is DonateCustomNote => note !== null);
+}
+
+/* The admin's starting amount, but only while that row still exists. */
+function readDefaultAmount(value: unknown, presets: DonatePreset[]): number | null {
+  const amount = asNumber(value);
+  if (amount <= 0) return null;
+  return presets.some((preset) => preset.amount === amount) ? amount : null;
+}
+
+/* One option per currency. A row with no code or no amounts is dropped. */
+function readCurrencyOptions(value: unknown): DonateCurrencyOption[] {
+  if (!Array.isArray(value)) return [];
+
+  return value
+    .map((entry) => {
+      const row = (entry ?? {}) as Record<string, unknown>;
+      const code = asText(row.code).toUpperCase();
+      const presets = readPresets(row.presets);
+      const monthlyPresets = readPresets(row.monthlyPresets);
+
+      if (!/^[A-Z]{3}$/.test(code) || presets.length === 0) return null;
+
+      return {
+        code,
+        rate: typeof row.rate === "number" ? row.rate : null,
+        presets,
+        monthlyPresets,
+        defaultAmount: readDefaultAmount(row.defaultAmount, presets),
+        defaultMonthlyAmount: readDefaultAmount(
+          row.defaultMonthlyAmount,
+          monthlyPresets.length > 0 ? monthlyPresets : presets,
+        ),
+      } satisfies DonateCurrencyOption;
+    })
+    .filter((option): option is DonateCurrencyOption => option !== null);
+}
+
 function readForm(value: unknown): DonateForm | null {
   const row = (value ?? {}) as Record<string, unknown>;
 
@@ -69,14 +226,48 @@ function readForm(value: unknown): DonateForm | null {
   const monthlyPresets = readPresets(row.monthlyPresets);
   if (monthlyPresets.length > 0) form.monthlyPresets = monthlyPresets;
 
+  const defaultAmount = readDefaultAmount(row.defaultAmount, presets);
+  if (defaultAmount !== null) form.defaultAmount = defaultAmount;
+
+  const monthlyChoices = monthlyPresets.length > 0 ? monthlyPresets : presets;
+  const defaultMonthlyAmount = readDefaultAmount(row.defaultMonthlyAmount, monthlyChoices);
+  if (defaultMonthlyAmount !== null) form.defaultMonthlyAmount = defaultMonthlyAmount;
+
   const purposes = readPurposes(row.purposes);
   if (purposes.length > 0) form.purposes = purposes;
 
   /* Monthly is offered only when the form's admin allowed it. */
   if (row.allowRecurringDonations === true) form.allowMonthly = true;
 
+  /* Admin → Public Display: how the marketing opt-in starts. */
+  const consentMode = asText(row.marketingConsentMode).toLowerCase();
+  if (consentMode === "checked" || consentMode === "unchecked" || consentMode === "hidden") {
+    form.marketingConsentMode = consentMode;
+  }
+
   if (row.feePercent !== null && row.feePercent !== undefined) {
     form.feePercent = asNumber(row.feePercent);
+  }
+  if (row.feeMinPercent !== null && row.feeMinPercent !== undefined) {
+    form.feeMinPercent = asNumber(row.feeMinPercent);
+  }
+  if (row.feeMaxPercent !== null && row.feeMaxPercent !== undefined) {
+    form.feeMaxPercent = asNumber(row.feeMaxPercent);
+  }
+
+  const addOns = readAddOns(row.addons);
+  if (addOns.length > 0) form.addons = addOns;
+
+  const customNotes = readCustomNotes(row.customNotes);
+  if (customNotes.length > 0) form.customNotes = customNotes;
+
+  const currencies = readCurrencyOptions(row.currencies);
+  if (currencies.length > 0) {
+    form.currencies = currencies;
+    form.currency = currencies[0].code;
+  } else {
+    const base = asText(row.currency).toUpperCase();
+    if (base.length > 0) form.currency = base;
   }
 
   return form;

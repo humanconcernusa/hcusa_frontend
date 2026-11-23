@@ -3,6 +3,7 @@ import { Fragment } from "react";
 import type { ReactNode } from "react";
 import { GlobeIcon, HeartIcon, YOUTH_ICONS } from "@/components/youth/youth-icons";
 import type { YouthPageContent } from "@/content/youth";
+import { YouthBenefitAccordion, YouthReadMore } from "@/components/youth/youth-mobile-disclosure";
 
 /* The pink pill the reference uses above Program Benefits, Program Timeline, How It Works and FAQ. */
 export function Eyebrow({ children }: { children: ReactNode }) {
@@ -27,20 +28,23 @@ export function Intro({ content }: { content: YouthPageContent["intro"] }) {
           {content.headingEnd}
         </h2>
 
-        {content.paragraphs.map((paragraph, index) => (
-          <Fragment key={paragraph}>
-            <p className="mt-5 text-[0.9375rem] leading-relaxed text-body">{paragraph}</p>
-
-            {index === 4 ? (
-              <blockquote className="mt-6 border-l-2 border-action pl-5">
-                <p className="text-[0.9375rem] leading-relaxed text-body italic">
-                  &ldquo;{content.quote}&rdquo;
-                </p>
-                <p className="mt-2 text-[0.8125rem] text-body italic">({content.quoteSource})</p>
-              </blockquote>
-            ) : null}
-          </Fragment>
-        ))}
+        <YouthReadMore
+          preview={content.paragraphs.slice(0, 2).map((paragraph) => (
+            <p key={paragraph} className="mt-5 text-[0.9375rem] leading-relaxed text-body">{paragraph}</p>
+          ))}
+        >
+          {content.paragraphs.slice(2).map((paragraph, index) => (
+            <Fragment key={paragraph}>
+              <p className="mt-5 text-[0.9375rem] leading-relaxed text-body">{paragraph}</p>
+              {index === 2 ? (
+                <blockquote className="mt-6 border-l-2 border-action pl-5">
+                  <p className="text-[0.9375rem] leading-relaxed text-body italic">&ldquo;{content.quote}&rdquo;</p>
+                  <p className="mt-2 text-[0.8125rem] text-body italic">({content.quoteSource})</p>
+                </blockquote>
+              ) : null}
+            </Fragment>
+          ))}
+        </YouthReadMore>
       </div>
     </section>
   );
@@ -61,13 +65,40 @@ export function Benefits({ content }: { content: YouthPageContent["benefits"] })
         {content.paragraphs.map((paragraph) => (
           <p
             key={paragraph}
-            className="mx-auto mt-4 max-w-[52rem] text-center text-[0.9375rem] leading-relaxed text-body"
+            className="mx-auto my-4 max-w-[52rem] text-center text-[0.9375rem] md:leading-relaxed leading-normal text-body"
           >
             {paragraph}
           </p>
         ))}
 
-        <ul className="mt-12 grid gap-6 lg:grid-cols-3">
+        <YouthBenefitAccordion>
+          {content.cards.map((card) => {
+            const Icon = YOUTH_ICONS[card.icon] ?? HeartIcon;
+            return (
+              <details key={card.title} className="group rounded-card bg-surface p-4 shadow-card">
+                <summary className="flex cursor-pointer list-none items-center gap-3 [&::-webkit-details-marker]:hidden">
+                  <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-tint"><Icon className="size-5 text-action" /></span>
+                  <span className="flex-1 text-sm font-semibold text-action">{card.title}</span>
+                  <span className="grid size-7 shrink-0 place-items-center rounded-full bg-page text-body" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" className="size-3.5" fill="none">
+                      <path d="M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                      <path d="M12 5v14" className="transition-opacity group-open:opacity-0" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                    </svg>
+                  </span>
+                </summary>
+                <div className="pt-3">
+                  {card.intro ? <p className="text-sm font-semibold text-ink">{card.intro}</p> : null}
+                  {card.body ? <p className="text-sm leading-relaxed text-body">{card.body}</p> : null}
+                  {card.bullets ? <ul className="mt-2 space-y-2">{card.bullets.map((bullet) => <li key={bullet} className="flex gap-2 text-sm leading-relaxed text-body"><span aria-hidden="true" className="mt-2 size-1 shrink-0 rounded-full bg-body" />{bullet}</li>)}</ul> : null}
+                  {card.after ? <p className="mt-2 text-sm leading-relaxed text-body">{card.after}</p> : null}
+                  {card.note ? <p className="mt-2 text-xs leading-relaxed text-body italic">{card.note}</p> : null}
+                </div>
+              </details>
+            );
+          })}
+        </YouthBenefitAccordion>
+
+        <ul className="mt-12 hidden gap-6 md:grid md:grid-cols-2 lg:grid-cols-3">
           {content.cards.map((card) => {
             const Icon = YOUTH_ICONS[card.icon] ?? HeartIcon;
 

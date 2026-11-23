@@ -15,7 +15,7 @@ const DONATION_API_URL = (process.env.NEXT_PUBLIC_DONATION_API_URL ?? "").replac
 /* Long, because the platform is creating a payment at Stripe when this call is made. */
 const REQUEST_TIMEOUT_MS = 20000;
 
-type DonationInfo = {
+export type DonationInfo = {
   /* Sent only when the donor says they are giving for an organization. */
   organization?: string;
   firstName: string;
@@ -63,7 +63,23 @@ export type DonationSubmitBody = {
   formId: string;
   /* Which site this is. The platform records it, so its admin can tell a hcusa gift apart. */
   source: string;
-  info: DonationInfo;
+  /* A monthly gift here keeps running until the donor cancels. */
+  openEnded?: boolean;
+  /* The donor allows the platform to email updates and future appeals. */
+  marketingConsent?: boolean;
+  /* Answers to the form's custom questions, keyed by the question's own key. */
+  customNotes?: Record<string, string | boolean>;
+  /*
+    The extras the donor ticked. Only the id and the typed values travel; the platform prices each
+    one from its own add-on settings and refuses an id the form does not offer.
+  */
+  addons?: { items: { addOnId: string; values?: Record<string, string> }[] };
+  info?: DonationInfo;
+  /*
+    The wallet flow starts the payment before the donor details exist. The platform then answers
+    with a donation id, and the later /donations/complete call fills the donor details.
+  */
+  deferDonor?: boolean;
   paymentMethod: "stripe";
   payment:
     | (PaymentBase & {
@@ -77,6 +93,7 @@ export type DonationSubmitBody = {
         scheduleConfig: { dates: SplitInstallment[] };
       });
   utm?: DonationUtm;
+  firstTouch?: DonationUtm;
 };
 
 export type StartedDonation = {
@@ -87,10 +104,149 @@ export type StartedDonation = {
   /* A monthly gift answers with these: the saved card, and the session that holds the plan. */
   setupIntentId?: string;
   pendingSessionId?: string;
+  /* One-time payments answer with the PaymentIntent id, used to tie /complete to the payment. */
+  paymentIntentId?: string;
 };
 
 function text(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
+}
+
+/* Errors come in two shapes: AppError nests them, the idempotency middleware returns them flat. */
+function errorFields(payload: {
+  error?: { code?: unknown; message?: unknown };
+  code?: unknown;
+  message?: unknown;
+} | null): { code: string; message: string } {
+  return {
+    code: text(payload?.error?.code) || text(payload?.code),
+    message: text(payload?.error?.message) || text(payload?.message),
+  };
+}
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+type DonationRecordStatus = { recorded: boolean; donationId?: string };
+
+/* Ask the API whether the monthly plan is really written. This is the real record, not a reply code. */
+export async function fetchDonationStatus(pendingSessionId: string): Promise<DonationRecordStatus> {
+  if (!pendingSessionId || DONATION_API_URL.length === 0) return { recorded: false };
+
+  try {
+    const response = await fetch(
+      `${DONATION_API_URL}/api/v1/donations/status?pendingSessionId=${encodeURIComponent(pendingSessionId)}`,
+      {
+        headers: { accept: "application/json" },
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      },
+    );
+    if (!response.ok) return { recorded: false };
+
+    const payload = (await response.json().catch(() => null)) as {
+      data?: { recorded?: unknown; donationId?: unknown };
+    } | null;
+
+    const recorded = payload?.data?.recorded === true;
+    const donationId = text(payload?.data?.donationId);
+    return { recorded, ...(donationId.length > 0 ? { donationId } : {}) };
+  } catch {
+    return { recorded: false };
+  }
+}
+
+const RECORD_POLL_ATTEMPTS = 6;
+const RECORD_POLL_DELAY_MS = 1000;
+
+export async function waitForDonationRecord(pendingSessionId: string): Promise<DonationRecordStatus> {
+  let last: DonationRecordStatus = { recorded: false };
+
+  for (let attempt = 1; attempt <= RECORD_POLL_ATTEMPTS; attempt += 1) {
+    await delay(RECORD_POLL_DELAY_MS);
+    last = await fetchDonationStatus(pendingSessionId);
+    if (last.recorded) return last;
+  }
+
+  return last;
+}
+
+export type StartedFirstPayment = {
+  donationId: string;
+  paymentIntentId: string;
+  clientSecret: string;
+  amount: number;
+};
+
+const FIRST_PAYMENT_LOCK_RETRY_MS = 1000;
+
+/*
+  The first monthly payment, taken while the donor is still on the card step. The server
+  creates a PaymentIntent for installment 1 with the card the SetupIntent saved, and answers
+  with its client secret. The browser confirms it so 3DS can finish.
+*/
+export async function createFirstPayment({
+  pendingSessionId,
+  setupIntentId,
+}: {
+  pendingSessionId: string;
+  setupIntentId: string;
+}): Promise<StartedFirstPayment> {
+  if (DONATION_API_URL.length === 0) {
+    throw new Error("The donation platform address is not set for this build.");
+  }
+
+  type FirstPaymentPayload = {
+    data?: {
+      donationId?: unknown;
+      paymentIntentId?: unknown;
+      clientSecret?: unknown;
+      amount?: unknown;
+    };
+    error?: { code?: unknown; message?: unknown };
+    code?: unknown;
+    message?: unknown;
+  };
+
+  let lastMessage = "The first payment could not be started.";
+
+  for (let attempt = 1; attempt <= 2; attempt += 1) {
+    const response = await fetch(`${DONATION_API_URL}/api/v1/donations/first-payment`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        accept: "application/json",
+        "x-idempotency-key": newPaymentKey(),
+      },
+      body: JSON.stringify({ pendingSessionId, setupIntentId }),
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    });
+
+    const payload = (await response.json().catch(() => null)) as FirstPaymentPayload | null;
+
+    if (response.ok) {
+      const clientSecret = text(payload?.data?.clientSecret);
+      const paymentIntentId = text(payload?.data?.paymentIntentId);
+      if (clientSecret.length === 0 || paymentIntentId.length === 0) {
+        throw new Error("The first payment could not be started.");
+      }
+
+      return {
+        donationId: text(payload?.data?.donationId),
+        paymentIntentId,
+        clientSecret,
+        amount: Number(payload?.data?.amount) || 0,
+      };
+    }
+
+    lastMessage = errorFields(payload).message || lastMessage;
+
+    /* The plan may still be locking in the webhook. One short retry is enough. */
+    if (response.status !== 409 || attempt === 2) break;
+    await delay(FIRST_PAYMENT_LOCK_RETRY_MS);
+  }
+
+  throw new Error(lastMessage);
 }
 
 /* One key per attempt, so a second press asks for the same payment instead of a new one. */
@@ -121,10 +277,10 @@ export function allocateAmount(total: number, causeIds: string[]): DonationAlloc
 }
 
 /*
-  How many monthly payments a gift runs for. The platform bills a fixed list of dates rather than an
-  open-ended subscription, so the popup fixes the term and says so on the card screen.
+  How many monthly dates the platform keeps ready ahead. The plan is open-ended: a worker adds
+  the next month before the horizon runs out. This is not the end of the plan.
 */
-export const MONTHLY_TERM = 12;
+export const INITIAL_HORIZON_MONTHS = 12;
 
 function daysInUtcMonth(year: number, monthIndex: number): number {
   return new Date(Date.UTC(year, monthIndex + 1, 0)).getUTCDate();
@@ -138,7 +294,7 @@ function daysInUtcMonth(year: number, monthIndex: number): number {
 export function monthlySchedule(
   amount: number,
   causeIds: string[],
-  term = MONTHLY_TERM,
+  term = INITIAL_HORIZON_MONTHS,
 ): SplitInstallment[] {
   const first = new Date(Date.now() + 60 * 60 * 1000);
 
@@ -165,10 +321,27 @@ export function monthlySchedule(
 export async function submitDonation(
   body: DonationSubmitBody,
   idempotencyKey: string,
+  turnstileToken = "",
 ): Promise<StartedDonation> {
   if (DONATION_API_URL.length === 0) {
     throw new Error("The donation platform address is not set for this build.");
   }
+
+  type SubmitPayload = {
+    data?: {
+      donationId?: unknown;
+      payment?: {
+        publishableKey?: unknown;
+        clientSecret?: unknown;
+        setupIntentId?: unknown;
+        paymentIntentId?: unknown;
+      };
+      pendingSessionId?: unknown;
+    };
+    error?: { code?: unknown; message?: unknown };
+    code?: unknown;
+    message?: unknown;
+  };
 
   const response = await fetch(`${DONATION_API_URL}/api/v1/donations/submit`, {
     method: "POST",
@@ -176,22 +349,22 @@ export async function submitDonation(
       "content-type": "application/json",
       accept: "application/json",
       "x-idempotency-key": idempotencyKey,
+      /* Cloudflare's bot check token; the platform checks it before taking the donation. */
+      ...(turnstileToken.length > 0 ? { "cf-turnstile-response": turnstileToken } : {}),
     },
     body: JSON.stringify(body),
     signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });
 
-  const payload = (await response.json().catch(() => null)) as {
-    data?: {
-      donationId?: unknown;
-      payment?: { publishableKey?: unknown; clientSecret?: unknown; setupIntentId?: unknown };
-      pendingSessionId?: unknown;
-    };
-    error?: { message?: unknown };
-  } | null;
+  const payload = (await response.json().catch(() => null)) as SubmitPayload | null;
 
   if (!response.ok) {
-    throw new Error(text(payload?.error?.message) || "The payment could not be started.");
+    const { message } = errorFields(payload);
+    throw new Error(message || "The payment could not be started.");
+  }
+
+  if (!payload) {
+    throw new Error("The payment could not be started.");
   }
 
   const publishableKey = text(payload?.data?.payment?.publishableKey);
@@ -204,6 +377,7 @@ export async function submitDonation(
 
   const setupIntentId = text(payload?.data?.payment?.setupIntentId);
   const pendingSessionId = text(payload?.data?.pendingSessionId);
+  const paymentIntentId = text(payload?.data?.payment?.paymentIntentId);
 
   return {
     donationId: text(payload?.data?.donationId),
@@ -211,23 +385,35 @@ export async function submitDonation(
     clientSecret,
     ...(setupIntentId.length > 0 ? { setupIntentId } : {}),
     ...(pendingSessionId.length > 0 ? { pendingSessionId } : {}),
+    ...(paymentIntentId.length > 0 ? { paymentIntentId } : {}),
   };
 }
 
 /*
-  Confirms a monthly gift with the platform, once Stripe has saved the card. Until this runs the plan
-  is not recorded anywhere, so it is the second half of the monthly step. The key is reused on a
-  retry, so a second press cannot set up a second plan.
+  The wallet flow's second half. Google Pay has already collected the card and the billing address,
+  so this sends those details to the donation that was started earlier.
 */
-export async function finalizeDonation(
-  body: { paymentMode: "split"; pendingSessionId: string; setupIntentId: string },
+export type CompleteDonationBody = {
+  donationId: string;
+  info: DonationInfo;
+  isAnonymous?: boolean;
+  marketingConsent?: boolean;
+  customNotes?: Record<string, string | boolean>;
+  onBehalfOf?: string;
+  paymentIntentId?: string;
+  setupIntentId?: string;
+  pendingSessionId?: string;
+};
+
+export async function completeDonation(
+  body: CompleteDonationBody,
   idempotencyKey: string,
 ): Promise<void> {
   if (DONATION_API_URL.length === 0) {
     throw new Error("The donation platform address is not set for this build.");
   }
 
-  const response = await fetch(`${DONATION_API_URL}/api/v1/donations/finalize`, {
+  const response = await fetch(`${DONATION_API_URL}/api/v1/donations/complete`, {
     method: "POST",
     headers: {
       "content-type": "application/json",
@@ -241,8 +427,67 @@ export async function finalizeDonation(
   if (response.ok) return;
 
   const payload = (await response.json().catch(() => null)) as {
-    error?: { message?: unknown };
+    error?: { code?: unknown; message?: unknown };
+    code?: unknown;
+    message?: unknown;
   } | null;
 
-  throw new Error(text(payload?.error?.message) || "The monthly gift could not be saved.");
+  const { message } = errorFields(payload);
+
+  throw new Error(message || "The donation details could not be saved.");
+}
+
+/*
+  The donor's receipt, as a PDF.
+
+  A receipt proves money changed hands, so the platform only issues one after the charge settles.
+  Stripe's webhook can land a few seconds after the card is confirmed, so a "not ready yet" answer
+  is retried a few times before the donor is told it will be emailed instead.
+
+  The email is the proof of ownership: the platform compares it with the donation's donor email.
+*/
+const RECEIPT_RETRIES = 4;
+const RECEIPT_RETRY_DELAY_MS = 2000;
+
+export async function fetchReceiptPdf({
+  donationId,
+  email,
+}: {
+  donationId: string;
+  email: string;
+}): Promise<Blob> {
+  if (DONATION_API_URL.length === 0) {
+    throw new Error("The donation platform address is not set for this build.");
+  }
+
+  for (let attempt = 1; attempt <= RECEIPT_RETRIES; attempt += 1) {
+    const response = await fetch(`${DONATION_API_URL}/api/v1/receipt/download`, {
+      method: "POST",
+      headers: { "content-type": "application/json", accept: "application/pdf" },
+      body: JSON.stringify({ donationId, email }),
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    });
+
+    if (response.ok) return response.blob();
+
+    const payload = (await response.json().catch(() => null)) as {
+      error?: { code?: unknown; message?: unknown };
+    } | null;
+
+    const code = text(payload?.error?.code);
+    const notReady = code === "RECEIPT_NOT_COMPLETED" || code === "RECEIPT_NOT_AVAILABLE";
+
+    if (notReady && attempt < RECEIPT_RETRIES) {
+      await new Promise((resolve) => setTimeout(resolve, RECEIPT_RETRY_DELAY_MS));
+      continue;
+    }
+
+    if (notReady) {
+      throw new Error("Your receipt is being prepared. It will also arrive by email.");
+    }
+
+    throw new Error(text(payload?.error?.message) || "The receipt could not be downloaded.");
+  }
+
+  throw new Error("The receipt could not be downloaded.");
 }

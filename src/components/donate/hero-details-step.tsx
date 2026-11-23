@@ -1,7 +1,12 @@
 "use client";
 
-import type { DonatePurpose } from "@/content/donate";
-import { CardIcon, detailsField } from "./hero-parts";
+import {
+  addOnAmount,
+  type DonateAddOn,
+  type DonateCustomNote,
+  type DonatePurpose,
+} from "@/content/donate";
+import { CardIcon, detailsField, money } from "./hero-parts";
 
 /*
   The details half of the hero popup: the purpose pills, the reader's name and email, the
@@ -13,6 +18,11 @@ import { CardIcon, detailsField } from "./hero-parts";
 */
 
 export function DetailsStep({
+  addOns,
+  chosenAddOns,
+  addOnValues,
+  onToggleAddOn,
+  onAddOnValue,
   purposes,
   chosen,
   purposeError,
@@ -20,20 +30,34 @@ export function DetailsStep({
   firstName,
   lastName,
   email,
+  marketingConsent,
+  showMarketingConsent = true,
   organization,
   isOrganization,
   onFirstName,
   onLastName,
   onEmail,
+  onToggleMarketingConsent,
   onOrganization,
   onToggleOrganization,
+  customNotes,
+  noteValues,
+  onNoteValue,
+  noteErrors,
   nameError,
   emailError,
   totalLabel,
   showTotal,
   cardError,
+  currencySymbol = "$",
   onOpenCard,
 }: {
+  /* The extras this form offers. Empty means the section is not drawn at all. */
+  addOns: DonateAddOn[];
+  chosenAddOns: string[];
+  addOnValues: Record<string, Record<string, string>>;
+  onToggleAddOn: (id: string) => void;
+  onAddOnValue: (addOnId: string, key: string, value: string) => void;
   /* The purposes the admin gave this popup. Empty means the section is not drawn at all. */
   purposes: DonatePurpose[];
   /* The ids of the ones the donor picked. */
@@ -43,23 +67,123 @@ export function DetailsStep({
   firstName: string;
   lastName: string;
   email: string;
+  marketingConsent: boolean;
+  showMarketingConsent?: boolean;
   organization: string;
   isOrganization: boolean;
   onFirstName: (value: string) => void;
   onLastName: (value: string) => void;
   onEmail: (value: string) => void;
+  onToggleMarketingConsent: (on: boolean) => void;
   onOrganization: (value: string) => void;
   onToggleOrganization: (on: boolean) => void;
+  /* The extra questions the admin added. Empty means the section is not drawn. */
+  customNotes: DonateCustomNote[];
+  noteValues: Record<string, string | boolean>;
+  onNoteValue: (key: string, value: string | boolean) => void;
+  noteErrors: Record<string, string>;
   nameError: string;
   emailError: string;
   totalLabel: string;
   showTotal: boolean;
   cardError: string;
+  /* The chosen currency's sign, e.g. "$" or "€". */
+  currencySymbol?: string;
   onOpenCard: () => void;
 }) {
   return (
     <>
       <div className="mt-5 border-t border-divider" />
+
+      {/* The extras sit above the purposes, so the donor picks them before the cause. */}
+      {addOns.length > 0 ? (
+        <>
+          <p className="mt-5 text-[0.8125rem] font-normal text-ink">Add-ons</p>
+          <div className="mt-2.5 flex flex-col gap-2">
+            {addOns.map((addOn) => {
+              const selected = chosenAddOns.includes(addOn.id);
+              const values = addOnValues[addOn.id] ?? {};
+              const inputs = addOn.pricing.inputs;
+
+              return (
+                <div
+                  key={addOn.id}
+                  className={`rounded-lg border px-3 py-3 transition-colors ${
+                    selected ? "border-action" : "border-line"
+                  }`}
+                >
+                  <label className="flex cursor-pointer items-start gap-3">
+                    <input
+                      type="checkbox"
+                      checked={selected}
+                      onChange={() => onToggleAddOn(addOn.id)}
+                      className="mt-1 size-4 shrink-0 accent-action"
+                    />
+
+                    <span className="min-w-0 flex-1">
+                      <span className="flex items-baseline justify-between gap-3">
+                        <span className="text-[0.875rem] font-medium text-ink">
+                          {addOn.iconEmoji.length > 0 ? `${addOn.iconEmoji} ` : ""}
+                          {addOn.name}
+                        </span>
+                        <span className="shrink-0 text-[0.8125rem] font-semibold text-action">
+                          {money(addOnAmount(addOn, values), currencySymbol)}
+                        </span>
+                      </span>
+
+                      {addOn.shortDescription.length > 0 ? (
+                        <span className="mt-0.5 block text-[0.75rem] text-body">
+                          {addOn.shortDescription}
+                        </span>
+                      ) : null}
+                    </span>
+                  </label>
+
+                  {selected && inputs.length > 0 ? (
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      {inputs.map((input) => {
+                        const current = values[input.key] ?? String(input.defaultValue ?? "");
+
+                        return (
+                          <label key={input.key} className="text-[0.75rem] text-body">
+                            {input.label}
+                            {input.type === "select" ? (
+                              <select
+                                value={current}
+                                onChange={(event) =>
+                                  onAddOnValue(addOn.id, input.key, event.target.value)
+                                }
+                                className="mt-1 min-h-9 w-full rounded-md border border-line bg-surface px-2 text-[0.8125rem] text-ink outline-none focus:border-action"
+                              >
+                                {input.options.map((option) => (
+                                  <option key={option.value} value={option.value}>
+                                    {option.label}
+                                  </option>
+                                ))}
+                              </select>
+                            ) : (
+                              <input
+                                inputMode="numeric"
+                                value={current}
+                                onChange={(event) =>
+                                  onAddOnValue(addOn.id, input.key, event.target.value)
+                                }
+                                className="mt-1 min-h-9 w-full rounded-md border border-line bg-surface px-2 text-[0.8125rem] text-ink outline-none focus:border-action"
+                              />
+                            )}
+                          </label>
+                        );
+                      })}
+                    </div>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="mt-5 border-t border-divider" />
+        </>
+      ) : null}
 
       {/* Only a form the admin has given purposes to shows this section. */}
       {purposes.length > 0 ? (
@@ -167,6 +291,21 @@ export function DetailsStep({
         </p>
       ) : null}
 
+      {/* Optional: the donor allows the platform to email updates and future appeals. */}
+      {showMarketingConsent ? (
+        <label className="mt-4 flex cursor-pointer items-start gap-3 text-[0.8125rem] text-body">
+          <input
+            type="checkbox"
+            checked={marketingConsent}
+            onChange={(event) => onToggleMarketingConsent(event.target.checked)}
+            className="mt-0.5 size-4 shrink-0 accent-action"
+          />
+          <span className="leading-snug">
+            Yes, send me updates about this campaign and future appeals.
+          </span>
+        </label>
+      ) : null}
+
       {/* Giving as an organization is optional, and it opens the name field when ticked. */}
       <label className="mt-4 flex cursor-pointer items-center gap-3 text-[0.8125rem] text-body">
         <input
@@ -193,6 +332,97 @@ export function DetailsStep({
         </>
       ) : null}
 
+      {customNotes.length > 0 ? (
+        <>
+          <div className="mt-5 border-t border-divider" />
+          <p className="mt-5 text-[0.8125rem] font-normal text-ink">Additional details</p>
+
+          <div className="mt-2.5 flex flex-col gap-4">
+            {customNotes.map((field) => {
+              const value = noteValues[field.key];
+              const error = noteErrors[field.key] || "";
+
+              return (
+                <div key={field.id || field.key}>
+                  <label className="text-[0.75rem] text-body">
+                    {field.label}
+                    {field.required ? <span className="text-action"> *</span> : null}
+                  </label>
+
+                  {field.type === "input" ? (
+                    <input
+                      value={String(value ?? "")}
+                      onChange={(event) => onNoteValue(field.key, event.target.value)}
+                      placeholder={field.placeholder || ""}
+                      className={`${detailsField} ${error ? "border-action" : "border-line"}`}
+                    />
+                  ) : field.type === "textarea" ? (
+                    <textarea
+                      rows={3}
+                      value={String(value ?? "")}
+                      onChange={(event) => onNoteValue(field.key, event.target.value)}
+                      placeholder={field.placeholder || ""}
+                      className={`${detailsField} resize-none ${error ? "border-action" : "border-line"}`}
+                    />
+                  ) : field.type === "select" ? (
+                    <select
+                      value={String(value ?? "")}
+                      onChange={(event) => onNoteValue(field.key, event.target.value)}
+                      className={`${detailsField} cursor-pointer ${error ? "border-action" : "border-line"}`}
+                    >
+                      <option value="">Select an option</option>
+                      {field.options.map((option) => (
+                        <option key={option.id || option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  ) : field.type === "radio" ? (
+                    <div className="mt-1 flex flex-col gap-2">
+                      {field.options.map((option) => (
+                        <label
+                          key={option.id || option.value}
+                          className="flex cursor-pointer items-center gap-2 text-[0.8125rem] text-body"
+                        >
+                          <input
+                            type="radio"
+                            name={`hero-note-${field.key}`}
+                            checked={value === option.value}
+                            onChange={() => onNoteValue(field.key, option.value)}
+                            className="size-4 shrink-0 accent-action"
+                          />
+                          {option.label}
+                        </label>
+                      ))}
+                    </div>
+                  ) : (
+                    <label className="mt-1 flex cursor-pointer items-center gap-2 text-[0.8125rem] text-body">
+                      <input
+                        type="checkbox"
+                        checked={value === true}
+                        onChange={(event) => onNoteValue(field.key, event.target.checked)}
+                        className="size-4 shrink-0 accent-action"
+                      />
+                      Yes
+                    </label>
+                  )}
+
+                  {field.helpText ? (
+                    <span className="mt-1 block text-[0.6875rem] text-body">{field.helpText}</span>
+                  ) : null}
+
+                  {error ? (
+                    <span role="alert" className="mt-1 block text-[0.75rem] text-action">
+                      {error}
+                    </span>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
+        </>
+      ) : null}
+
       {/* The sum the card will be charged, sitting right above the button. */}
       {showTotal ? (
         <p className="mt-6 text-[0.8125rem] text-body">
@@ -200,7 +430,7 @@ export function DetailsStep({
         </p>
       ) : null}
 
-      {/* The card route opens the card step in place. It is the only way to pay, so it fills the row. */}
+      {/* The payment step opens in place. It offers Google Pay or the card fields. */}
       <div className="donate-actions mt-3">
         <button
           type="button"
@@ -208,7 +438,7 @@ export function DetailsStep({
           className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md border border-action bg-surface px-2 text-[0.875rem] font-semibold whitespace-nowrap text-action transition-colors hover:bg-tint max-sm:min-h-11"
         >
           <CardIcon />
-          Debit/Credit Card
+          Continue to payment
         </button>
 
         {cardError.length > 0 ? (

@@ -1,5 +1,6 @@
 import { DonateButton } from "@/components/donate/donate-button";
 import type { FoodAidPageContent } from "@/content/food-aid";
+import { assetUrl } from "@/media";
 
 /*
   The Food Aid "Why" band. Same arrangement as the healthcare page's, but the four card
@@ -53,7 +54,7 @@ export function WhyFoodAid({ content }: { content: FoodAidPageContent["why"] }) 
               {/* A plain image, not next/image: these are SVGs, which next/image refuses
                   by default. */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={WHY_ICONS[index % WHY_ICONS.length]} alt="" className="size-12" />
+              <img src={assetUrl(WHY_ICONS[index % WHY_ICONS.length])} alt="" className="size-12" />
               <p className="text-[1rem] font-medium text-ink">{card.title}</p>
             </li>
           ))}

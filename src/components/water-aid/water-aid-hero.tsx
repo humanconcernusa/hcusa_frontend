@@ -23,7 +23,7 @@ export function WaterAidHero({ content }: { content: WaterAidPageContent["hero"]
 
       <div className="container-page pt-32 pb-10 lg:min-h-[46rem] lg:pt-[10.5rem] lg:pb-[6rem]">
         <div className="max-w-[35.22rem] rounded-card bg-surface p-7 shadow-raised lg:p-8">
-          <span className="inline-flex items-center gap-3 overflow-hidden rounded-full border-[1.5px] border-white/12 bg-[linear-gradient(135deg,#0d0d0d,#7f0000)] px-3.5 py-1.5 font-[Georgia,serif] shadow-[0_4px_24px_rgba(180,0,0,0.4)]">
+          <span className="inline-flex items-center gap-3 overflow-hidden rounded-full border-[1.5px] border-white/12 bg-[linear-gradient(135deg,#0d0d0d,#7f0000)] px-3.5 py-1.5 font-medium shadow-[0_4px_24px_rgba(180,0,0,0.4)]">
             {/* The droplet in a rounded tile, beating on the spot like the other badges. */}
             <svg
               viewBox="0 0 24 24"
@@ -38,7 +38,7 @@ export function WaterAidHero({ content }: { content: WaterAidPageContent["hero"]
             </svg>
 
             <span className="flex items-center gap-2">
-              <span className="text-[0.875rem] tracking-[0.14em] text-white uppercase">
+              <span className="text-[0.875rem] tracking-[0.14em] text-white">
                 {content.eyebrow}
               </span>
 

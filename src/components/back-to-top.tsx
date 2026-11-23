@@ -38,9 +38,9 @@ export function BackToTop() {
       type="button"
       onClick={backToTop}
       aria-label="Back to top"
-      className={`fixed right-5 bottom-5 z-40 grid size-11 place-items-center rounded-full bg-action text-white shadow-raised transition-[opacity,transform] duration-200 hover:bg-action-hover ${
+      className={`fixed right-5  z-40 grid size-11 place-items-center rounded-full bg-action text-white shadow-raised transition-[opacity,transform] duration-200 hover:bg-action-hover ${
         isVisible ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-2 opacity-0"
-      }`}
+      } ${pathname.startsWith("/zakat-calculator")? "md:bottom-5 bottom-12": "bottom-5"}`}
     >
       <svg
         viewBox="0 0 24 24"

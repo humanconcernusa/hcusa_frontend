@@ -1,8 +1,11 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
+
 import type { DonatePreset } from "@/content/donate";
 import { FeeSlider } from "./fee-slider";
 import { HeartBurst, money, wording } from "./hero-parts";
+import { RisingHeart } from "./rising-heart";
 
 /*
   The amount half of the hero popup: the one-time / monthly switch, the stacked list of amounts,
@@ -20,6 +23,9 @@ export function AmountStep({
   extra,
   amountError,
   showFee,
+  feeMin = 0,
+  feeMax = 20,
+  currencySymbol = "$",
   onPickCadence,
   onPickAmount,
   onCustomFocus,
@@ -39,12 +45,50 @@ export function AmountStep({
   amountError: string;
   /* The admin can put a slider on this popup; it waits until an amount is picked. */
   showFee: boolean;
+  /* The lowest and highest percent the fee slider allows. */
+  feeMin?: number;
+  feeMax?: number;
+  /* The chosen currency's sign, e.g. "$" or "€". */
+  currencySymbol?: string;
   onPickCadence: (monthly: boolean) => void;
   onPickAmount: (amount: number) => void;
   onCustomFocus: () => void;
   onCustomChange: (raw: string) => void;
   onFeeChange: (percent: number) => void;
 }) {
+  /* Where the floating heart starts: the small heart inside the Monthly choice. */
+  const monthlyHeartRef = useRef<HTMLSpanElement | null>(null);
+
+  /* The heart is placed from the button's own position, measured on the press. */
+  const [heart, setHeart] = useState<{ left: number; top: number; key: number } | null>(null);
+  const heartTimer = useRef<number | null>(null);
+  const heartCount = useRef(0);
+
+  useEffect(
+    () => () => {
+      if (heartTimer.current) window.clearTimeout(heartTimer.current);
+    },
+    [],
+  );
+
+  function pickCadence(monthly: boolean) {
+    const starting = monthly && !isMonthly;
+
+    onPickCadence(monthly);
+
+    if (!starting) return;
+
+    const rect = monthlyHeartRef.current?.getBoundingClientRect();
+    if (!rect) return;
+
+    /* A plain counter, so every press gets a fresh key and the animation restarts. */
+    heartCount.current += 1;
+    setHeart({ left: rect.left + rect.width / 2, top: rect.top, key: heartCount.current });
+
+    if (heartTimer.current) window.clearTimeout(heartTimer.current);
+    heartTimer.current = window.setTimeout(() => setHeart(null), 3900);
+  }
+
   return (
     <>
       {/*
@@ -71,7 +115,7 @@ export function AmountStep({
             <button
               key={option.label}
               type="button"
-              onClick={() => onPickCadence(option.monthly)}
+              onClick={() => pickCadence(option.monthly)}
               aria-pressed={selected}
               className={`relative z-10 flex min-h-9 flex-1 items-center justify-center gap-2 rounded-full px-4 text-[0.875rem] font-semibold whitespace-nowrap transition-colors ${
                 selected ? "text-white" : "text-body hover:text-ink"
@@ -79,7 +123,7 @@ export function AmountStep({
             >
               {option.monthly ? (
                 /* The heart lies flat and grey until Monthly is picked, then it beats. */
-                <span aria-hidden="true" className="relative inline-flex">
+                <span ref={monthlyHeartRef} aria-hidden="true" className="relative inline-flex">
                   <span className={selected ? "inline-flex animate-bump" : "inline-flex"}>
                     <svg
                       viewBox="0 0 24 24"
@@ -98,6 +142,11 @@ export function AmountStep({
           );
         })}
       </div>
+
+      {/* Drawn on <body> with a high z-index, so nothing in the popup can cover it. */}
+      {heart ? (
+        <RisingHeart trigger={heart.key} left={heart.left} top={heart.top} />
+      ) : null}
 
       <div className="mt-4 flex flex-col gap-2">
         {amounts.map((preset, index) => {
@@ -119,7 +168,7 @@ export function AmountStep({
                   selected ? "bg-action text-white" : "bg-page text-ink"
                 }`}
               >
-                {money(preset.amount)}
+                {money(preset.amount, currencySymbol)}
               </span>
 
               {text.length > 0 ? (
@@ -140,7 +189,7 @@ export function AmountStep({
               isCustom ? "bg-action text-white" : "bg-page text-ink"
             }`}
           >
-            $
+            {currencySymbol}
           </span>
 
           <input
@@ -150,7 +199,7 @@ export function AmountStep({
             onFocus={onCustomFocus}
             onChange={(event) => onCustomChange(event.target.value)}
             placeholder="Enter a custom amount"
-            aria-label="Custom donation amount in dollars"
+            aria-label={`Custom donation amount in ${currencySymbol}`}
             className="min-h-0 w-full rounded-md bg-transparent text-[0.9375rem] text-ink outline-none placeholder:text-[#8a8a8a]"
           />
         </label>
@@ -164,14 +213,14 @@ export function AmountStep({
 
       {showFee ? (
         <>
-          <FeeSlider value={feePercent} onChange={onFeeChange} />
+          <FeeSlider value={feePercent} onChange={onFeeChange} min={feeMin} max={feeMax} />
 
           <p className="mt-3 text-[0.8125rem] leading-snug text-body">
             {feePercent > 0 ? (
               <>
                 I&apos;ll give an additional{" "}
                 <span className="font-semibold text-ink">{feePercent}%</span>, equivalent to{" "}
-                <span className="font-semibold text-ink">{money(extra)}</span>, to help cover
+                <span className="font-semibold text-ink">{money(extra, currencySymbol)}</span>, to help cover
                 processing fees and other costs.
               </>
             ) : (

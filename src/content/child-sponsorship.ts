@@ -75,6 +75,8 @@ export const childSponsorshipDefaults: ChildSponsorshipPageContent = {
     headingAccent: "of",
     headingEnd: "Transformation",
     videoId: "Q-_2TEAAWfA",
+    image: `${ASSETS}/video.jpg`,
+    imageAlt: 'Covers education & nutrition Image'
   },
 
   counters: {

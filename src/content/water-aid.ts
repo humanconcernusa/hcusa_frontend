@@ -66,6 +66,8 @@ export const waterAidDefaults: WaterAidPageContent = {
     headingAccent: "Support",
     headingEnd: "Creates Real Impact",
     videoId: "AFxUBKVJn68",
+    image: `${ASSETS}/video.jpg`,
+    imageAlt:'Protecting families and restoring dignity'
   },
 
   counters: {

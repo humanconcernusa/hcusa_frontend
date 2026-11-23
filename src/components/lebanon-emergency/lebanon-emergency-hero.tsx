@@ -20,14 +20,14 @@ export function LebanonHero({ content }: { content: LebanonPageContent["hero"] }
         />
       </div>
 
-      <div className="container-page pt-32 pb-14 lg:min-h-[36.75rem] lg:pt-[7.5rem] lg:pb-[6rem]">
+      <div className="container-page pt-24 md:pt-32 pb-14 lg:min-h-[36.75rem] lg:pt-[7.5rem] lg:pb-[6rem]">
         <div className="max-w-[35.22rem] rounded-card bg-surface p-7 shadow-raised lg:p-8">
           {/*
             The alert pill: a bell in a dark shell that glows, with rings that ripple out of it.
             The pill clips them, so they read as arcs inside its shape.
           */}
           <span className="inline-flex items-center gap-3 overflow-hidden rounded-full border border-[#3a0000] bg-[#100000] py-[3px] pr-8 pl-1.5 text-[1rem] font-medium tracking-wide text-white">
-            <span className="relative grid size-[38px] shrink-0 animate-icon-glow place-items-center rounded-full border border-[#3a0000] bg-[#100000]">
+            <span className="relative grid md:size-[38px] size-7 shrink-0 animate-icon-glow place-items-center rounded-full border border-[#3a0000] bg-[#100000]">
               <span
                 aria-hidden="true"
                 className="absolute -inset-px animate-ripple rounded-full border border-[#cc1111]"
@@ -78,13 +78,13 @@ export function LebanonHero({ content }: { content: LebanonPageContent["hero"] }
             {content.badge}
           </span>
 
-          <h1 className="mt-5 text-[2rem] leading-none font-semibold sm:text-[2.75rem] lg:text-[3.125rem]">
+          <h1 className="mt-5 text-2xl leading-none font-semibold sm:text-[2.75rem] lg:text-[3.125rem]">
             <span className="accent">{content.headingAccent}</span> {content.headingEnd}
           </h1>
 
-          <div className="mt-6 max-w-[34rem] border-l-4 border-action bg-tint px-4 py-3 text-[1rem] text-ink">
+          <div className="mt-2 max-w-[34rem] border-l-4 border-action bg-tint px-4 py-3 md:text-[1rem] text-sm text-ink">
             {content.paragraphs.map((paragraph, index) => (
-              <p key={paragraph} className={index === 0 ? undefined : "mt-3"}>
+              <p key={paragraph} className={index === 0 ? undefined : "md:mt-3 mt-2"}>
                 {paragraph}
               </p>
             ))}

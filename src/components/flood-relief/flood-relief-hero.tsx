@@ -92,7 +92,8 @@ export function FloodHero({ content }: { content: FloodReliefPageContent["hero"]
 
           {/* Opens the popup this page's hero button is set to. */}
           <DonateButton formId={content.form} size="lg" className="mt-6">
-            {content.cta}
+            <span className="md:hidden">Donate Now</span>
+            <span className="hidden md:inline">{content.cta}</span>
           </DonateButton>
         </div>
       </div>

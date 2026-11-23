@@ -32,7 +32,7 @@ export function HealthcareHero({ content }: { content: HealthcarePageContent["he
             The badge: a plus in a dark tile, the words, then three dots. The tile beats on
             the spot, as the pill icons on the other pages do.
           */}
-          <span className="inline-flex items-center gap-3 overflow-hidden rounded-full border-[1.5px] border-white/12 bg-[linear-gradient(135deg,#0d0d0d,#7f0000)] px-3.5 py-1.5 font-[Georgia,serif] shadow-[0_4px_24px_rgba(180,0,0,0.4)]">
+          <span className="inline-flex items-center gap-3 overflow-hidden rounded-full border-[1.5px] border-white/12 bg-[linear-gradient(135deg,#0d0d0d,#7f0000)] px-3.5 py-1.5 font-medium shadow-[0_4px_24px_rgba(180,0,0,0.4)]">
             <svg
               viewBox="0 0 24 24"
               aria-hidden="true"

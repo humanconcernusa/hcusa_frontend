@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, type KeyboardEvent, type MouseEvent } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent, type MouseEvent } from "react";
 import type { DonateForm } from "@/content/donate";
 import { HeroForm } from "./donate-hero-form";
 
@@ -29,6 +29,11 @@ export function DonateModal({
   preview?: boolean;
 }) {
   const panel = useRef<HTMLDivElement>(null);
+  /* True when the form holds something the donor typed or picked. */
+  const [dirty, setDirty] = useState(false);
+  /* The second warning before a close that would throw the donor's input away. */
+  const [confirmClose, setConfirmClose] = useState(false);
+  const keepButton = useRef<HTMLButtonElement>(null);
 
   /*
     The Monthly burst's canvas. It is drawn into the overlay rather than the panel, because the
@@ -42,7 +47,17 @@ export function DonateModal({
     if (!open) return;
 
     const onKey = (event: globalThis.KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
+      if (event.key !== "Escape") return;
+      /* Escape backs out of the warning first, then asks before leaving a filled form. */
+      if (confirmClose) {
+        setConfirmClose(false);
+        return;
+      }
+      if (dirty) {
+        setConfirmClose(true);
+        return;
+      }
+      onClose();
     };
 
     document.addEventListener("keydown", onKey);
@@ -53,7 +68,12 @@ export function DonateModal({
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = previousOverflow;
     };
-  }, [open, onClose]);
+  }, [confirmClose, dirty, open, onClose]);
+
+  /* Put the keyboard on the safe choice, not on the one that throws the form away. */
+  useEffect(() => {
+    if (confirmClose) keepButton.current?.focus();
+  }, [confirmClose]);
 
   useEffect(() => {
     if (!open) return;
@@ -66,6 +86,15 @@ export function DonateModal({
   }, [open]);
 
   if (!open) return null;
+
+  /* The X leaves at once when nothing was entered; otherwise it opens the warning. */
+  function requestClose() {
+    if (dirty) {
+      setConfirmClose(true);
+      return;
+    }
+    onClose();
+  }
 
   function trapFocus(event: KeyboardEvent<HTMLDivElement>) {
     if (event.key !== "Tab" || !panel.current) return;
@@ -177,7 +206,10 @@ export function DonateModal({
         onKeyDown={trapFocus}
         className="relative mx-auto my-8 flex max-h-[95vh] w-full max-w-[26rem] animate-dialog-in flex-col overflow-hidden rounded-2xl bg-surface shadow-raised outline-none max-sm:my-0 max-sm:h-dvh max-sm:max-h-none max-sm:max-w-none max-sm:rounded-none"
       >
-        <div className="flex shrink-0 items-center justify-between px-4 py-2.5 max-sm:border-b max-sm:border-divider">
+        <div
+          inert={confirmClose}
+          className="flex shrink-0 items-center justify-between px-4 py-2.5 max-sm:border-b max-sm:border-divider"
+        >
           <span className="inline-flex items-center gap-2 rounded-full bg-[#eef1f9] px-3 py-1.5 text-[0.8125rem] text-ink">
             <svg
               viewBox="0 0 24 24"
@@ -195,7 +227,7 @@ export function DonateModal({
 
           <button
             type="button"
-            onClick={onClose}
+            onClick={requestClose}
             aria-label="Close"
             className="grid size-9 place-items-center rounded-full text-ink transition-colors hover:bg-page"
           >
@@ -214,14 +246,70 @@ export function DonateModal({
           screen. Its bottom padding is left to the sticky button bar, which is why there is
           none here.
         */}
-        <div className="min-h-0 flex-1 overflow-y-auto px-6 pt-3 pb-0">
+        <div
+          inert={confirmClose}
+          className="min-h-0 flex-1 overflow-y-auto px-6 pt-3 pb-0"
+        >
           <HeroForm
             form={form}
             onClose={onClose}
+            onDirtyChange={setDirty}
             confettiCanvas={confettiCanvas}
             preview={preview}
           />
         </div>
+
+        {confirmClose ? (
+          <div className="absolute inset-0 z-30 flex items-center justify-center p-5">
+            <div aria-hidden="true" className="absolute inset-0 bg-black/60 backdrop-blur-[2px]" />
+
+            <div
+              role="alertdialog"
+              aria-modal="true"
+              aria-labelledby="leave-donation-title"
+              className="relative w-full max-w-[20rem] rounded-2xl border border-line bg-surface p-5 shadow-xl"
+            >
+              <div className="flex items-start gap-3">
+                <span className="grid size-9 shrink-0 place-items-center rounded-full bg-tint text-action">
+                  <svg
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                    className="size-4 fill-none stroke-current stroke-2"
+                  >
+                    <path d="M12 8v5M12 16.5v.5" strokeLinecap="round" />
+                  </svg>
+                </span>
+
+                <div className="min-w-0">
+                  <h3 id="leave-donation-title" className="text-[1rem] font-semibold text-ink">
+                    Leave this donation?
+                  </h3>
+                  <p className="mt-1 text-[0.8125rem] leading-snug text-body">
+                    Your details will not be saved.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-5 flex flex-col gap-2">
+                <button
+                  ref={keepButton}
+                  type="button"
+                  onClick={() => setConfirmClose(false)}
+                  className="min-h-11 w-full rounded-md bg-action px-4 text-[0.875rem] font-semibold text-white transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action/40"
+                >
+                  Keep donating
+                </button>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="min-h-11 w-full rounded-md border border-line bg-surface px-4 text-[0.875rem] font-semibold text-body transition-colors hover:bg-page focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action/40"
+                >
+                  Leave without donating
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
       </div>
     </div>
   );

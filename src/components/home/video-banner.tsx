@@ -8,9 +8,9 @@ export function VideoBanner({ content }: { content: HomeContent["videoBanner"] }
   const [isPlaying, setIsPlaying] = useState(false);
 
   return (
-    <section className="bg-page py-14 lg:py-16">
+    <section className="bg-page  py-14 lg:py-16">
       <div className="container-page">
-        <div className="relative h-[15rem] overflow-hidden rounded-card lg:h-[25.75rem]">
+        <div className="relative h-[13rem] overflow-hidden rounded-card md:h-[25.75rem] lg:h-[30.75rem]">
           {isPlaying ? (
             <iframe
               className="absolute inset-0 h-full w-full"

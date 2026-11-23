@@ -18,12 +18,24 @@ const TICKS = [0, 5, 10, 15, 20];
 export function FeeSlider({
   value,
   onChange,
+  min = 0,
+  max = MAX_FEE_PERCENT,
 }: {
   value: number;
   onChange: (value: number) => void;
+  /* The admin can narrow the slider; the donor cannot go outside these. */
+  min?: number;
+  max?: number;
 }) {
   const [isSliding, setIsSliding] = useState(false);
-  const filled = `${(value / MAX_FEE_PERCENT) * 100}%`;
+  const safeMin = Math.max(0, Math.min(100, Number(min) || 0));
+  const safeMax = Math.max(safeMin + 1, Math.min(100, Number(max) || MAX_FEE_PERCENT));
+  const ratio = Math.min(1, Math.max(0, (value - safeMin) / (safeMax - safeMin)));
+  const filled = `${ratio * 100}%`;
+  const ticks = TICKS.filter((tick) => tick >= safeMin && tick <= safeMax);
+  const scaleTicks = ticks.length >= 2 ? ticks : [safeMin, safeMax];
+  /* The bar stays the same red, but it starts faint and becomes solid as the figure rises. */
+  const fillOpacity = 0.2 + ratio * 0.8;
 
   return (
     <div className="mt-4">
@@ -53,13 +65,13 @@ export function FeeSlider({
         {/* The glow behind the filled part, then the filled part itself. */}
         <div
           aria-hidden="true"
-          className="absolute h-2 rounded-full bg-action/40 blur-[6px] transition-[width] duration-200"
-          style={{ width: filled }}
+          className="absolute h-2 rounded-full bg-action/40 blur-[6px] transition-[width,opacity] duration-200"
+          style={{ width: filled, opacity: fillOpacity }}
         />
         <div
           aria-hidden="true"
-          className="absolute h-2 rounded-full bg-action transition-[width] duration-200"
-          style={{ width: filled }}
+          className="absolute h-2 rounded-full bg-action transition-[width,opacity] duration-200"
+          style={{ width: filled, opacity: fillOpacity }}
         />
 
         <label htmlFor="hero-fee-percent" className="sr-only">
@@ -68,8 +80,8 @@ export function FeeSlider({
         <input
           id="hero-fee-percent"
           type="range"
-          min={0}
-          max={MAX_FEE_PERCENT}
+          min={safeMin}
+          max={safeMax}
           step={1}
           value={value}
           onChange={(event) => onChange(Number(event.target.value))}
@@ -85,7 +97,7 @@ export function FeeSlider({
 
       {/* The scale under the track. A dot is red once the figure has reached it. */}
       <div aria-hidden="true" className="mt-2 flex justify-between px-[11px]">
-        {TICKS.map((tick) => (
+        {scaleTicks.map((tick) => (
           <span
             key={tick}
             className={`size-1 rounded-full ${tick <= value ? "bg-action" : "bg-line"}`}

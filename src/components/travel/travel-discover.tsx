@@ -1,5 +1,6 @@
 import Image from "next/image";
 import type { TravelPageContent } from "@/content/travel";
+import { assetUrl } from "@/media";
 
 /*
   The dark band: the pill with the plane, the heading with its red phrase, the two paragraphs, and
@@ -23,7 +24,7 @@ export function TravelDiscover({ content }: { content: TravelPageContent["discov
               />
               {/* A plain image, not next/image: this is an SVG, which next/image refuses. */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/images/travel/plane.svg" alt="" className="relative size-[15px]" />
+              <img src={assetUrl("/images/travel/plane.svg")} alt="" className="relative size-[15px]" />
             </span>
 
             <span className="text-[0.75rem] font-medium tracking-[0.14em] text-ink uppercase">

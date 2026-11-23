@@ -46,7 +46,7 @@ export default async function ZakatCalculatorPage() {
               <p className="mt-3 text-center text-[1rem] text-body">{rates.body}</p>
 
               <div className="mt-8">
-                <ZakatCalculatorForm rates={rates} />
+                <ZakatCalculatorForm rates={rates} showStickyTotal />
               </div>
             </div>
           </div>
